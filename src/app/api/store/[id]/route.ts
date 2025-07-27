@@ -52,8 +52,9 @@ type Store = {
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   const { id } = params;
+  console.log(`[Store API] Fetching store with ID: ${id}`);
+  
   try {
-    // const res = await fetch("https://coupon-app-backend.vercel.app/api/stores");
     const res = await fetch(buildApiUrl(BACKEND_CONFIG.ENDPOINTS.STORES), {
       method: "GET",
       headers: {
@@ -63,20 +64,28 @@ export async function GET(request: Request, { params }: { params: { id: string }
     });
 
     if (!res.ok) {
+      console.error(`[Store API] Backend returned status: ${res.status}`);
       throw new Error(`HTTP error! status: ${res.status}`);
     }
 
     const data = await res.json();
     const stores = data.data || data || [];
-    const store = stores.find((s: any) => s.id === id);
+    console.log(`[Store API] Found ${stores.length} stores in backend`);
+    
+    // Try to find store by both id and _id fields
+    const store = stores.find((s: any) => s.id === id || s._id === id);
 
     if (!store) {
+      console.error(`[Store API] Store with ID ${id} not found`);
+      console.log(`[Store API] Available store IDs:`, stores.map((s: any) => s._id || s.id).slice(0, 5));
       return NextResponse.json({ message: "Store not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ store });
+    console.log(`[Store API] Found store: ${store.name}`);
+    // Return the store data directly, not wrapped in an object
+    return NextResponse.json(store);
   } catch (error) {
-    console.error("Error fetching store:", error);
+    console.error("[Store API] Error fetching store:", error);
     return NextResponse.json(
       { error: "Failed to fetch store" },
       { status: 500 }
