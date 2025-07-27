@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import { buildApiUrl, BACKEND_CONFIG } from '@/lib/config';
 
 // Server-side data fetching utilities
 export async function fetchStoresServer() {
@@ -14,7 +15,7 @@ export async function fetchStoresServer() {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/proxy-stores`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || buildApiUrl(BACKEND_CONFIG.ENDPOINTS.STORES)}`, {
       headers,
       cache: 'no-store', // Always fetch fresh data
     });
@@ -45,7 +46,7 @@ export async function fetchCategoriesServer() {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/proxy-categories`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || buildApiUrl(BACKEND_CONFIG.ENDPOINTS.CATEGORIES)}`, {
       headers,
       cache: 'no-store', // Always fetch fresh data
     });

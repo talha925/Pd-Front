@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
+import { buildApiUrl, BACKEND_CONFIG } from '@/lib/config';
 
-const API_URL = "https://coupon-app-backend.vercel.app/api/blogs";
+const API_URL = buildApiUrl(BACKEND_CONFIG.ENDPOINTS.BLOGS);
 
 // GET /api/blogs/[id]
 export async function GET(request: Request, { params }: { params: { id: string } }) {

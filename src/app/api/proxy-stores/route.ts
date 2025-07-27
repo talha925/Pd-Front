@@ -1,5 +1,6 @@
 // ✅ FILE: src/app/api/proxy-stores/route.ts
 import { NextResponse } from "next/server";
+import { buildApiUrl, BACKEND_CONFIG } from '@/lib/config';
 
 export async function GET() {
   try {
@@ -7,7 +8,7 @@ export async function GET() {
     const timeout = setTimeout(() => controller.abort(), 10000); // 10 seconds
     let res;
     try {
-      res = await fetch("https://coupon-app-backend.vercel.app/api/stores", {
+      res = await fetch(buildApiUrl(BACKEND_CONFIG.ENDPOINTS.STORES), {
         headers: {
           "Content-Type": "application/json",
         },
