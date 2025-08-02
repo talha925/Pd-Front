@@ -29,10 +29,10 @@ const AuthContext = createContext<AuthContextType>({
   token: null,
   isAuthenticated: false,
   isLoading: true,
-  login: async () => {},
-  logout: async () => {},
+  login: async () => { },
+  logout: async () => { },
   refreshToken: async () => false,
-  updateUser: () => {},
+  updateUser: () => { },
   hasPermission: () => false,
 });
 
@@ -73,7 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode; initialToken?: 
   // Refresh token function
   const refreshToken = useCallback(async (): Promise<boolean> => {
     if (isRefreshing) return false;
-    
+
     try {
       setIsRefreshing(true);
       const response = await fetch('/api/auth/refresh', {
@@ -98,17 +98,68 @@ export const AuthProvider: React.FC<{ children: React.ReactNode; initialToken?: 
     }
   }, [isRefreshing]);
 
+  // List of public routes that don't require authentication
+  const isPublicRoute = useCallback(() => {
+    if (typeof window === 'undefined') return false;
+    
+    const currentPath = window.location.pathname;
+    
+    // List of public paths
+    const publicPaths = [
+      '/',
+      '/login',
+      '/register',
+      '/blog',
+      '/stores',
+      '/categories',
+      '/about',
+      '/contact'
+    ];
+    
+    // List of public API routes
+    const publicApiRoutes = [
+      '/api/proxy-stores',
+      '/api/proxy-categories',
+      '/api/blogs',
+      '/api/blog',
+      '/api/blog-categories',
+      '/api/store',
+      '/api/auth/login',
+      '/api/auth/refresh',
+      '/api/auth/validate'
+    ];
+    
+    // Check if current path matches any public path or starts with any public API route
+    return (
+      publicPaths.some(path => currentPath === path) ||
+      publicPaths.some(path => currentPath.startsWith(path + '/')) ||
+      publicApiRoutes.some(route => currentPath.startsWith(route))
+    );
+  }, []);
+
   // Check for existing auth on mount
   useEffect(() => {
     // Prevent multiple initializations
     if (hasInitializedRef.current) return;
     hasInitializedRef.current = true;
-    
+
     let isMounted = true;
-    
+
     const initializeAuth = async () => {
-      console.log('[AuthContext] Starting auth initialization', { initialToken: !!initialToken });
-      
+      console.log('[AuthContext] Starting auth initialization', { 
+        initialToken: !!initialToken,
+        path: typeof window !== 'undefined' ? window.location.pathname : ''
+      });
+
+      // Skip auth check for public routes
+      if (isPublicRoute()) {
+        console.log('[AuthContext] Public route detected, skipping auth check');
+        if (isMounted) {
+          setIsLoading(false);
+        }
+        return;
+      }
+
       try {
         // If we have an initial token from SSR, validate it first
         if (initialToken) {
@@ -120,7 +171,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode; initialToken?: 
             const userData = await fetch('/api/auth/me', {
               credentials: 'include',
             });
-            
+
             if (userData.ok && isMounted) {
               const userInfo = await userData.json();
               setUser(userInfo.user);
@@ -140,64 +191,83 @@ export const AuthProvider: React.FC<{ children: React.ReactNode; initialToken?: 
 
         // If no initial token or invalid, try to get from HTTP-only cookie
         console.log('[AuthContext] Trying to get auth from HTTP-only cookie');
-        const cookieResponse = await fetch('/api/auth/me', {
-          credentials: 'include',
-        });
+        try {
+          const cookieResponse = await fetch('/api/auth/me', {
+            credentials: 'include',
+          });
 
-        if (cookieResponse.ok && isMounted) {
-          const userData = await cookieResponse.json();
-          setUser(userData.user);
-          setToken(userData.token);
-          localStorage.setItem('authToken', userData.token);
-          localStorage.setItem('user', JSON.stringify(userData.user));
-          setIsLoading(false);
-          console.log('[AuthContext] Auth initialized successfully from cookie');
-          return;
-        } else {
-          console.log('[AuthContext] No valid auth in cookie:', cookieResponse.status);
+          if (cookieResponse.ok && isMounted) {
+            const userData = await cookieResponse.json();
+            setUser(userData.user);
+            setToken(userData.token);
+            localStorage.setItem('authToken', userData.token);
+            localStorage.setItem('user', JSON.stringify(userData.user));
+            setIsLoading(false);
+            console.log('[AuthContext] Auth initialized successfully from cookie');
+            return;
+          } else {
+            console.log('[AuthContext] No valid auth in cookie:', cookieResponse.status);
+          }
+        } catch (error) {
+          console.log('[AuthContext] Error checking cookie auth:', error);
         }
 
-        // Fallback to localStorage (client-side)
-        console.log('[AuthContext] Trying localStorage fallback');
-        const storedToken = localStorage.getItem('authToken');
+        // Fallback to localStorage (client-side) only if we're on a protected page
+        const currentPath = window.location.pathname;
+        const protectedPaths = ['/admin', '/profile', '/dashboard'];
+        const isProtectedPath = protectedPaths.some(path => currentPath.startsWith(path));
+
+        if (isProtectedPath) {
+          console.log('[AuthContext] Protected path detected, checking localStorage');
+          const storedToken = localStorage.getItem('authToken');
           const storedUser = localStorage.getItem('user');
-        
-        if (storedToken && storedUser && isMounted) {
-          const parsedUser = JSON.parse(storedUser);
-          
-          // Validate the stored token
-          const isValid = await validateToken(storedToken);
-          
-          if (isValid && isMounted) {
-            setUser(parsedUser);
-            setToken(storedToken);
-            console.log('[AuthContext] Auth initialized successfully from localStorage');
-          } else {
-            console.log('[AuthContext] Stored token is invalid, trying refresh');
-            // Try to refresh the token
-            const refreshSuccess = await refreshToken();
-            if (!refreshSuccess && isMounted) {
-              console.log('[AuthContext] Token refresh failed, clearing auth state');
-            // Clear invalid state
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('user');
-            } else {
-              console.log('[AuthContext] Token refreshed successfully');
+
+          if (storedToken && storedUser && isMounted) {
+            const parsedUser = JSON.parse(storedUser);
+
+            try {
+              // Only validate token if we're on a protected path
+              const isValid = await validateToken(storedToken);
+
+              if (isValid && isMounted) {
+                setUser(parsedUser);
+                setToken(storedToken);
+                console.log('[AuthContext] Auth initialized successfully from localStorage');
+              } else {
+                console.log('[AuthContext] Stored token is invalid, trying refresh');
+                // Try to refresh the token
+                const refreshSuccess = await refreshToken();
+                if (!refreshSuccess && isMounted) {
+                  console.log('[AuthContext] Token refresh failed, clearing auth state');
+                  // Clear invalid state
+                  localStorage.removeItem('authToken');
+                  localStorage.removeItem('user');
+                } else {
+                  console.log('[AuthContext] Token refreshed successfully');
+                }
+              }
+            } catch (error) {
+              console.error('[AuthContext] Error validating token:', error);
+              localStorage.removeItem('authToken');
+              localStorage.removeItem('user');
             }
+          } else {
+            console.log('[AuthContext] No stored auth found in localStorage');
           }
         } else {
-          console.log('[AuthContext] No stored auth found in localStorage');
+          console.log('[AuthContext] Public path, skipping auth check');
+          setIsLoading(false);
         }
       } catch (error) {
         console.error('[AuthContext] Auth initialization error:', error);
         // Clear potentially corrupted state
         if (isMounted) {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('user');
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('user');
         }
       } finally {
         if (isMounted) {
-        setIsLoading(false);
+          setIsLoading(false);
           console.log('[AuthContext] Auth initialization complete');
         }
       }
@@ -210,39 +280,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode; initialToken?: 
     };
   }, []); // Empty dependency array - only run once on mount
 
-  // Auto-refresh token before expiration
-  useEffect(() => {
-    if (!token) return;
-
-    const tokenRefreshInterval = setInterval(async () => {
-      const refreshSuccess = await refreshToken();
-      if (!refreshSuccess) {
-        // If refresh fails, logout user
-        await logout();
-      }
-    }, 14 * 60 * 1000); // Refresh every 14 minutes (assuming 15-minute token expiry)
-
-    return () => clearInterval(tokenRefreshInterval);
-  }, [token, refreshToken]);
-
   // Login function
-  const login = useCallback(async (newToken: string, newUser: User) => {
+  const login = useCallback(async (newToken: string, userData: User) => {
     try {
-    // Save to state
-    setToken(newToken);
-    setUser(newUser);
-    
-    // Save to localStorage
-    localStorage.setItem('authToken', newToken);
-    localStorage.setItem('user', JSON.stringify(newUser));
-    
-    // Save to HTTP-only cookie via API call
+      // Save to state
+      setToken(newToken);
+      setUser(userData);
+
+      // Save to localStorage
+      localStorage.setItem('authToken', newToken);
+      localStorage.setItem('user', JSON.stringify(userData));
+
+      // Save to HTTP-only cookie via API call
       await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ token: newToken }),
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token: newToken }),
       });
     } catch (error) {
       console.error('Login error:', error);
@@ -253,21 +308,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode; initialToken?: 
   // Logout function
   const logout = useCallback(async () => {
     try {
-    // Clear state
-    setToken(null);
-    setUser(null);
-    
-    // Clear localStorage
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
-    
-    // Clear HTTP-only cookie via API call
+      // Clear state
+      setToken(null);
+      setUser(null);
+
+      // Clear localStorage
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
+
+      // Clear HTTP-only cookie via API call
       await fetch('/api/auth/logout', {
-      method: 'POST',
-    });
-    
-    // Redirect to login
-    router.push('/login');
+        method: 'POST',
+      });
+
+      // Redirect to login
+      router.push('/login');
     } catch (error) {
       console.error('Logout error:', error);
       // Even if API call fails, clear local state
@@ -275,7 +330,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode; initialToken?: 
       setUser(null);
       localStorage.removeItem('authToken');
       localStorage.removeItem('user');
-      router.push('/login');
     }
   }, [router]);
 

@@ -22,7 +22,6 @@ import {
 } from '@/lib/utils/validation';
 import { processTags } from '@/lib/utils/formatting';
 import { BLOG_STATUS_OPTIONS } from '@/lib/constants/options';
-import { buildApiUrl, BACKEND_CONFIG } from '@/lib/config';
 
 interface BlogFormProps {
   initialValues?: Partial<{
@@ -290,7 +289,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
         const formData = new FormData();
         formData.append('image', imageFile);
 
-        const uploadResponse = await fetch(buildApiUrl(BACKEND_CONFIG.ENDPOINTS.UPLOAD), {
+        const uploadResponse = await fetch('https://coupon-app-backend.vercel.app/api/upload', {
           method: 'POST',
           body: formData,
         });

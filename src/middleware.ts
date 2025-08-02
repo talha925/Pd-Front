@@ -17,7 +17,7 @@ export async function middleware(req: NextRequest) {
   const token = req.cookies.get('authToken')?.value;
   const { pathname } = req.nextUrl;
 
-  // Define protected routes
+  // Define protected routes (require authentication)
   const protectedRoutes = [
     '/blog/create',
     '/admin',
@@ -29,6 +29,26 @@ export async function middleware(req: NextRequest) {
     '/admin',
   ];
 
+  // Define public API routes (no auth required)
+  const publicApiRoutes = [
+    '/api/proxy-stores',
+    '/api/proxy-categories',
+    '/api/blogs',
+    '/api/blog-categories',
+    '/api/store',
+    '/api/auth/login',
+    '/api/blog/',
+    '/api/blog/:id',
+    '/api/auth/refresh',
+    '/api/auth/validate'
+  ];
+
+  // Skip middleware for public API routes
+  const isPublicApiRoute = publicApiRoutes.some(route => pathname.startsWith(route));
+  if (isPublicApiRoute) {
+    return NextResponse.next();
+  }
+
   // Check if the current path is protected
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
   const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route));
@@ -38,7 +58,7 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL('/login', req.url));
     }
 
-    // Verify the token
+    // Verify the token only for protected routes
     const payload = await verifyToken(token);
     if (!payload) {
       // Clear invalid token and redirect to login

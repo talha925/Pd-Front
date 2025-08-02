@@ -9,7 +9,8 @@
     "lint": "next lint",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "analyze": "ANALYZE=true next build"
   },
   "dependencies": {
     "@ckeditor/ckeditor5-alignment": "^45.2.1",
@@ -58,6 +59,7 @@
     "zustand": "^5.0.6"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^15.4.5",
     "@tailwindcss/postcss": "^4.1.11",
     "@testing-library/jest-dom": "^6.4.2",
     "@testing-library/react": "^14.2.1",
