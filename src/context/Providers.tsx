@@ -7,11 +7,12 @@ import { AppProvider } from './AppContext';
 
 interface ProvidersProps {
   children: React.ReactNode;
+  initialToken?: string | null;
 }
 
-export const Providers: React.FC<ProvidersProps> = ({ children }) => {
+export const Providers: React.FC<ProvidersProps> = ({ children, initialToken }) => {
   return (
-    <AuthProvider>
+    <AuthProvider initialToken={initialToken}>
       <ThemeProvider>
         <AppProvider>
           {children}
