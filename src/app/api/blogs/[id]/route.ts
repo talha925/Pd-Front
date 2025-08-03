@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const API_URL = "https://coupon-app-backend.vercel.app/api/blogs";
+const API_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://coupon-app-backend.vercel.app"}/api/blogs`;
 
 // GET /api/blogs/[id]
 export async function GET(request: Request, { params }: { params: { id: string } }) {
@@ -47,4 +47,4 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   } catch (error) {
     return NextResponse.json({ message: 'Failed to update blog', error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
   }
-} 
+}

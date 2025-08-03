@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const res = await fetch("https://coupon-app-backend.vercel.app/api/stores", {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || "https://coupon-app-backend.vercel.app"}/api/stores`, {
       headers: {
         "Content-Type": "application/json",
       },

@@ -81,5 +81,6 @@ export const config = {
   matcher: [
     '/blog/create',
     '/blog/create/:path*',
+    '/admin/:path*',
   ],
-}; 
+};

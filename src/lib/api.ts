@@ -36,7 +36,8 @@ class ApiClient {
   private baseUrl: string;
 
   constructor(baseUrl: string = '') {
-    this.baseUrl = baseUrl;
+    // Use environment variable for base URL if available
+    this.baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || baseUrl;
   }
 
   /**
@@ -267,4 +268,4 @@ class ApiClient {
 export const api = new ApiClient();
 
 // Export the class for testing or custom instances
-export default ApiClient; 
+export default ApiClient;

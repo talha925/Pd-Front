@@ -18,6 +18,7 @@ const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-inter',
+  preload: true,
 })
 
 // Enhanced metadata for better SEO
@@ -86,18 +87,21 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={inter.variable}>
       <head>
-        {/* Preload critical fonts */}
-        <link
-          rel="preload"
-          href="/fonts/inter-var.woff2"
-          as="font"
-          type="font/woff2"
-          crossOrigin="anonymous"
-        />
         {/* Preconnect to API domain */}
         <link
           rel="preconnect"
-          href="https://coupon-app-backend.vercel.app"
+          href={process.env.NEXT_PUBLIC_API_BASE_URL || "https://coupon-app-backend.vercel.app"}
+          crossOrigin="anonymous"
+        />
+        {/* Preconnect to Google Fonts */}
+        <link
+          rel="preconnect"
+          href="https://fonts.googleapis.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
         />
       </head>

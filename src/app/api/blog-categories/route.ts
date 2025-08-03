@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const API_URL = "https://coupon-app-backend.vercel.app/api/blogCategories";
+const API_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://coupon-app-backend.vercel.app"}/api/blogCategories`;
 
 const getBlogCategories = async () => {
   try {
@@ -37,4 +37,4 @@ export async function GET() {
       { status: 500 }
     );
   }
-} 
+}

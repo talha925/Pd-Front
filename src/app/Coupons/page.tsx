@@ -257,8 +257,8 @@
 //         },
 //         _id: "679e7bc91f8136e8b4060009",
 //         name: "Hello",
-//         directUrl: "https://coupon-app-backend.vercel.app/api/stores",
-//         trackingUrl: "https://coupon-app-backend.vercel.app/api/stores",
+//         directUrl: `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://coupon-app-backend.vercel.app"}/api/stores`,
+//         trackingUrl: `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://coupon-app-backend.vercel.app"}/api/stores`,
 //       },
 //       discount: 30,
 //       expirationDate: "2025-03-31T23:59:59.000Z",
@@ -267,8 +267,8 @@
 //       flickerButton: false,
 //       verifiedButton: true,
 //       exclusiveButton: false,
-//       storeLink: "https://coupon-app-backend.vercel.app/api/stores",
-//       affiliateLink: "https://coupon-app-backend.vercel.app/api/stores",
+//       storeLink: `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://coupon-app-backend.vercel.app"}/api/stores`,
+//       affiliateLink: `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://coupon-app-backend.vercel.app"}/api/stores`,
 //       image:
 //         "https://coupon-app-image.s3.us-east-1.amazonaws.com/9e712346-d6ae-4de9-ba47-69ab0ee5dd10-zafulcom_logo.jpeg",
 //     },
@@ -414,15 +414,15 @@
 //       store: {
 //         _id: "679e7bc91f8136e8b4060009",
 //         name: "Zaful",
-//         directUrl: "https://coupon-app-backend.vercel.app/api/stores",
-//         trackingUrl: "https://coupon-app-backend.vercel.app/api/stores",
+//         directUrl: `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://coupon-app-backend.vercel.app"}/api/stores`,
+//         trackingUrl: `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://coupon-app-backend.vercel.app"}/api/stores`,
 //         image: {
 //           url: "https://coupon-app-image.s3.us-east-1.amazonaws.com/9e712346-d6ae-4de9-ba47-69ab0ee5dd10-zafulcom_logo.jpeg",
 //           alt: "Zaful Logo",
 //         },
 //       },
-//       storeLink: "https://coupon-app-backend.vercel.app/api/stores",
-//       affiliateLink: "https://coupon-app-backend.vercel.app/api/stores",
+//       storeLink: `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://coupon-app-backend.vercel.app"}/api/stores`,
+//       affiliateLink: `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://coupon-app-backend.vercel.app"}/api/stores`,
 //       image:
 //         "https://coupon-app-image.s3.us-east-1.amazonaws.com/9e712346-d6ae-4de9-ba47-69ab0ee5dd10-zafulcom_logo.jpeg",
 //     },
@@ -542,7 +542,7 @@
 //   useEffect(() => {
 //     const fetchCoupons = async () => {
 //       try {
-//         const response = await fetch("https://coupon-app-backend.vercel.app/api/coupons");
+//         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || "https://coupon-app-backend.vercel.app"}/api/coupons`);
 //         const result = await response.json();
 
 //         if (result.status === "success" && Array.isArray(result.data)) {
@@ -666,7 +666,7 @@
 //   useEffect(() => {
 //     const fetchCoupons = async () => {
 //       try {
-//         const response = await fetch("https://coupon-app-backend.vercel.app/api/coupons");
+//         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || "https://coupon-app-backend.vercel.app"}/api/coupons`);
 //         const result = await response.json();
 
 //         if (result.status === "success" && Array.isArray(result.data)) {
@@ -787,7 +787,7 @@
 //   useEffect(() => {
 //     const fetchCoupons = async () => {
 //       try {
-//         const response = await fetch("https://coupon-app-backend.vercel.app/api/coupons");
+//         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || "https://coupon-app-backend.vercel.app"}/api/coupons`);
 //         const result = await response.json();
 
 //         if (result.status === "success" && Array.isArray(result.data)) {
@@ -898,7 +898,7 @@ const CouponsPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("https://coupon-app-backend.vercel.app/api/stores")
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || "https://coupon-app-backend.vercel.app"}/api/stores`)
       .then((res) => res.json())
       .then((data) => {
         setStores(data.data);

@@ -289,7 +289,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
         const formData = new FormData();
         formData.append('image', imageFile);
 
-        const uploadResponse = await fetch('https://coupon-app-backend.vercel.app/api/upload', {
+        const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://coupon-app-backend.vercel.app'}/api/upload`, {
           method: 'POST',
           body: formData,
         });
@@ -662,4 +662,4 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
   );
 };
 
-export default BlogForm; 
+export default BlogForm;

@@ -2,11 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ['coupon-app-backend.vercel.app', 'coupon-app-image.s3.us-east-1.amazonaws.com', 'cdn.pixabay.com'],
     formats: ['image/webp', 'image/avif'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    // Using remotePatterns (recommended approach) instead of domains
     remotePatterns: [
       {
         protocol: 'https',
