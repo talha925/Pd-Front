@@ -6,17 +6,6 @@ import { api } from '@/lib/api';
 import Image from 'next/image';
 import parse from 'html-react-parser';
 
-function decodeHtmlEntities(str: string) {
-  if (!str) return '';
-  return str.replace(/&lt;/g, '<')
-            .replace(/&gt;/g, '>')
-            .replace(/&amp;/g, '&')
-            .replace(/&quot;/g, '"')
-            .replace(/&#x27;/g, "'")
-            .replace(/&#x2F;/g, '/')
-            .replace(/&nbsp;/g, ' ');
-}
-
 export default function BlogDetailPage() {
   const { id: slug } = useParams();
   const [blog, setBlog] = useState<any>(null);
@@ -25,29 +14,18 @@ export default function BlogDetailPage() {
 
   useEffect(() => {
     if (!slug) return;
+    
     setLoading(true);
-    // Step 1: Get blog by slug to find _id
-    api.get(`/api/blogs?slug=${slug}`)
+    api.get(`/api/blogs/${slug}`)
       .then((res) => {
-        const blogs = res.blogs?.blogs || res.data?.blogs || [];
-        const found = blogs.find((b: any) => b.slug === slug || b._id === slug);
-        if (found && found._id) {
-          // Step 2: Fetch full detail by _id
-          api.get(`/api/blogs/${found._id}`)
-            .then((detailRes) => {
-              const fullBlog = detailRes.blog || detailRes.data;
-              setBlog(fullBlog);
-              setError('');
-            })
-            .catch(() => setError('Failed to fetch blog detail'))
-            .finally(() => setLoading(false));
-        } else {
-          setError('Blog not found');
-          setLoading(false);
-        }
+        const blogData = res.blog || res.data;
+        setBlog(blogData);
+        setError('');
       })
       .catch(() => {
         setError('Failed to fetch blog');
+      })
+      .finally(() => {
         setLoading(false);
       });
   }, [slug]);
@@ -76,7 +54,7 @@ export default function BlogDetailPage() {
       <h1 className="text-3xl font-bold mb-4">{blog.title}</h1>
       {blog.longDescription ? (
         <div className="prose max-w-none">
-          {parse(decodeHtmlEntities(blog.longDescription))}
+          {parse(blog.longDescription)}
         </div>
       ) : (
         <div className="text-gray-500 italic">No content available.</div>
