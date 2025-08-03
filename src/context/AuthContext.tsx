@@ -47,8 +47,8 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode; initialToken?: string | null }> = ({ children, initialToken }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(initialToken || null);
-  const [isLoading, setIsLoading] = useState(!initialToken);
+  const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const router = useRouter();
   const hasInitializedRef = useRef(false);
@@ -147,7 +147,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode; initialToken?: 
 
     const initializeAuth = async () => {
       console.log('[AuthContext] Starting auth initialization', { 
-        initialToken: !!initialToken,
         path: typeof window !== 'undefined' ? window.location.pathname : ''
       });
 
@@ -161,35 +160,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode; initialToken?: 
       }
 
       try {
-        // If we have an initial token from SSR, validate it first
-        if (initialToken) {
-          console.log('[AuthContext] Validating initial token from SSR');
-          const isValid = await validateToken(initialToken);
-          if (isValid && isMounted) {
-            console.log('[AuthContext] Initial token is valid, fetching user data');
-            // Get user data from the token
-            const userData = await fetch('/api/auth/me', {
-              credentials: 'include',
-            });
-
-            if (userData.ok && isMounted) {
-              const userInfo = await userData.json();
-              setUser(userInfo.user);
-              setToken(initialToken);
-              localStorage.setItem('authToken', initialToken);
-              localStorage.setItem('user', JSON.stringify(userInfo.user));
-              setIsLoading(false);
-              console.log('[AuthContext] Auth initialized successfully with SSR token');
-              return;
-            } else {
-              console.log('[AuthContext] Failed to fetch user data with SSR token:', userData.status);
-            }
-          } else {
-            console.log('[AuthContext] Initial token is invalid');
-          }
-        }
-
-        // If no initial token or invalid, try to get from HTTP-only cookie
+        // Try to get auth from HTTP-only cookie
         console.log('[AuthContext] Trying to get auth from HTTP-only cookie');
         try {
           const cookieResponse = await fetch('/api/auth/me', {

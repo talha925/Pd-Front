@@ -1,7 +1,6 @@
 import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import { cookies } from 'next/headers'
 import Header from '@/components/Header'
 import { Providers } from '@/context/Providers'
 import ErrorBoundary from '@/components/ErrorBoundary'
@@ -79,10 +78,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  // Server-side cookie reading for SSR hydration
-  const cookieStore = cookies()
-  const initialToken = cookieStore.get('authToken')?.value ?? null
-
   return (
     <html lang="en" suppressHydrationWarning className={inter.variable}>
       <head>
@@ -103,7 +98,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} bg-gray-900 text-white`}>
         <ErrorBoundary>
-          <Providers initialToken={initialToken}>
+          <Providers>
             <Header />
             {children}
             {/* Monitor performance metrics */}
