@@ -97,14 +97,14 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.className} bg-gray-900 text-white`}>
-        <ErrorBoundary>
-          <Providers>
+        <Providers>
+          <ErrorBoundary>
             <Header />
             {children}
             {/* Monitor performance metrics */}
             <PerformanceMonitor />
-          </Providers>
-        </ErrorBoundary>
+          </ErrorBoundary>
+        </Providers>
       </body>
     </html>
   )
