@@ -87,7 +87,7 @@ export default function BlogDetailPage() {
     return <div className="flex justify-center items-center h-40"><span className="text-lg text-gray-600">No blog content available.</span></div>;
   }
 
-  const baseUrl = process.env.NODE_ENV === 'production' ? 'https://yourwebsite.com' : 'http://localhost:3000';
+  const baseUrl = process.env.NODE_ENV === 'production' ? 'https://pd-front-psi.vercel.app' : 'http://localhost:3000';
 
   return (
     <>
