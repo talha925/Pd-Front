@@ -14,7 +14,9 @@ export async function fetchStoresServer() {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/proxy-stores`, {
+    // Use NEXT_PUBLIC_API_BASE_URL instead of NEXT_PUBLIC_API_URL
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://coupon-app-backend.vercel.app';
+    const response = await fetch(`${baseUrl}/api/proxy-stores`, {
       headers,
       cache: 'no-store', // Always fetch fresh data
     });
@@ -45,7 +47,9 @@ export async function fetchCategoriesServer() {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/proxy-categories`, {
+    // Use NEXT_PUBLIC_API_BASE_URL instead of NEXT_PUBLIC_API_URL
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://coupon-app-backend.vercel.app';
+    const response = await fetch(`${baseUrl}/api/proxy-categories`, {
       headers,
       cache: 'no-store', // Always fetch fresh data
     });
@@ -67,4 +71,4 @@ export async function fetchCategoriesServer() {
 export async function getServerAuthToken() {
   const cookieStore = cookies();
   return cookieStore.get('authToken')?.value || null;
-} 
+}

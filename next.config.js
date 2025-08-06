@@ -19,6 +19,7 @@ const nextConfig = {
         hostname: 'cdn.pixabay.com',
       },
     ],
+    unoptimized: process.env.NODE_ENV === 'production',
   },
   experimental: {
     optimizeCss: true,
