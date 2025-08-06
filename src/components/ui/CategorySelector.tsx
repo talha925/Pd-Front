@@ -32,15 +32,20 @@ const CategorySelector = ({
     const fetchCategories = async () => {
       try {
         setLoading(true);
+        // Use relative URL to ensure it goes through the Next.js API route
         const response = await fetch('/api/blog-categories');
         if (response.ok) {
           const data = await response.json();
-          setCategories(data.data || data || []);
+          // Handle different response formats
+          const categoryData = data.data || data || [];
+          setCategories(Array.isArray(categoryData) ? categoryData : []);
         } else {
           console.error('Failed to fetch categories');
+          setCategories([]);
         }
       } catch (error) {
         console.error('Error fetching categories:', error);
+        setCategories([]);
       } finally {
         setLoading(false);
       }
@@ -79,4 +84,4 @@ const CategorySelector = ({
   );
 };
 
-export default CategorySelector; 
+export default CategorySelector;

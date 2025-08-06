@@ -38,6 +38,11 @@ class ApiClient {
   constructor(baseUrl: string = '') {
     // Use environment variable for base URL if available
     this.baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || baseUrl;
+    // Remove trailing slash if present
+    if (this.baseUrl && this.baseUrl.endsWith('/')) {
+      this.baseUrl = this.baseUrl.slice(0, -1);
+    }
+    console.log('API Client initialized with baseUrl:', this.baseUrl);
   }
 
   /**
@@ -139,12 +144,18 @@ class ApiClient {
     }
     
     let errorMessage = 'An error occurred';
-    try {
-      const errorData = await response.json();
-      errorMessage = errorData.message || response.statusText || errorMessage;
-    } catch (e) {
-      // If we can't parse the error, use the status text
-      errorMessage = response.statusText || errorMessage;
+    // Only try to parse the response body if it hasn't been read yet
+    if (response.bodyUsed === false) {
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || response.statusText || errorMessage;
+      } catch (e) {
+        // If we can't parse the error, use the status text
+        errorMessage = response.statusText || errorMessage;
+      }
+    } else {
+      // If body was already read, just use status text
+      errorMessage = response.statusText || `Error ${response.status}` || errorMessage;
     }
     
     throw new Error(errorMessage);
@@ -155,7 +166,8 @@ class ApiClient {
    */
   private async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
     const headers = await this.createHeaders(options);
-    const url = this.baseUrl + endpoint;
+    // Use relative URL for local API routes, absolute URL for external routes
+    const url = endpoint.startsWith('/api/') ? endpoint : this.baseUrl + endpoint;
     
     const response = await fetch(url, {
       ...options,
@@ -164,7 +176,7 @@ class ApiClient {
     });
 
     if (!response.ok) {
-      await this.handleError(response);
+      return await this.handleError(response);
     }
 
     // For 204 No Content responses, return null
@@ -179,86 +191,189 @@ class ApiClient {
    * Make a GET request
    */
   async get<T = any>(endpoint: string, options?: RequestOptions): Promise<T> {
-    const url = this.baseUrl + endpoint;
+    // Always use relative URLs for API routes to avoid CORS issues
+    let url = endpoint;
+    
+    // Special handling for blog-categories endpoint
+    if (endpoint === '/api/blog-categories' || endpoint.includes('blog-categories')) {
+      console.log('Using local proxy for blog categories');
+      const headers = await this.createHeaders(options);
+      
+      try {
+        const response = await fetch('/api/blog-categories', {
+          ...options,
+          method: 'GET',
+          headers,
+          cache: 'no-store',
+        });
+
+        if (!response.ok) {
+          console.error('Error fetching blog categories:', response.status, response.statusText);
+          return { data: [] } as any;
+        }
+
+        return await response.json();
+      } catch (error) {
+        console.error('Failed to fetch blog categories:', error);
+        return { data: [] } as any;
+      }
+    }
+    
+    // For all other API routes, ensure we're using relative URLs for local routes
+    if (!endpoint.startsWith('/api/') && !endpoint.startsWith('http')) {
+      // If it's not a relative API route and not an absolute URL, prepend the baseUrl
+      url = this.baseUrl + endpoint;
+    }
+    
+    console.log('API GET request to:', url);
     const headers = await this.createHeaders(options);
     
-    const response = await fetch(url, {
-      ...options,
-      method: 'GET',
-      headers,
-      cache: 'no-store',
-    });
+    try {
+      const response = await fetch(url, {
+        ...options,
+        method: 'GET',
+        headers,
+        cache: 'no-store',
+      });
 
-    if (!response.ok) {
-      this.handleError(response);
+      if (!response.ok) {
+        return await this.handleError(response);
+      }
+
+      // For 204 No Content responses, return null
+      if (response.status === 204) {
+        return null as any;
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error(`Error fetching ${url}:`, error);
+      // For specific endpoints, return empty data instead of throwing
+      if (endpoint.includes('categories') || endpoint.includes('blogs')) {
+        console.log(`Returning empty data for ${endpoint} due to error`);
+        return { data: [] } as any;
+      }
+      throw error;
     }
-
-    return await response.json();
   }
 
   /**
    * Make a POST request
    */
   async post<T = any>(endpoint: string, data: any, options?: RequestOptions): Promise<T> {
-    const url = this.baseUrl + endpoint;
     const headers = await this.createHeaders(options);
+    // Always use relative URLs for API routes to avoid CORS issues
+    let url = endpoint;
     
-    const response = await fetch(url, {
-      ...options,
-      method: 'POST',
-      headers,
-      body: JSON.stringify(data),
-      cache: 'no-store',
-    });
-
-    if (!response.ok) {
-      this.handleError(response);
+    // For non-API routes that aren't absolute URLs, prepend the baseUrl
+    if (!endpoint.startsWith('/api/') && !endpoint.startsWith('http')) {
+      url = this.baseUrl + endpoint;
     }
+    
+    console.log('API POST request to:', url);
+    
+    try {
+      const response = await fetch(url, {
+        ...options,
+        method: 'POST',
+        headers,
+        body: JSON.stringify(data),
+        cache: 'no-store',
+      });
 
-    return await response.json();
+      if (!response.ok) {
+        return await this.handleError(response);
+      }
+
+      // For 204 No Content responses, return null
+      if (response.status === 204) {
+        return null as any;
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error(`Error posting to ${url}:`, error);
+      throw error;
+    }
   }
 
   /**
    * Make a PUT request
    */
   async put<T = any>(endpoint: string, data: any, options?: RequestOptions): Promise<T> {
-    const url = this.baseUrl + endpoint;
     const headers = await this.createHeaders(options);
+    // Always use relative URLs for API routes to avoid CORS issues
+    let url = endpoint;
     
-    const response = await fetch(url, {
-      ...options,
-      method: 'PUT',
-      headers,
-      body: JSON.stringify(data),
-      cache: 'no-store',
-    });
-
-    if (!response.ok) {
-      this.handleError(response);
+    // For non-API routes that aren't absolute URLs, prepend the baseUrl
+    if (!endpoint.startsWith('/api/') && !endpoint.startsWith('http')) {
+      url = this.baseUrl + endpoint;
     }
+    
+    console.log('API PUT request to:', url);
+    
+    try {
+      const response = await fetch(url, {
+        ...options,
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(data),
+        cache: 'no-store',
+      });
 
-    return await response.json();
+      if (!response.ok) {
+        return await this.handleError(response);
+      }
+
+      // For 204 No Content responses, return null
+      if (response.status === 204) {
+        return null as any;
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error(`Error putting to ${url}:`, error);
+      throw error;
+    }
   }
 
   /**
    * Make a DELETE request
    */
   async delete<T = any>(endpoint: string, options?: RequestOptions): Promise<T> {
-    const url = this.baseUrl + endpoint;
     const headers = await this.createHeaders(options);
+    // Always use relative URLs for API routes to avoid CORS issues
+    let url = endpoint;
     
-    const response = await fetch(url, {
-      ...options,
-      method: 'DELETE',
-      headers,
-      cache: 'no-store',
-    });
-
-    if (!response.ok) {
-      this.handleError(response);
+    // For non-API routes that aren't absolute URLs, prepend the baseUrl
+    if (!endpoint.startsWith('/api/') && !endpoint.startsWith('http')) {
+      url = this.baseUrl + endpoint;
     }
+    
+    console.log('API DELETE request to:', url);
+    
+    try {
+      const response = await fetch(url, {
+        ...options,
+        method: 'DELETE',
+        headers,
+        cache: 'no-store',
+      });
 
-    return await response.json();
+      if (!response.ok) {
+        return await this.handleError(response);
+      }
+
+      // For 204 No Content responses, return null
+      if (response.status === 204) {
+        return null as any;
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error(`Error deleting ${url}:`, error);
+      throw error;
+    }
   }
 
 

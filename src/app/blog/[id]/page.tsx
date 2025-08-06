@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import Image from 'next/image';
@@ -10,23 +10,11 @@ import Head from 'next/head';
 // Define the decodeHtmlEntities function to decode HTML entities
 function decodeHtmlEntities(str: string) {
   if (!str) return '';
-
-  const decodedOnce = str
-    .replace(/&amp;/g, '&') // Decode `&amp;` to `&`
-    .replace(/&lt;/g, '<')   // Decode `&lt;` to `<`
-    .replace(/&gt;/g, '>')   // Decode `&gt;` to `>`
-    .replace(/&quot;/g, '"') // Decode `&quot;` to `"`
-    .replace(/&#x27;/g, "'") // Decode `&#x27;` to `'`
-    .replace(/&#x2F;/g, '/') // Decode `&#x2F;` to `/`
-    .replace(/&nbsp;/g, ' '); // Decode `&nbsp;` to space
-
-  return decodedOnce
-    .replace(/&lt;/g, '<')   
-    .replace(/&gt;/g, '>')   
-    .replace(/&amp;/g, '&')   
-    .replace(/&quot;/g, '"')  
-    .replace(/&#x27;/g, "'")  
-    .replace(/&#x2F;/g, '/');
+  
+  // Using a textarea to decode HTML entities
+  const textArea = document.createElement('textarea');
+  textArea.innerHTML = str;
+  return textArea.value;
 }
 
 export default function BlogDetailPage() {
@@ -47,24 +35,63 @@ export default function BlogDetailPage() {
     // Fetch blog data directly using the slug
     api.get(`/api/blogs?slug=${slug}`)
       .then((res) => {
-        const blogs = res.blogs?.blogs || res.data?.blogs || [];
+        // Safely extract blogs array from response
+        let blogs = [];
+        if (res && typeof res === 'object') {
+          if (res.blogs && Array.isArray(res.blogs)) {
+            blogs = res.blogs;
+          } else if (res.blogs && res.blogs.blogs && Array.isArray(res.blogs.blogs)) {
+            blogs = res.blogs.blogs;
+          } else if (res.data && res.data.blogs && Array.isArray(res.data.blogs)) {
+            blogs = res.data.blogs;
+          }
+        }
+        
         const found = blogs.find((b: any) => b.slug === slug || b._id === slug);
 
         if (found) {
-          setBlog(found); // Set blog directly if found
+          // Step 2: Fetch full detail by _id
+          api.get(`/api/blogs/${found._id}`)
+            .then((detailRes) => {
+              // Safely extract blog data from response
+              let fullBlog = null;
+              if (detailRes && typeof detailRes === 'object') {
+                if (detailRes.blog) {
+                  fullBlog = detailRes.blog;
+                } else if (detailRes.data) {
+                  fullBlog = detailRes.data;
+                }
+              }
+              
+              if (fullBlog) {
+                setBlog(fullBlog);
+                setError('');
+              } else {
+                setError('Blog data not found');
+              }
+            })
+            .catch((err) => {
+              console.error('Blog detail fetch error:', err);
+              setError('Failed to fetch blog detail');
+            })
+            .finally(() => setLoading(false));
         } else {
           setError('Blog not found');
+          setLoading(false);
         }
       })
-      .catch(() => setError('Failed to fetch blog'))
-      .finally(() => setLoading(false));
+      .catch((err) => {
+        console.error('Blog list fetch error:', err);
+        setError('Failed to fetch blog');
+        setLoading(false);
+      });
   }, [slug]);
 
+  // Don't render anything until the component has mounted to avoid hydration errors
   if (!mounted) {
-    return null; // Prevent rendering on the server side before the component has mounted
+    return null;
   }
 
-  // If still loading, show a skeleton loader
   if (loading) {
     return (
       <div className="flex justify-center items-center h-40">
@@ -73,7 +100,6 @@ export default function BlogDetailPage() {
     );
   }
 
-  // If an error occurred during fetching
   if (error) {
     return (
       <div className="flex justify-center items-center h-40">
@@ -82,9 +108,8 @@ export default function BlogDetailPage() {
     );
   }
 
-  // If no blog is found or there's no content
   if (!blog) {
-    return <div className="flex justify-center items-center h-40"><span className="text-lg text-gray-600">No blog content available.</span></div>;
+    return <div className="flex justify-center items-center h-40"><span className="text-lg text-gray-600">No content available.</span></div>;
   }
 
   const baseUrl = process.env.NODE_ENV === 'production' ? 'https://pd-front-psi.vercel.app' : 'http://localhost:3000';
@@ -112,6 +137,8 @@ export default function BlogDetailPage() {
             width={800}
             height={400}
             className="rounded mb-6"
+              priority // Add this to mark the image as priority
+
           />
         )}
 
@@ -119,6 +146,7 @@ export default function BlogDetailPage() {
 
         {blog.longDescription ? (
           <div className="prose max-w-none">
+            {/* Decoding HTML entities */}
             {parse(decodeHtmlEntities(blog.longDescription))}
           </div>
         ) : (
