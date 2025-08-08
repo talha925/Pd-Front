@@ -37,7 +37,7 @@ class ApiClient {
 
   constructor(baseUrl: string = '') {
     // Use environment variable for base URL if available
-    this.baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://coupon-app-backend.vercel.app';
+    this.baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || baseUrl;
     // Remove trailing slash if present
     if (this.baseUrl && this.baseUrl.endsWith('/')) {
       this.baseUrl = this.baseUrl.slice(0, -1);

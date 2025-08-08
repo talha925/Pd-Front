@@ -60,19 +60,9 @@ export function useDataFetching<T = any>({
         dependencies: stableDependencies.current
       });
     }
-    
-    // Ensure URL is absolute for external API calls
-    let fullUrl = url;
-    if (!url.startsWith('/') && !url.startsWith('http')) {
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://coupon-app-backend.vercel.app';
-      fullUrl = `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
-      if (debug) {
-        console.log(`[useDataFetching] Using full URL: ${fullUrl}`);
-      }
-    }
 
     // Create a unique key for this request
-    const requestKey = `${method}:${fullUrl}:${JSON.stringify(body)}:${JSON.stringify(headers)}`;
+    const requestKey = `${method}:${url}:${JSON.stringify(body)}:${JSON.stringify(headers)}`;
     
     // Check if there's already a pending request for this key
     if (requestCache.has(requestKey)) {
@@ -129,7 +119,7 @@ export function useDataFetching<T = any>({
       }
 
       // Create the fetch promise and cache it
-      const fetchPromise = fetch(fullUrl, requestOptions).then(async (response) => {
+      const fetchPromise = fetch(url, requestOptions).then(async (response) => {
         // Check if request was aborted
         if (controller.signal.aborted) {
           throw new Error('Request aborted');
@@ -165,7 +155,7 @@ export function useDataFetching<T = any>({
       }
 
       if (debug) {
-        console.log(`[useDataFetching] Successfully fetched ${fullUrl}`, result);
+        console.log(`[useDataFetching] Successfully fetched ${url}`, result);
       }
     } catch (err) {
       // Clean up cache on error
@@ -174,7 +164,7 @@ export function useDataFetching<T = any>({
       // Don't show error if request was aborted
       if (err instanceof Error && err.name === 'AbortError') {
         if (debug) {
-          console.log(`[useDataFetching] Request aborted for ${fullUrl}`);
+          console.log(`[useDataFetching] Request aborted for ${url}`);
         }
         return;
       }
@@ -192,7 +182,7 @@ export function useDataFetching<T = any>({
       });
 
       if (debug) {
-        console.error(`[useDataFetching] Error fetching ${fullUrl}:`, errorMessage);
+        console.error(`[useDataFetching] Error fetching ${url}:`, errorMessage);
       }
     } finally {
       setLoading(false);
@@ -248,4 +238,4 @@ export function usePut<T = any>(url: string, body?: any, options?: Omit<UseDataF
 
 export function useDelete<T = any>(url: string, options?: Omit<UseDataFetchingOptions<T>, 'url' | 'method'>) {
   return useDataFetching<T>({ url, method: 'DELETE', ...options });
-}
+} 
