@@ -1,6 +1,7 @@
 /**
  * API client for making authenticated requests
  */
+import config, { getApiUrl } from './config';
 
 interface RequestOptions extends RequestInit {
   skipAuth?: boolean;
@@ -36,8 +37,8 @@ class ApiClient {
   private baseUrl: string;
 
   constructor(baseUrl: string = '') {
-    // Use environment variable for base URL if available
-    this.baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || baseUrl;
+    // Use config for base URL
+    this.baseUrl = config.api.baseUrl || baseUrl;
     // Remove trailing slash if present
     if (this.baseUrl && this.baseUrl.endsWith('/')) {
       this.baseUrl = this.baseUrl.slice(0, -1);
@@ -191,7 +192,7 @@ class ApiClient {
    * Make a GET request
    */
   async get<T = any>(endpoint: string, options?: RequestOptions): Promise<T> {
-    // Always use relative URLs for API routes to avoid CORS issues
+    // Use the getApiUrl helper to determine the correct URL
     let url = endpoint;
     
     // Special handling for blog-categories endpoint
@@ -219,10 +220,9 @@ class ApiClient {
       }
     }
     
-    // For all other API routes, ensure we're using relative URLs for local routes
-    if (!endpoint.startsWith('/api/') && !endpoint.startsWith('http')) {
-      // If it's not a relative API route and not an absolute URL, prepend the baseUrl
-      url = this.baseUrl + endpoint;
+    // For all other endpoints, use the getApiUrl helper
+    if (!endpoint.startsWith('/api/')) {
+      url = getApiUrl(endpoint);
     }
     
     console.log('API GET request to:', url);
@@ -262,12 +262,12 @@ class ApiClient {
    */
   async post<T = any>(endpoint: string, data: any, options?: RequestOptions): Promise<T> {
     const headers = await this.createHeaders(options);
-    // Always use relative URLs for API routes to avoid CORS issues
+    // Use the getApiUrl helper to determine the correct URL
     let url = endpoint;
     
-    // For non-API routes that aren't absolute URLs, prepend the baseUrl
-    if (!endpoint.startsWith('/api/') && !endpoint.startsWith('http')) {
-      url = this.baseUrl + endpoint;
+    // For non-API routes, use the getApiUrl helper
+    if (!endpoint.startsWith('/api/')) {
+      url = getApiUrl(endpoint);
     }
     
     console.log('API POST request to:', url);
@@ -302,12 +302,12 @@ class ApiClient {
    */
   async put<T = any>(endpoint: string, data: any, options?: RequestOptions): Promise<T> {
     const headers = await this.createHeaders(options);
-    // Always use relative URLs for API routes to avoid CORS issues
+    // Use the getApiUrl helper to determine the correct URL
     let url = endpoint;
     
-    // For non-API routes that aren't absolute URLs, prepend the baseUrl
-    if (!endpoint.startsWith('/api/') && !endpoint.startsWith('http')) {
-      url = this.baseUrl + endpoint;
+    // For non-API routes, use the getApiUrl helper
+    if (!endpoint.startsWith('/api/')) {
+      url = getApiUrl(endpoint);
     }
     
     console.log('API PUT request to:', url);
@@ -342,12 +342,12 @@ class ApiClient {
    */
   async delete<T = any>(endpoint: string, options?: RequestOptions): Promise<T> {
     const headers = await this.createHeaders(options);
-    // Always use relative URLs for API routes to avoid CORS issues
+    // Use the getApiUrl helper to determine the correct URL
     let url = endpoint;
     
-    // For non-API routes that aren't absolute URLs, prepend the baseUrl
-    if (!endpoint.startsWith('/api/') && !endpoint.startsWith('http')) {
-      url = this.baseUrl + endpoint;
+    // For non-API routes, use the getApiUrl helper
+    if (!endpoint.startsWith('/api/')) {
+      url = getApiUrl(endpoint);
     }
     
     console.log('API DELETE request to:', url);

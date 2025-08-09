@@ -1,6 +1,7 @@
 
 
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
+import config from '@/lib/config';
 
 // Optional: move this to a types.ts file
 type Store = {
@@ -22,7 +23,7 @@ type Store = {
 //   { params }: { params: { id: string } }
 // ) {
 //   try {
-//     const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || "https://coupon-app-backend.vercel.app"}/api/stores`);
+//     const res = await fetch(`${config.api.baseUrl}/api/stores`);
 //     if (!res.ok) throw new Error("Failed to fetch stores");
 
 //     const json = await res.json();
@@ -51,7 +52,7 @@ type Store = {
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || "https://coupon-app-backend.vercel.app"}/api/stores`, {
+    const res = await fetch(`${config.api.baseUrl}/api/stores`, {
       cache: "no-store", 
     });
     if (!res.ok) throw new Error("Failed to fetch stores");

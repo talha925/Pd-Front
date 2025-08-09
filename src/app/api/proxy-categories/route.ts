@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
+import config from '@/lib/config';
 
 export async function GET() {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://coupon-app-backend.vercel.app'}/api/categories`);
+    const res = await fetch(`${config.api.baseUrl}/api/categories`);
     
     if (!res.ok) {
       throw new Error('Failed to fetch categories');

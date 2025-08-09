@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
+import config from '@/lib/config';
 
-const API_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://coupon-app-backend.vercel.app"}/api/blogCategories`;
+const API_URL = `${config.api.baseUrl}/api/blogCategories`;
 
 const getBlogCategories = async () => {
   try {

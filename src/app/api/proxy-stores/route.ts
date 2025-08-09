@@ -1,9 +1,10 @@
 // ✅ FILE: src/app/api/proxy-stores/route.ts
 import { NextResponse } from "next/server";
+import config from '@/lib/config';
 
 export async function GET() {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || "https://coupon-app-backend.vercel.app"}/api/stores`, {
+    const res = await fetch(`${config.api.baseUrl}/api/stores`, {
       headers: {
         "Content-Type": "application/json",
       },

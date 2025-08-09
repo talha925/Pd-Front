@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import config from './config';
 
 // Server-side data fetching utilities
 export async function fetchStoresServer() {
@@ -14,7 +15,7 @@ export async function fetchStoresServer() {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/proxy-stores`, {
+    const response = await fetch(`${config.api.siteUrl}/api/proxy-stores`, {
       headers,
       cache: 'no-store', // Always fetch fresh data
     });
@@ -45,7 +46,7 @@ export async function fetchCategoriesServer() {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/proxy-categories`, {
+    const response = await fetch(`${config.api.siteUrl}/api/proxy-categories`, {
       headers,
       cache: 'no-store', // Always fetch fresh data
     });
@@ -63,8 +64,10 @@ export async function fetchCategoriesServer() {
   }
 }
 
-// Helper to get auth token server-side
-export async function getServerAuthToken() {
+/**
+ * Get the server-side authentication token from cookies
+ */
+export const getServerAuthToken = () => {
   const cookieStore = cookies();
   return cookieStore.get('authToken')?.value || null;
-} 
+}

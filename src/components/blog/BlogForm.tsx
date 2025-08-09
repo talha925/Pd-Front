@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import config from '@/lib/config';
 import { 
   FormField, 
   RichTextEditor, 
@@ -289,7 +290,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
         const formData = new FormData();
         formData.append('image', imageFile);
 
-        const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://coupon-app-backend.vercel.app'}/api/upload`, {
+        const uploadResponse = await fetch(`${config.api.baseUrl}/api/upload`, {
           method: 'POST',
           body: formData,
         });

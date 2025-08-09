@@ -3,6 +3,7 @@ import { Metadata } from "next";
 import Carousel from "@/components/ui/Carousel";
 import NewsletterSubscription from "@/components/ui/NewsletterSubscription";
 import BlogCard from "@/components/blog/BlogCard";
+import config from '@/lib/config';
 
 interface Blog {
   _id: string;
@@ -28,7 +29,7 @@ export const metadata: Metadata = {
 // Fetch data at build time or with revalidation
 async function fetchFeaturedBlogs() {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://coupon-app-backend.vercel.app'}/api/blogs?featured=true&page=1&pageSize=6`, {
+    const res = await fetch(`${config.api.baseUrl}/api/blogs?featured=true&page=1&pageSize=6`, {
       next: { revalidate: 3600 } // Revalidate every hour
     });
     

@@ -6,6 +6,7 @@ import Header from '@/components/Header'
 import { Providers } from '@/context/Providers'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import dynamic from 'next/dynamic'
+import config from '@/lib/config'
 
 // Dynamically import performance monitoring component
 const PerformanceMonitor = dynamic(
@@ -90,7 +91,7 @@ export default function RootLayout({
         {/* Preconnect to API domain */}
         <link
           rel="preconnect"
-          href={process.env.NEXT_PUBLIC_API_BASE_URL || "https://coupon-app-backend.vercel.app"}
+          href={config.api.baseUrl}
           crossOrigin="anonymous"
         />
         {/* Preconnect to Google Fonts */}
