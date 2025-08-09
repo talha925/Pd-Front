@@ -269,7 +269,6 @@ export default async function Blogs() {
                 <li><a href="#" className="text-gray-400 hover:text-white hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-blue-400 hover:to-purple-600 transition-all duration-300">Privacy Policy</a></li>
                 <li><a href="#" className="text-gray-400 hover:text-white hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-blue-400 hover:to-purple-600 transition-all duration-300">Terms & Conditions</a></li>
                 <li><a href="#" className="text-gray-400 hover:text-white hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-blue-400 hover:to-purple-600 transition-all duration-300">Contact Us</a></li>
-                <li><a href="/Coupons" className="text-gray-400 hover:text-white hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-blue-400 hover:to-purple-600 transition-all duration-300">Coupons</a></li>
               </ul>
             </div>
 
