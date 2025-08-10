@@ -8,9 +8,14 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 import dynamic from 'next/dynamic'
 import config from '@/lib/config'
 
-// Dynamically import performance monitoring component
+// Dynamically import performance monitoring components
 const PerformanceMonitor = dynamic(
   () => import('@/components/ui/PerformanceMonitor'),
+  { ssr: false }
+)
+
+const PerformanceTracker = dynamic(
+  () => import('@/components/ui/PerformanceTracker'),
   { ssr: false }
 )
 
@@ -113,6 +118,7 @@ export default function RootLayout({
             {children}
             {/* Monitor performance metrics */}
             <PerformanceMonitor />
+            <PerformanceTracker />
           </Providers>
         </ErrorBoundary>
       </body>

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
+import { generateNotificationId } from '@/lib/utils/idGenerator';
 
 // Types
 export interface Notification {
@@ -83,15 +84,15 @@ export const useAppStore = create<AppState>()(
 
         // Notification actions
         addNotification: (notification) => {
-          const id = Math.random().toString(36).substr(2, 9);
+          const id = generateNotificationId();
           const newNotification = { ...notification, id };
           
           set((state) => ({
             notifications: [...state.notifications, newNotification],
           }));
 
-          // Auto-remove notification after duration
-          if (notification.duration !== 0) {
+          // Auto-remove notification after duration (only on client)
+          if (typeof window !== 'undefined' && notification.duration !== 0) {
             setTimeout(() => {
               get().removeNotification(id);
             }, notification.duration || 5000);
@@ -191,4 +192,4 @@ export const useSearchActions = () => useAppStore((state) => ({
   setSearchQuery: state.setSearchQuery,
   setFilters: state.setFilters,
   clearFilters: state.clearFilters,
-})); 
+}));

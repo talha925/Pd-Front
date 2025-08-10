@@ -1,7 +1,9 @@
 'use client';
 
-import React from 'react';
-import { Editor } from '@tinymce/tinymce-react';
+import React, { Suspense, lazy } from 'react';
+
+// Dynamically import TinyMCE Editor to reduce initial bundle size
+const LazyTinyMCEEditor = lazy(() => import('./TinyMCEWrapper'));
 
 interface RichTextEditorProps {
   value: string;
@@ -32,41 +34,20 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       <label className="block text-sm font-medium text-gray-700 mb-2">
         Long Description <span className="text-red-500">*</span>
       </label>
-      <Editor
-        apiKey='6be041uk7orm1ngovq1ze4udc28my9puzhlaeosuhcm6g3lg'
-        value={value}
-        onEditorChange={handleEditorChange}
-        init={{
-          height: 400,
-          menubar: true,
-          plugins: [
-            'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'image', 'link', 'lists', 
-            'media', 'searchreplace', 'table', 'visualblocks', 'wordcount', 'code', 'fullscreen',
-            'insertdatetime', 'preview', 'help',
-            'checklist', 'mediaembed', 'casechange', 'formatpainter', 'pageembed'
-          ],
-          toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | ' +
-            'link image media table | align lineheight | checklist numlist bullist indent outdent | ' +
-            'emoticons charmap | removeformat | code fullscreen help',
-          content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; }',
-          placeholder: placeholder,
-          images_upload_handler: function (blobInfo, progress) {
-            return new Promise((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload = function () {
-                resolve(reader.result as string);
-              };
-              reader.onerror = function () {
-                reject('Image upload failed');
-              };
-              reader.readAsDataURL(blobInfo.blob());
-            });
-          }
-        }}
-      />
+      <Suspense fallback={
+        <div className="border border-gray-300 rounded-md p-4 h-96 flex items-center justify-center bg-gray-50">
+          <div className="text-gray-500">Loading editor...</div>
+        </div>
+      }>
+        <LazyTinyMCEEditor
+          value={value}
+          onEditorChange={handleEditorChange}
+          placeholder={placeholder}
+        />
+      </Suspense>
       {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
     </div>
   );
 };
 
-export default RichTextEditor; 
+export default RichTextEditor;

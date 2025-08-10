@@ -52,16 +52,16 @@ export function useOptimizedAuth(options: UseOptimizedAuthOptions = {}): UseOpti
 
   const auth = useAuth();
   const router = useRouter();
-  const sessionTimeoutRef = useRef<NodeJS.Timeout>();
+  const sessionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const offlineActionsRef = useRef<Array<{ action: string; data: any; timestamp: number }>>([]);
-  const isOnlineRef = useRef(navigator.onLine);
+  const isOnlineRef = useRef(typeof window !== 'undefined' ? navigator.onLine : true);
 
   // Session management
   const [isSessionExpired, setIsSessionExpired] = useState(false);
   const [sessionTimeRemaining, setSessionTimeRemaining] = useState(0);
 
   // Online/offline detection
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isOnline, setIsOnline] = useState(typeof window !== 'undefined' ? navigator.onLine : true);
 
   // Enhanced permission checks
   const hasPermission = useCallback((permission: string): boolean => {
@@ -292,4 +292,4 @@ export function useOptimizedAuth(options: UseOptimizedAuthOptions = {}): UseOpti
     redirectToLogin,
     redirectToHome,
   };
-} 
+}

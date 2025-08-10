@@ -1,12 +1,18 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { X, CheckCircle, AlertCircle, AlertTriangle, Info } from 'lucide-react';
 
 const NotificationToast: React.FC = () => {
   const { state, removeNotification } = useApp();
   const { notifications } = state;
+  const [isClient, setIsClient] = useState(false);
+
+  // Ensure this only renders on the client to avoid hydration mismatches
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -38,7 +44,8 @@ const NotificationToast: React.FC = () => {
     }
   };
 
-  if (notifications.length === 0) return null;
+  // Don't render anything during SSR or if no notifications
+  if (!isClient || notifications.length === 0) return null;
 
   return (
     <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm">
@@ -82,4 +89,4 @@ const NotificationToast: React.FC = () => {
   );
 };
 
-export default NotificationToast; 
+export default NotificationToast;

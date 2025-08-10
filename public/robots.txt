@@ -1,0 +1,18 @@
+# Robots.txt for Brandwell
+# Allow all crawlers to access the site
+
+User-agent: *
+Allow: /
+
+# Disallow admin and private areas
+Disallow: /admin/
+Disallow: /api/
+Disallow: /login
+Disallow: /_next/
+Disallow: /.*
+
+# Sitemap location
+Sitemap: https://brandwell.com/sitemap.xml
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 1

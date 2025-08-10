@@ -1,6 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, useReducer } from 'react';
+import React, { createContext, useContext, useState, useCallback, useReducer, useEffect } from 'react';
+import { generateNotificationId } from '@/lib/utils/idGenerator';
 
 // Notification types
 export interface Notification {
@@ -194,13 +195,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Notification actions
   const addNotification = useCallback((notification: Omit<Notification, 'id'>) => {
-    const id = Math.random().toString(36).substr(2, 9);
+    const id = generateNotificationId();
     const newNotification = { ...notification, id };
     
     dispatch({ type: 'ADD_NOTIFICATION', payload: newNotification });
 
-    // Auto-remove notification after duration
-    if (notification.duration !== 0) {
+    // Auto-remove notification after duration (only on client)
+    if (typeof window !== 'undefined' && notification.duration !== 0) {
       setTimeout(() => {
         dispatch({ type: 'REMOVE_NOTIFICATION', payload: id });
       }, notification.duration || 5000);
@@ -268,4 +269,4 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 };
 
-export default AppContext; 
+export default AppContext;
