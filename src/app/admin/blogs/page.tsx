@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from '@/context/AuthContext';
@@ -39,6 +39,18 @@ interface Category {
 export default function AdminBlogsPage() {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  
+  // All hooks must be called before any conditional returns
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const pageSize = 10;
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -52,17 +64,6 @@ export default function AdminBlogsPage() {
   if (!isAuthenticated) {
     return null;
   }
-
-  const [blogs, setBlogs] = useState<Blog[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedDate, setSelectedDate] = useState("");
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const pageSize = 10;
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   // Fetch categories
   useEffect(() => {
@@ -201,4 +202,4 @@ export default function AdminBlogsPage() {
       </div>
     </div>
   );
-} 
+}

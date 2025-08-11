@@ -52,7 +52,7 @@ export function useOptimizedAuth(options: UseOptimizedAuthOptions = {}): UseOpti
 
   const auth = useAuth();
   const router = useRouter();
-  const sessionTimeoutRef = useRef<NodeJS.Timeout>();
+  const sessionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const offlineActionsRef = useRef<Array<{ action: string; data: any; timestamp: number }>>([]);
   const isOnlineRef = useRef(navigator.onLine);
 
@@ -292,4 +292,4 @@ export function useOptimizedAuth(options: UseOptimizedAuthOptions = {}): UseOpti
     redirectToLogin,
     redirectToHome,
   };
-} 
+}

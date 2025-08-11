@@ -8,7 +8,7 @@ async function verifyToken(token: string) {
     const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'default_secret_replace_in_production');
     const { payload } = await jwtVerify(token, secret);
     return payload;
-  } catch (error) {
+  } catch (_error) {
     return null;
   }
 }
