@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
+import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import config from '@/lib/config';
 import { 
@@ -55,7 +56,7 @@ interface BlogFormProps {
 
 const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: BlogFormProps = {}) => {
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, token } = useAuth();
   
   // Required Fields
   const [title, setTitle] = useState(initialValues?.title || '');
@@ -288,11 +289,12 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
       try {
         setMessage('Uploading image...');
         const formData = new FormData();
-        formData.append('image', imageFile);
+        formData.append('file', imageFile);
 
-        const uploadResponse = await fetch(`${config.api.baseUrl}/api/upload`, {
+        const uploadResponse = await fetch(`/api/upload`, {
           method: 'POST',
           body: formData,
+          headers: token ? { 'Authorization': `Bearer ${token}` } : undefined,
         });
 
         if (!uploadResponse.ok) {
@@ -571,11 +573,15 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
             {imageUrl && (
               <div className="mt-4">
                 <div className="text-sm text-gray-600 mb-2">Image Preview:</div>
-                <img 
-                  src={imageUrl} 
-                  alt="Uploaded preview" 
-                  className="rounded-lg w-full max-w-md h-auto border border-gray-300" 
-                />
+                {/* Ensure image URL is encoded for Next.js Image component */}
+                 <Image 
+                   src={imageUrl} 
+                   alt={imageAlt || 'Uploaded preview'} 
+                   width={500} 
+                   height={300} 
+                   className="rounded-lg w-full max-w-md h-auto object-cover border border-gray-300" 
+                   unoptimized={true} // For testing purposes, remove in production if not needed
+                 />
               </div>
             )}
           </div>

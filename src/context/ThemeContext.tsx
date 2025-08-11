@@ -56,9 +56,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Set theme function
   const setTheme = useCallback((newTheme: Theme) => {
     setThemeState(newTheme);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('theme', newTheme);
-    }
+    localStorage.setItem('theme', newTheme);
     applyTheme(newTheme);
   }, [applyTheme]);
 
@@ -70,9 +68,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Initialize theme on mount
   useEffect(() => {
-    // Only run on client side
-    if (typeof window === 'undefined') return;
-    
     // Get stored theme preference
     const storedTheme = localStorage.getItem('theme') as Theme;
     const initialTheme = storedTheme || 'system';
@@ -111,4 +106,4 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   );
 };
 
-export default ThemeContext;
+export default ThemeContext; 

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Editor } from '@tinymce/tinymce-react';
+import Image from 'next/image';
 
 interface TinyMCEWrapperProps {
   id: string;
@@ -46,7 +47,8 @@ const TinyMCEWrapper: React.FC<TinyMCEWrapperProps> = ({
             // For now, we'll just convert it to a data URL
             const reader = new FileReader();
             reader.onload = function () {
-              resolve(reader.result as string);
+              // Encode the image URL to handle special characters before passing to TinyMCE
+               resolve(encodeURI(reader.result as string));
             };
             reader.onerror = function () {
               reject('Image upload failed');
