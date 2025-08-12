@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { api } from '@/lib/api';
+import HttpClient from '@/services/HttpClient';
 import Image from 'next/image';
-import { useAuth } from '@/context/AuthContext';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import config from '@/lib/config';
 import { 
   FormField, 
@@ -56,7 +56,8 @@ interface BlogFormProps {
 
 const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: BlogFormProps = {}) => {
   const router = useRouter();
-  const { isAuthenticated, isLoading, token } = useAuth();
+  const { isAuthenticated, isLoading, token } = useUnifiedAuth();
+  const httpClient = new HttpClient();
   
   // Required Fields
   const [title, setTitle] = useState(initialValues?.title || '');
@@ -114,7 +115,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
     const fetchCategories = async () => {
       try {
         setCategoriesLoading(true);
-        const data = await api.get('/api/blog-categories');
+        const data = await httpClient.get('/api/blog-categories');
         setCategories(data.data || data || []);
       } catch (error) {
         console.error('Error fetching categories:', error);
@@ -131,7 +132,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
     const fetchStores = async () => {
       try {
         setStoresLoading(true);
-        const data = await api.get('/api/proxy-stores');
+        const data = await httpClient.get('/api/proxy-stores');
         const storesData = data.data || data || [];
         setStores(storesData);
       } catch (error) {
@@ -369,7 +370,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
     }
 
     try {
-      const response = await api.post('/api/create-blog', blogData);
+      const response = await httpClient.post('/api/create-blog', blogData);
       setMessage('Blog created successfully!');
       // Reset form after successful save
       resetForm();

@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
-import { useAuth } from '@/context/AuthContext';
+import HttpClient from "@/services/HttpClient";
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 
 // Custom debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -37,8 +37,9 @@ interface Category {
 }
 
 export default function AdminBlogsPage() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useUnifiedAuth();
   const router = useRouter();
+  const httpClient = new HttpClient();
   
   // All hooks must be called before any conditional returns
   const [blogs, setBlogs] = useState<Blog[]>([]);
@@ -67,7 +68,7 @@ export default function AdminBlogsPage() {
 
   // Fetch categories
   useEffect(() => {
-    api.get("/api/blog-categories").then((data) => {
+    httpClient.get("/api/blog-categories").then((data) => {
       setCategories(data.data || data || []);
     });
   }, []);
@@ -82,7 +83,7 @@ export default function AdminBlogsPage() {
     params.append('page', String(page));
     params.append('pageSize', String(pageSize));
 
-    api.get(`/api/blogs?${params.toString()}`)
+    httpClient.get(`/api/blogs?${params.toString()}`)
       .then((response) => {
         const { blogs, success } = response;
         if (success && blogs && Array.isArray(blogs.blogs)) {
@@ -102,7 +103,7 @@ export default function AdminBlogsPage() {
     async (id: string) => {
       if (!confirm("Are you sure you want to delete this blog?")) return;
       try {
-        await api.delete(`/api/blogs/${id}`);
+        await httpClient.delete(`/api/blogs/${id}`);
         setBlogs((prev) => prev.filter((blog) => blog._id !== id));
       } catch (err) {
         alert("Failed to delete blog. Please try again.");

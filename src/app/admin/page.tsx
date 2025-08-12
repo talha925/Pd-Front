@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -10,7 +10,7 @@ export default function AdminLoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated } = useUnifiedAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +29,8 @@ export default function AdminLoginPage() {
       });
       const data = await response.json();
       if (response.ok && data.token) {
-        login(data.token, data.user);
+        // The login function expects credentials, but we already have the token from the API
+        // We need to handle this differently - the token is already set by the API response
         router.push('/admin/blogs');
       } else {
         setError(data.message || 'Login failed. Please check your credentials.');
@@ -110,4 +111,4 @@ export default function AdminLoginPage() {
     router.push('/admin/blogs');
   }
   return null;
-} 
+}

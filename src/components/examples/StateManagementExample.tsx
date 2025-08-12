@@ -1,16 +1,15 @@
 'use client';
 
 import React from 'react';
-import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
-import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
-import { useAuthAwareGet } from '@/hooks/useAuthAwareDataFetching';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import { useUnifiedDataFetching } from '@/hooks/useUnifiedDataFetching';
 
 // Example component showing complete state management usage
 export function StateManagementExample() {
-  // Basic auth usage
-  const { user, isAuthenticated, login, logout, hasPermission } = useAuth();
+  // Unified auth usage
+  const { user, isAuthenticated, login, logout, hasPermission } = useUnifiedAuth();
   
   // Theme management
   const { theme, setTheme, toggleTheme, resolvedTheme } = useTheme();
@@ -25,27 +24,30 @@ export function StateManagementExample() {
   
   // Enhanced auth with session management
   const {
-    isSessionExpired,
     sessionTimeRemaining,
     extendSession,
-    hasAnyPermission,
-    hasAllPermissions
-  } = useEnhancedAuth({
-    requireAuth: true,
-    permissions: ['read:blogs', 'write:blogs']
+    hasPermission: hasUnifiedPermission
+  } = useUnifiedAuth({
+    enableSessionWarnings: true,
+    sessionWarningThreshold: 5 * 60 * 1000, // 5 minutes
+    debug: false
   });
   
-  // Auth-aware data fetching
-  const { data: blogs, loading: blogsLoading, error: blogsError } = useAuthAwareGet('/api/blogs', {
-    refetchOnAuthReady: true
+  // Unified data fetching
+  const { data: blogs, isLoading: blogsLoading, error: blogsError } = useUnifiedDataFetching('/api/blogs', {
+    method: 'GET',
+    requireAuth: true,
+    autoFetch: true,
+    cacheKey: 'blogs-list',
+    cacheTTL: 5 * 60 * 1000 // 5 minutes
   });
 
   // Example handlers
   const handleLogin = async () => {
     setLoading(true);
     try {
-      // Simulate login
-      await login('fake-token', { id: '1', name: 'John Doe', email: 'john@example.com' });
+      // Simulate login with proper credentials
+      await login({ email: 'john@example.com', password: 'fake-password' });
       addNotification({
         type: 'success',
         title: 'Login Successful',
@@ -99,11 +101,14 @@ export function StateManagementExample() {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  if (isSessionExpired) {
+  // Check if session is about to expire (less than 1 minute remaining)
+  const isSessionExpiring = sessionTimeRemaining < 60000;
+  
+  if (isSessionExpiring) {
     return (
       <div className="p-4 bg-yellow-100 border border-yellow-400 rounded">
-        <h3 className="text-yellow-800 font-bold">Session Expired</h3>
-        <p className="text-yellow-700">Your session has expired. Please extend it to continue.</p>
+        <h3 className="text-yellow-800 font-bold">Session Expiring Soon</h3>
+        <p className="text-yellow-700">Your session will expire soon. Please extend it to continue.</p>
         <button 
           onClick={extendSession}
           className="mt-2 px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
@@ -232,11 +237,11 @@ export function StateManagementExample() {
         
         <div className="space-y-2">
           <p><strong>Loading:</strong> {blogsLoading ? 'Yes' : 'No'}</p>
-          <p><strong>Error:</strong> {blogsError || 'None'}</p>
+          <p><strong>Error:</strong> {blogsError?.message || 'None'}</p>
           <p><strong>Blogs Count:</strong> {blogs?.data?.length || 0}</p>
           
           {blogsError && (
-            <p className="text-red-600">Error loading blogs: {blogsError}</p>
+            <p className="text-red-600">Error loading blogs: {blogsError.message}</p>
           )}
           
           {blogs?.data && blogs.data.length > 0 && (
@@ -259,10 +264,10 @@ export function StateManagementExample() {
         <div className="space-y-2">
           <p><strong>Can Read Blogs:</strong> {hasPermission('read:blogs') ? 'Yes' : 'No'}</p>
           <p><strong>Can Write Blogs:</strong> {hasPermission('write:blogs') ? 'Yes' : 'No'}</p>
-          <p><strong>Has Any Blog Permission:</strong> {hasAnyPermission(['read:blogs', 'write:blogs']) ? 'Yes' : 'No'}</p>
-          <p><strong>Has All Blog Permissions:</strong> {hasAllPermissions(['read:blogs', 'write:blogs']) ? 'Yes' : 'No'}</p>
+          <p><strong>Can Read Blogs (Unified):</strong> {hasUnifiedPermission('read:blogs') ? 'Yes' : 'No'}</p>
+          <p><strong>Can Write Blogs (Unified):</strong> {hasUnifiedPermission('write:blogs') ? 'Yes' : 'No'}</p>
         </div>
       </section>
     </div>
   );
-} 
+}

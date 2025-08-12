@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { api } from "@/lib/api";
+import HttpClient from "@/services/HttpClient";
 import BlogForm from "@/components/blog/BlogForm";
 
 export default function EditBlogPage() {
@@ -13,12 +13,13 @@ export default function EditBlogPage() {
   const [blog, setBlog] = useState<any>(null);
   const [formLoading, setFormLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const httpClient = new HttpClient();
 
   // Fetch blog data
   useEffect(() => {
     if (!blogId) return;
     setLoading(true);
-    api.get(`/api/blogs/${blogId}`)
+    httpClient.get(`/api/blogs/${blogId}`)
       .then((data: any) => {
         // If API returns { blog: {...} }
         const b = data.blog || data;
@@ -72,7 +73,7 @@ export default function EditBlogPage() {
       setMessage("");
       setErrors({});
       try {
-        await api.put(`/api/blogs/${blogId}`, formData);
+        await httpClient.put(`/api/blogs/${blogId}`, formData);
         setMessage("Blog updated successfully!");
         setTimeout(() => router.push("/blogs"), 1200);
       } catch (err: any) {
@@ -116,4 +117,4 @@ export default function EditBlogPage() {
       ) : null}
     </div>
   );
-} 
+}

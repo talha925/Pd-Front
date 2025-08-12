@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import Link from 'next/link';
 
 export default function LoginPage() {
@@ -11,7 +11,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { login } = useAuth();
+  const { login } = useUnifiedAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,8 +37,8 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok && data.token) {
-        // Use the login function from AuthContext
-        login(data.token, data.user);
+        // Use the login function with credentials
+        await login({ email, password });
         
         // Always redirect to blog/create page after login
         router.push('/blog/create');
@@ -125,4 +125,4 @@ export default function LoginPage() {
       </div>
     </div>
   );
-} 
+}

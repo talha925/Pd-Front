@@ -14,7 +14,7 @@ const config = {
     baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://coupon-app-backend.vercel.app',
     
     // Frontend URL (for callbacks, etc.)
-    siteUrl: process.env.NEXT_PUBLIC_SITE_URL || (isProduction ? 'https://pd-front-psi.vercel.app' : 'http://localhost:3000'),
+    siteUrl: process.env.NEXT_PUBLIC_SITE_URL || (isProduction ? 'https://pd-front-psi.vercel.app' : 'http://localhost:3001'),
     
     // Timeout for API requests in milliseconds
     timeout: parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || '30000', 10),

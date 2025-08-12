@@ -4,18 +4,24 @@ import Image from "next/image";
 import Link from "next/link";
 import { Menu, LogOut, Bell, Search, X } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useAuth } from "@/context/AuthContext";
+import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 import { useApp } from "@/context/AppContext";
 import { usePathname } from "next/navigation";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import NotificationToast from "@/components/ui/NotificationToast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function Header() {
-  const { user, isAuthenticated, logout, isLoading } = useAuth();
+  const { user, isAuthenticated, logout, isLoading } = useUnifiedAuth();
   const { state } = useApp();
   const pathname = usePathname();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Prevent hydration mismatch by only showing dynamic content after hydration
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   // Hide header on all /admin routes
   if (pathname.startsWith('/admin')) {
@@ -97,7 +103,7 @@ export default function Header() {
             {/* Notification Bell */}
             <button className="relative p-2 text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-lg transition-all duration-300 group">
               <Bell className="w-5 h-5" />
-              {state.notifications.length > 0 && (
+              {isHydrated && state.notifications.length > 0 && (
                 <span className="absolute -top-1 -right-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse font-semibold">
                   {state.notifications.length}
                 </span>
@@ -105,7 +111,7 @@ export default function Header() {
             </button>
 
             {/* User Menu - Desktop */}
-            {isAuthenticated && (
+            {isHydrated && isAuthenticated && (
               <div className="hidden lg:flex items-center space-x-3">
                 <div className="text-sm text-gray-300">
                   Welcome, <span className="text-white font-medium">{user?.name}</span>
@@ -170,7 +176,7 @@ export default function Header() {
                     </nav>
 
                     {/* Mobile User Section */}
-                    {isAuthenticated && (
+                    {isHydrated && isAuthenticated && (
                       <div className="mt-8 pt-6 border-t border-gray-800">
                         <div className="flex items-center space-x-3 mb-4">
                           <div className="w-10 h-10 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-full flex items-center justify-center">

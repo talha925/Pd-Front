@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { StoreGrid } from '@/components/store';
-import { useAuthAwareGet } from '@/hooks/useAuthAwareDataFetching';
+import { useUnifiedDataFetching } from '@/hooks/useUnifiedDataFetching';
 import { Store } from '@/lib/types/store';
 
 interface StoresClientProps {
@@ -11,22 +11,28 @@ interface StoresClientProps {
 }
 
 export function StoresClient({ initialStores, serverError }: StoresClientProps) {
-  // Use auth-aware data fetching with server-side initial data
+  // Use unified data fetching with server-side initial data
   const { 
     data, 
-    loading, 
+    isLoading: loading, 
     error, 
     isInitialized 
-  } = useAuthAwareGet('/api/proxy-stores', {
-    initialData: { data: initialStores },
-    refetchOnAuthReady: true, // Refetch when auth becomes ready
+  } = useUnifiedDataFetching('/api/proxy-stores', {
+    method: 'GET',
+    requireAuth: true,
+    autoFetch: true,
+    cacheKey: 'stores-list',
+    cacheTTL: 5 * 60 * 1000, // 5 minutes
     debug: false, // Disable debug in production
+    onSuccess: (data) => {
+      // Handle successful data fetch
+    }
   });
 
   // Use server data initially, then client data once initialized
-  const stores = isInitialized ? (data?.data || []) : initialStores;
-  const finalError = isInitialized ? error : serverError;
-  const isLoading = loading && isInitialized; // Only show loading after auth is ready
+  const stores = data?.data || initialStores;
+  const finalError = error?.message || serverError;
+  const isLoading = loading; // Show loading state
 
   return (
     <StoreGrid 
@@ -35,4 +41,4 @@ export function StoresClient({ initialStores, serverError }: StoresClientProps) 
       error={finalError} 
     />
   );
-} 
+}

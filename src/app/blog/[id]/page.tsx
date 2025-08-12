@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { api } from '@/lib/api';
+import HttpClient from '@/services/HttpClient';
 import Image from 'next/image';
 import parse from 'html-react-parser';
 import Head from 'next/head';
@@ -23,6 +23,7 @@ export default function BlogDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [mounted, setMounted] = useState(false); // Track whether the component has mounted
+  const httpClient = new HttpClient();
 
   useEffect(() => {
     setMounted(true); // Set mounted to true after component is mounted
@@ -33,7 +34,7 @@ export default function BlogDetailPage() {
     setError('');
 
     // Fetch blog data directly using the slug
-    api.get(`/api/blogs?slug=${slug}`)
+    httpClient.get(`/api/blogs?slug=${slug}`)
       .then((res) => {
         // Safely extract blogs array from response
         let blogs = [];
@@ -51,7 +52,7 @@ export default function BlogDetailPage() {
 
         if (found) {
           // Step 2: Fetch full detail by _id
-          api.get(`/api/blogs/${found._id}`)
+          httpClient.get(`/api/blogs/${found._id}`)
             .then((detailRes) => {
               // Safely extract blog data from response
               let fullBlog = null;
@@ -112,7 +113,7 @@ export default function BlogDetailPage() {
     return <div className="flex justify-center items-center h-40"><span className="text-lg text-gray-600">No content available.</span></div>;
   }
 
-  const baseUrl = process.env.NODE_ENV === 'production' ? 'https://pd-front-psi.vercel.app' : 'http://localhost:3000';
+  const baseUrl = process.env.NODE_ENV === 'production' ? 'https://pd-front-psi.vercel.app' : 'http://localhost:3001';
 
   return (
     <>

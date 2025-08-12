@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
@@ -18,7 +18,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
   fallback,
   redirectTo = '/login',
 }) => {
-  const { isAuthenticated, isLoading, user, hasPermission } = useAuth();
+  const { isAuthenticated, isLoading, user, hasPermission } = useUnifiedAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -94,4 +94,4 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
   return <>{children}</>;
 };
 
-export default AuthGuard; 
+export default AuthGuard;

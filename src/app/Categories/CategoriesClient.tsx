@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { CategoryGrid } from '@/components/category';
-import { useAuthAwareGet } from '@/hooks/useAuthAwareDataFetching';
+import { useUnifiedDataFetching } from '@/hooks/useUnifiedDataFetching';
 import { Category } from '@/lib/types/category';
 
 interface CategoriesClientProps {
@@ -11,22 +11,28 @@ interface CategoriesClientProps {
 }
 
 export function CategoriesClient({ initialCategories, serverError }: CategoriesClientProps) {
-  // Use auth-aware data fetching with server-side initial data
+  // Use unified data fetching with server-side initial data
   const { 
     data, 
-    loading, 
+    isLoading: loading, 
     error, 
     isInitialized 
-  } = useAuthAwareGet('/api/proxy-categories', {
-    initialData: { data: { categories: initialCategories } },
-    refetchOnAuthReady: true, // Refetch when auth becomes ready
+  } = useUnifiedDataFetching('/api/proxy-categories', {
+    method: 'GET',
+    requireAuth: true,
+    autoFetch: true,
+    cacheKey: 'categories-list',
+    cacheTTL: 5 * 60 * 1000, // 5 minutes
     debug: false, // Disable debug in production
+    onSuccess: (data) => {
+      // Handle successful data fetch
+    }
   });
 
   // Use server data initially, then client data once initialized
-  const categories = isInitialized ? (data?.data?.categories || []) : initialCategories;
-  const finalError = isInitialized ? error : serverError;
-  const isLoading = loading && isInitialized; // Only show loading after auth is ready
+  const categories = data?.data?.categories || initialCategories;
+  const finalError = error?.message || serverError;
+  const isLoading = loading; // Show loading state
 
   return (
     <CategoryGrid 
@@ -35,4 +41,4 @@ export function CategoriesClient({ initialCategories, serverError }: CategoriesC
       error={finalError} 
     />
   );
-} 
+}
