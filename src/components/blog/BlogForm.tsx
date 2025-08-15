@@ -374,6 +374,10 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
       setMessage('Blog created successfully!');
       // Reset form after successful save
       resetForm();
+      // Redirect to admin blogs page after successful creation
+      setTimeout(() => {
+        router.push('/admin/blogs');
+      }, 1500);
     } catch (error) {
       console.error('Error creating blog:', error);
       setMessage('Error creating blog. Please try again.');

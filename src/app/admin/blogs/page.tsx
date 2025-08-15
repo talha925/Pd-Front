@@ -59,6 +59,33 @@ export default function AdminBlogsPage() {
     }
   }, [isAuthenticated, isLoading, router]);
 
+  // Refresh blogs when window gains focus (user returns from edit/create)
+  useEffect(() => {
+    const handleFocus = () => {
+      // Refresh blogs when user returns to this page
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (debouncedSearchTerm) params.append('search', debouncedSearchTerm);
+      if (selectedCategory) params.append('category', selectedCategory);
+      if (selectedDate) params.append('date', selectedDate);
+      params.append('page', page.toString());
+      params.append('limit', pageSize.toString());
+      
+      httpClient.get(`/api/blogs?${params.toString()}`)
+        .then((data) => {
+          setBlogs(data.blogs || data.data || []);
+          setTotalPages(data.totalPages || 1);
+        })
+        .catch((error) => {
+          console.error('Error fetching blogs:', error);
+        })
+        .finally(() => setLoading(false));
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [debouncedSearchTerm, selectedCategory, selectedDate, page, pageSize]);
+
   if (isLoading) {
     return <div className="flex justify-center items-center h-40"><span className="text-lg text-gray-600">Loading...</span></div>;
   }
@@ -126,23 +153,23 @@ export default function AdminBlogsPage() {
           placeholder="Search by store name..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full sm:w-80 px-4 py-3 border border-gray-300 rounded-lg"
+          className="w-full sm:w-80 px-4 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <select
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
-          className="px-4 py-3 border border-gray-300 rounded-lg"
+          className="px-4 py-3 border border-gray-300 rounded-lg text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="">All Categories</option>
+          <option value="" className="text-gray-900">All Categories</option>
           {categories.map((cat) => (
-            <option key={cat._id} value={cat._id}>{cat.name}</option>
+            <option key={cat._id} value={cat._id} className="text-gray-900">{cat.name}</option>
           ))}
         </select>
         <input
           type="date"
           value={selectedDate}
           onChange={(e) => setSelectedDate(e.target.value)}
-          className="px-4 py-3 border border-gray-300 rounded-lg"
+          className="px-4 py-3 border border-gray-300 rounded-lg text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
       {loading ? (

@@ -49,3 +49,27 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     return NextResponse.json({ message: 'Failed to update blog', error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
   }
 }
+
+// DELETE /api/blogs/[id]
+export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+  const { id } = params;
+  try {
+    const response = await fetch(`${API_URL}/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    });
+    if (!response.ok) {
+      if (response.status === 404) {
+        return NextResponse.json({ message: 'Blog not found' }, { status: 404 });
+      }
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return NextResponse.json({ message: 'Blog deleted successfully' });
+  } catch (error) {
+    return NextResponse.json({ message: 'Failed to delete blog', error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
+  }
+}
+

@@ -21,11 +21,9 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "critters": "^0.0.23",
-    "dompurify": "^3.2.6",
-    "he": "^1.2.0",
     "html-entities": "^2.6.0",
     "html-react-parser": "^5.2.6",
-    "isomorphic-dompurify": "^2.26.0",
+
     "jose": "^6.0.12",
     "jsdom": "^26.1.0",
     "lucide-react": "^0.539.0",
