@@ -1,4 +1,5 @@
 import Image from "next/image";
+
 import { Metadata } from "next";
 import Carousel from "@/components/ui/Carousel";
 import NewsletterSubscription from "@/components/ui/NewsletterSubscription";
@@ -77,6 +78,7 @@ export default async function Blogs() {
             <p className="text-xl text-gray-300 mb-8 max-w-2xl leading-relaxed">
               Your ultimate guide to smart shopping and better living
             </p>
+    
             <button className="inline-flex items-center px-8 py-4 max-w-[220px] text-lg font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/25 group">
               Explore Now
               <svg className="w-5 h-5 ml-2 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -101,6 +103,7 @@ export default async function Blogs() {
                 alt="Travel Destinations"
                 width={800}
                 height={400}
+                loading="lazy"
                 className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-125"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-gray-900/95 via-gray-900/60 to-transparent" />
@@ -137,6 +140,7 @@ export default async function Blogs() {
                 alt="Health & Wellness"
                 width={800}
                 height={400}
+                loading="lazy"
                 className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-125"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-gray-900/95 via-gray-900/60 to-transparent" />
@@ -173,6 +177,7 @@ export default async function Blogs() {
                 alt="Lifestyle & Fashion"
                 width={800}
                 height={400}
+                loading="lazy"
                 className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-125"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-gray-900/95 via-gray-900/60 to-transparent" />

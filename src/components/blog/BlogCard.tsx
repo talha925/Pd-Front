@@ -23,6 +23,7 @@ export default function BlogCard({ blog }: BlogCardProps) {
             alt={blog.image.alt || blog.title}
             width={800}
             height={450}
+            sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
             loading="lazy" // Use lazy loading for non-critical images
           />

@@ -17,7 +17,7 @@ export function StoresClient({ initialStores, serverError }: StoresClientProps) 
     isLoading: loading, 
     error, 
     isInitialized 
-  } = useUnifiedDataFetching('/api/proxy-stores', {
+  } = useUnifiedDataFetching('/api/proxy-stores?fields=_id,name,image.url,image.alt,coupons.code,trackingUrl', {
     method: 'GET',
     requireAuth: true,
     autoFetch: true,

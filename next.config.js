@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  assetPrefix: process.env.CDN_URL || '',
   reactStrictMode: true,
   poweredByHeader: false,
   eslint: {
@@ -105,7 +106,7 @@ const nextConfig = {
   // Enable gzip compression
   compress: true,
   // Increase build performance
-  swcMinify: false,
+  swcMinify: true,
   // Optimize fonts
   optimizeFonts: true,
   webpack: (config, { isDev }) => {

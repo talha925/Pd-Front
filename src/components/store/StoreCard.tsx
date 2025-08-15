@@ -41,6 +41,8 @@ const StoreCard: React.FC<StoreCardProps> = ({ store }) => {
           alt={store.image?.alt || store.name}
           width={160}
           height={80}
+          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          loading="lazy"
           className="object-contain max-h-24"
         />
       </div>
@@ -72,4 +74,4 @@ const StoreCard: React.FC<StoreCardProps> = ({ store }) => {
   );
 };
 
-export default StoreCard; 
+export default StoreCard;

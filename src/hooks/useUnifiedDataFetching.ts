@@ -20,6 +20,8 @@ interface DataFetchingOptions extends Omit<RequestConfig, 'method' | 'url'> {
   enabled?: boolean;
   requireAuth?: boolean;
   waitForAuth?: boolean;
+  debounce?: number; // Debounce delay in milliseconds
+
   
   // Retry options
   retryCount?: number;
@@ -124,6 +126,7 @@ export function useUnifiedDataFetching<T = any>(
     waitForAuth = false,
     retryCount = 0,
     retryDelay = 1000,
+    debounce = 0, // Default to no debounce
     cacheKey,
     cacheTTL = 5 * 60 * 1000, // 5 minutes
     onSuccess,
@@ -146,6 +149,7 @@ export function useUnifiedDataFetching<T = any>(
   // Refs
   const abortControllerRef = useRef<AbortController | null>(null);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const mountedRef = useRef(true);
 
   // Auth state
@@ -162,6 +166,9 @@ export function useUnifiedDataFetching<T = any>(
     return () => {
       mountedRef.current = false;
       cancel();
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -201,6 +208,22 @@ export function useUnifiedDataFetching<T = any>(
   }, [enabled, requireAuth, authState.isAuthenticated, authState.isLoading, waitForAuth, log]);
 
   const fetchData = useCallback(async (retryAttempt = 0): Promise<void> => {
+    if (debounce > 0 && retryAttempt === 0) {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+      return new Promise(resolve => {
+        debounceTimeoutRef.current = setTimeout(() => {
+          debounceTimeoutRef.current = null;
+          resolve(fetchDataInternal(retryAttempt));
+        }, debounce);
+      });
+    } else {
+      return fetchDataInternal(retryAttempt);
+    }
+  }, [url, method, requestConfig, shouldFetch, retryCount, retryDelay, cacheKey, cacheTTL, onSuccess, onError, onSettled, debug, log, updateState, state.data, state.error, debounce]);
+
+  const fetchDataInternal = useCallback(async (retryAttempt = 0): Promise<void> => {
     if (!shouldFetch()) {
       return;
     }
@@ -333,7 +356,7 @@ export function useUnifiedDataFetching<T = any>(
     } finally {
       onSettled?.();
     }
-  }, [url, method, requestConfig, shouldFetch, retryCount, retryDelay, cacheKey, cacheTTL, onSuccess, onError, onSettled, log, updateState, state.data, state.error]);
+  }, [url, method, requestConfig, shouldFetch, retryCount, retryDelay, cacheKey, cacheTTL, onSuccess, onError, onSettled, debug, log, updateState, state.data, state.error]);
 
   const refetch = useCallback(async (): Promise<void> => {
     // Invalidate cache
@@ -376,6 +399,10 @@ export function useUnifiedDataFetching<T = any>(
     if (retryTimeoutRef.current) {
       clearTimeout(retryTimeoutRef.current);
       retryTimeoutRef.current = null;
+    }
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+      debounceTimeoutRef.current = null;
     }
   }, [log]);
 

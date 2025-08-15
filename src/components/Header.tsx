@@ -41,6 +41,7 @@ export default function Header() {
                   alt="logo"
                   width={40}
                   height={40}
+                  priority
                   className="w-10 h-10 transition-transform duration-300 group-hover:scale-110"
                 />
               </div>
@@ -144,6 +145,7 @@ export default function Header() {
                           alt="logo"
                           width={24}
                           height={24}
+                          priority
                           className="w-6 h-6"
                         />
                       </div>

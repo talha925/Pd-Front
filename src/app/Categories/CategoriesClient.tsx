@@ -17,7 +17,7 @@ export function CategoriesClient({ initialCategories, serverError }: CategoriesC
     isLoading: loading, 
     error, 
     isInitialized 
-  } = useUnifiedDataFetching('/api/proxy-categories', {
+  } = useUnifiedDataFetching('/api/proxy-categories?fields=name,description', {
     method: 'GET',
     requireAuth: true,
     autoFetch: true,

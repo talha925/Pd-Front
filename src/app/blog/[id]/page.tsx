@@ -1,159 +1,156 @@
-'use client';
+// app/blog/[id]/page.tsx
 
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import HttpClient from '@/services/HttpClient';
+import { Metadata } from 'next';
 import Image from 'next/image';
-import parse from 'html-react-parser';
-import Head from 'next/head';
+import parse, { DOMNode, Element, domToReact } from 'html-react-parser';
+import config from '@/lib/config';
+import { decode } from 'html-entities';
 
-// Define the decodeHtmlEntities function to decode HTML entities
-function decodeHtmlEntities(str: string) {
-  if (!str) return '';
-  
-  // Using a textarea to decode HTML entities
-  const textArea = document.createElement('textarea');
-  textArea.innerHTML = str;
-  return textArea.value;
+// Blog Type Interface (No changes)
+interface Blog {
+  _id: string;
+  title: string;
+  slug?: string;
+  longDescription?: string;
+  image?: { url: string; alt?: string; };
+  meta?: { title?: string; description?: string; keywords?: string; };
+  excerpt?: string;
+  createdAt?: string;
+  author?: string;
 }
 
-export default function BlogDetailPage() {
-  const { id: slug } = useParams();
-  const [blog, setBlog] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>('');
-  const [mounted, setMounted] = useState(false); // Track whether the component has mounted
-  const httpClient = new HttpClient();
+// NEW HELPER: This function will decode the string repeatedly until it's clean.
+// This will fix your "&lt;p&gt;&amp;lt;p&amp;gt;..." issue.
+function decodeRecursively(text: string): string {
+    let newText = decode(text);
+    while (newText !== text) {
+        text = newText;
+        newText = decode(text);
+    }
+    return newText;
+}
 
-  useEffect(() => {
-    setMounted(true); // Set mounted to true after component is mounted
+// REBUILT & ROBUST: This function now correctly finds the right blog.
+// WHY: Your API's slug filter isn't working, so we fetch the whole list and find the blog ourselves.
+// This is the most reliable way and mimics your old working client-side logic.
+async function fetchBlogBySlugOrId(slugOrId: string): Promise<Blog | null> {
+    try {
+        console.log(`Searching for blog with slug: ${slugOrId}`);
 
-    if (!slug) return;
+        // Step 1: Fetch ALL blogs from the general endpoint.
+        const listRes = await fetch(`${config.api.baseUrl}/api/blogs`, {
+            next: { revalidate: 60 } // Cache for 1 minute
+        });
 
-    setLoading(true);
-    setError('');
+        if (!listRes.ok) {
+            throw new Error('Failed to fetch blog list');
+        }
 
-    // Fetch blog data directly using the slug
-    httpClient.get(`/api/blogs?slug=${slug}`)
-      .then((res) => {
-        // Safely extract blogs array from response
-        let blogs = [];
-        if (res && typeof res === 'object') {
-          if (res.blogs && Array.isArray(res.blogs)) {
-            blogs = res.blogs;
-          } else if (res.blogs && res.blogs.blogs && Array.isArray(res.blogs.blogs)) {
-            blogs = res.blogs.blogs;
-          } else if (res.data && res.data.blogs && Array.isArray(res.data.blogs)) {
-            blogs = res.data.blogs;
-          }
+        const listData = await listRes.json();
+        const allBlogs = listData.blogs || (listData.data && listData.data.blogs) || [];
+
+        // Step 2: Find the correct blog in the list using its slug.
+        const foundBlogSummary = allBlogs.find((b: any) => b.slug === slugOrId);
+
+        if (!foundBlogSummary || !foundBlogSummary._id) {
+            console.error(`Blog with slug "${slugOrId}" not found in the list.`);
+            return null; // Blog not found
         }
         
-        const found = blogs.find((b: any) => b.slug === slug || b._id === slug);
+        console.log(`Found blog ID: ${foundBlogSummary._id}. Now fetching full details...`);
 
-        if (found) {
-          // Step 2: Fetch full detail by _id
-          httpClient.get(`/api/blogs/${found._id}`)
-            .then((detailRes) => {
-              // Safely extract blog data from response
-              let fullBlog = null;
-              if (detailRes && typeof detailRes === 'object') {
-                if (detailRes.blog) {
-                  fullBlog = detailRes.blog;
-                } else if (detailRes.data) {
-                  fullBlog = detailRes.data;
-                }
-              }
-              
-              if (fullBlog) {
-                setBlog(fullBlog);
-                setError('');
-              } else {
-                setError('Blog data not found');
-              }
-            })
-            .catch((err) => {
-              console.error('Blog detail fetch error:', err);
-              setError('Failed to fetch blog detail');
-            })
-            .finally(() => setLoading(false));
-        } else {
-          setError('Blog not found');
-          setLoading(false);
+        // Step 3: Use the found _id to get the complete blog data.
+        const detailRes = await fetch(`${config.api.baseUrl}/api/blogs/${foundBlogSummary._id}`, {
+            next: { revalidate: 3600 } // Cache for 1 hour
+        });
+
+        if (!detailRes.ok) {
+            throw new Error(`Failed to fetch details for blog ID: ${foundBlogSummary._id}`);
         }
-      })
-      .catch((err) => {
-        console.error('Blog list fetch error:', err);
-        setError('Failed to fetch blog');
-        setLoading(false);
-      });
-  }, [slug]);
 
-  // Don't render anything until the component has mounted to avoid hydration errors
-  if (!mounted) {
-    return null;
-  }
+        const detailData = await detailRes.json();
+        const fullBlog = detailData.blog || detailData.data;
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-40">
-        <div className="w-16 h-16 border-t-4 border-blue-600 border-solid rounded-full animate-spin"></div>
-      </div>
-    );
-  }
+        console.log('Successfully fetched full blog data.');
+        return fullBlog || null;
 
-  if (error) {
-    return (
-      <div className="flex justify-center items-center h-40">
-        <span className="text-lg text-red-600">{error}</span>
-      </div>
-    );
-  }
+    } catch (error) {
+        console.error('Error in fetchBlogBySlugOrId:', error);
+        return null;
+    }
+}
+
+// The parser now uses the new recursive decoder
+function customParser(html: string) {
+    // First, fully clean the double (or triple) encoded HTML string
+    const decodedHtml = decodeRecursively(html);
+
+    return parse(decodedHtml, {
+        replace: (domNode) => {
+            const node = domNode as Element;
+            // Fix for invalid nesting like <p><ul>...</ul></p>
+            if (node.name === 'p') {
+                const containsBlockElement = node.children.some(
+                    (child) =>
+                        child.type === 'tag' &&
+                        ['ul', 'ol', 'h1', 'h2', 'h3', 'h4', 'div', 'blockquote'].includes((child as Element).name)
+                );
+                if (containsBlockElement) {
+                    return <>{domToReact(node.children as DOMNode[], { replace: () => null })}</>;
+                }
+            }
+        },
+    });
+}
+
+// Generate metadata - no changes needed here
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const blog = await fetchBlogBySlugOrId(params.id);
+  if (!blog) return { title: 'Blog Not Found' };
+  return {
+    title: blog.meta?.title || blog.title,
+    description: blog.meta?.description || blog.excerpt || 'Blog post description',
+  };
+}
+
+
+// --- Main Page Component ---
+export default async function BlogDetailPage({ params }: { params: { id: string } }) {
+  const blog = await fetchBlogBySlugOrId(params.id);
 
   if (!blog) {
-    return <div className="flex justify-center items-center h-40"><span className="text-lg text-gray-600">No content available.</span></div>;
+    return (
+      <div className="flex justify-center items-center h-40">
+        <span className="text-lg text-red-600">Blog not found. Please check the URL.</span>
+      </div>
+    );
   }
 
-  const baseUrl = process.env.NODE_ENV === 'production' ? 'https://pd-front-psi.vercel.app' : 'http://localhost:3001';
-
   return (
-    <>
-      <Head>
-        <title>{blog.meta?.title || blog.title}</title>
-        <meta name="description" content={blog.meta?.description || blog.excerpt || 'Blog post description'} />
-        <meta name="keywords" content={blog.meta?.keywords || 'blog, post, article'} />
-        <meta property="og:title" content={blog.meta?.title || blog.title} />
-        <meta property="og:description" content={blog.meta?.description || blog.excerpt || 'Blog post description'} />
-        <meta property="og:image" content={blog.image?.url || '/default-image.jpg'} />
-        <meta property="og:type" content="article" />
-        <meta property="og:published_time" content={blog.createdAt || ''} />
-        <meta property="og:author" content={blog.author || 'Unknown Author'} />
-        <link rel="canonical" href={`${baseUrl}/blog/${slug}`} />
-      </Head>
-
-      <div className="max-w-3xl mx-auto p-6 bg-white rounded-xl shadow-lg mt-8">
-        {blog.image?.url && (
+    <article className="max-w-3xl mx-auto p-6 bg-white rounded-xl shadow-lg mt-8">
+      {blog.image?.url && (
+        <div className="relative w-full h-auto mb-6">
           <Image
             src={blog.image.url}
             alt={blog.image.alt || blog.title}
             width={800}
             height={400}
-            className="rounded mb-6"
-              priority // Add this to mark the image as priority
-
+            className="rounded-lg object-cover"
+            priority
+            sizes="(max-width: 768px) 100vw, 800px"
           />
-        )}
+        </div>
+      )}
 
-        <h1 className="text-3xl font-bold mb-4">{blog.title}</h1>
+      <h1 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900">{blog.title}</h1>
 
-        {blog.longDescription ? (
-          <div className="prose max-w-none">
-            {/* Decoding HTML entities */}
-            {parse(decodeHtmlEntities(blog.longDescription))}
-          </div>
-        ) : (
-          <div className="text-gray-500 italic">No content available.</div>
-        )}
-      </div>
-    </>
+      {blog.longDescription ? (
+        <div className="prose prose-lg max-w-none">
+          {customParser(blog.longDescription)}
+        </div>
+      ) : (
+        <div className="text-gray-500 italic">No content available for this post.</div>
+      )}
+    </article>
   );
 }
