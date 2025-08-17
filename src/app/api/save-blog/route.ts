@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath, revalidateTag } from 'next/cache';
 
 // Blog data interface
 interface BlogData {
@@ -90,6 +91,14 @@ export async function POST(request: NextRequest) {
     // Save the blog data
     const result = await saveBlogData(blogData);
     
+    // Revalidate blog-related pages and tags after saving
+    revalidatePath('/blog');
+    revalidateTag('blogs');
+    if (result?.blog?.id) {
+      revalidatePath(`/blog/${result.blog.id}`);
+      revalidateTag(`blog-${result.blog.id}`);
+    }
+    
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
     console.error('Error saving blog:', error);
@@ -121,4 +130,4 @@ export async function GET() {
       { status: 500 }
     );
   }
-} 
+}

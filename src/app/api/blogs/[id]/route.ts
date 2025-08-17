@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import config from '@/lib/config';
 
 const API_URL = `${config.api.baseUrl}/api/blogs`;
@@ -44,6 +45,13 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
+    
+    // Revalidate blog-related pages and tags after update
+    revalidatePath('/blog');
+    revalidatePath(`/blog/${id}`);
+    revalidateTag('blogs');
+    revalidateTag(`blog-${id}`);
+    
     return NextResponse.json({ updatedBlog: data.data || data || null });
   } catch (error) {
     return NextResponse.json({ message: 'Failed to update blog', error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
@@ -67,6 +75,13 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
       }
       throw new Error(`HTTP error! status: ${response.status}`);
     }
+    
+    // Revalidate blog-related pages and tags after deletion
+    revalidatePath('/blog');
+    revalidatePath(`/blog/${id}`);
+    revalidateTag('blogs');
+    revalidateTag(`blog-${id}`);
+    
     return NextResponse.json({ message: 'Blog deleted successfully' });
   } catch (error) {
     return NextResponse.json({ message: 'Failed to delete blog', error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });

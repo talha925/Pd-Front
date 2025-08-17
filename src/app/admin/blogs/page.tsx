@@ -50,8 +50,14 @@ export default function AdminBlogsPage() {
   const [selectedDate, setSelectedDate] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [mounted, setMounted] = useState(false);
   const pageSize = 10;
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  // Handle mounting state to prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -85,13 +91,6 @@ export default function AdminBlogsPage() {
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
   }, [debouncedSearchTerm, selectedCategory, selectedDate, page, pageSize]);
-
-  if (isLoading) {
-    return <div className="flex justify-center items-center h-40"><span className="text-lg text-gray-600">Loading...</span></div>;
-  }
-  if (!isAuthenticated) {
-    return null;
-  }
 
   // Fetch categories
   useEffect(() => {
@@ -143,6 +142,19 @@ export default function AdminBlogsPage() {
   const handleEdit = useCallback((id: string) => {
     router.push(`/admin/blogs/${id}/edit`);
   }, [router]);
+
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!mounted) {
+    return <div className="flex justify-center items-center h-40"><span className="text-lg text-gray-600">Loading...</span></div>;
+  }
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-40"><span className="text-lg text-gray-600">Loading...</span></div>;
+  }
+  
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-6">

@@ -10,7 +10,10 @@ const getBlogs = async () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      cache: 'no-store',
+      next: { 
+        revalidate: 300, // Revalidate every 5 minutes
+        tags: ['blogs'] // Enable tag-based revalidation
+      }
     });
 
     if (!response.ok) {

@@ -3,6 +3,18 @@ import { headers } from 'next/headers';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import config from '@/lib/config';
 
+interface UploadResponse {
+  imageUrl?: string;
+  message?: string;
+}
+
+interface UploadParams {
+  Bucket: string;
+  Key: string;
+  Body: Buffer;
+  ContentType: string;
+}
+
 const s3Client = new S3Client({
   region: process.env.AWS_S3_REGION || process.env.AWS_REGION || 'us-east-1',
   credentials: {
@@ -31,7 +43,7 @@ function sanitizeFilename(filename: string): string {
   return `${baseFilename}-${uniqueSuffix}.${fileExtension}`;
 }
 
-export async function POST(request: Request) {
+export async function POST(request: Request): Promise<NextResponse<UploadResponse>> {
   const headersList = headers();
   const authorization = headersList.get('authorization');
 

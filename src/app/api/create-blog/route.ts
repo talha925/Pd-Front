@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import config from '@/lib/config';
 
 const API_URL = `${config.api.baseUrl}/api/blogs`;
@@ -261,6 +262,15 @@ export async function POST(request: NextRequest) {
     console.log('Meta keywords being sent:', cleanedBlogData.meta?.keywords);
 
     const result = await createBlog(cleanedBlogData);
+    
+    // Revalidate blog-related pages and tags after creation
+    revalidatePath('/blog');
+    revalidateTag('blogs');
+    if (result?.data?.id || result?.id) {
+      const blogId = result?.data?.id || result?.id;
+      revalidatePath(`/blog/${blogId}`);
+      revalidateTag(`blog-${blogId}`);
+    }
     
     return NextResponse.json({
       success: true,

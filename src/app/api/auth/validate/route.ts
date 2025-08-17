@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
 
+interface JWTPayload {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  exp?: number;
+  iat?: number;
+}
+
+interface ValidateResponse {
+  message: string;
+  user?: JWTPayload;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization');
@@ -19,7 +33,7 @@ export async function POST(request: NextRequest) {
       process.env.JWT_SECRET || 'default_secret_replace_in_production'
     );
     
-    const { payload } = await jwtVerify(token, secret);
+    const { payload } = await jwtVerify(token, secret) as { payload: JWTPayload };
     
     // Check if token is expired
     if (payload.exp && Date.now() >= payload.exp * 1000) {
@@ -40,4 +54,4 @@ export async function POST(request: NextRequest) {
       { status: 401 }
     );
   }
-} 
+}

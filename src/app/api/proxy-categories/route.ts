@@ -3,7 +3,13 @@ import config from '@/lib/config';
 
 export async function GET() {
   try {
-    const res = await fetch(`${config.api.baseUrl}/api/categories`);
+    // ISR: Enable caching with revalidation for categories proxy API
+    const res = await fetch(`${config.api.baseUrl}/api/categories`, {
+      next: { 
+        revalidate: 300, // Revalidate every 5 minutes
+        tags: ['categories'] // Enable tag-based revalidation
+      }
+    });
     
     if (!res.ok) {
       throw new Error('Failed to fetch categories');

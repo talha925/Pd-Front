@@ -4,11 +4,15 @@ import config from '@/lib/config';
 
 export async function GET() {
   try {
+    // ISR: Enable caching with revalidation for stores proxy API
     const res = await fetch(`${config.api.baseUrl}/api/stores`, {
       headers: {
         "Content-Type": "application/json",
       },
-      cache: "no-store", // check repo pull request
+      next: { 
+        revalidate: 300, // Revalidate every 5 minutes
+        tags: ['stores'] // Enable tag-based revalidation
+      }
     });
 
     const data = await res.json();
