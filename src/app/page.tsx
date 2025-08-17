@@ -31,7 +31,7 @@ export const metadata: Metadata = {
 async function fetchFeaturedBlogs() {
   try {
     const res = await fetch(`${config.api.baseUrl}/api/blogs?featured=true&page=1&pageSize=6`, {
-      next: { revalidate: 3600 } // Revalidate every hour
+      next: { revalidate: 3600, tags: ['featured-blogs'] } // Revalidate every hour or when tagged
     });
     
     if (!res.ok) throw new Error('Failed to fetch blogs');

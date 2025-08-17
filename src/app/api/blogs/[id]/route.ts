@@ -49,7 +49,9 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     // Revalidate blog-related pages and tags after update
     revalidatePath('/blog');
     revalidatePath(`/blog/${id}`);
+    revalidatePath('/'); // Revalidate home page for Featured Blogs
     revalidateTag('blogs');
+    revalidateTag('featured-blogs'); // Add featured blogs tag
     revalidateTag(`blog-${id}`);
     
     return NextResponse.json({ updatedBlog: data.data || data || null });
@@ -79,7 +81,9 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     // Revalidate blog-related pages and tags after deletion
     revalidatePath('/blog');
     revalidatePath(`/blog/${id}`);
+    revalidatePath('/'); // Revalidate home page for Featured Blogs
     revalidateTag('blogs');
+    revalidateTag('featured-blogs'); // Add featured blogs tag
     revalidateTag(`blog-${id}`);
     
     return NextResponse.json({ message: 'Blog deleted successfully' });

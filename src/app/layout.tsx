@@ -112,15 +112,15 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.className} bg-gray-900 text-white`}>
-        <ErrorBoundary>
-          <Providers initialToken={initialToken}>
+        <Providers initialToken={initialToken}>
+          <ErrorBoundary>
             <Header />
             {children}
             {/* Monitor performance metrics */}
             <PerformanceMonitor />
             <PerformanceTracker />
-          </Providers>
-        </ErrorBoundary>
+          </ErrorBoundary>
+        </Providers>
       </body>
     </html>
   )

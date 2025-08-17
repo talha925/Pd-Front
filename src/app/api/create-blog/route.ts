@@ -265,7 +265,9 @@ export async function POST(request: NextRequest) {
     
     // Revalidate blog-related pages and tags after creation
     revalidatePath('/blog');
+    revalidatePath('/'); // Revalidate home page for Featured Blogs
     revalidateTag('blogs');
+    revalidateTag('featured-blogs'); // Add featured blogs tag
     if (result?.data?.id || result?.id) {
       const blogId = result?.data?.id || result?.id;
       revalidatePath(`/blog/${blogId}`);
