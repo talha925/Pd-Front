@@ -1,6 +1,7 @@
 export interface Blog {
   _id?: string;
   title: string;
+  slug: string; // Required for consistent routing
   shortDescription: string;
   longDescription: string;
   author: {
@@ -65,4 +66,4 @@ export interface BlogFormData {
 
 export interface BlogValidationErrors {
   [key: string]: string;
-} 
+}

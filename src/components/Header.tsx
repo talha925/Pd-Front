@@ -2,13 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Menu, LogOut, Bell, Search, X } from "lucide-react";
+import { Menu, LogOut, Search, X } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 import { useApp } from "@/context/AppContext";
 import { usePathname } from "next/navigation";
-import ThemeToggle from "@/components/ui/ThemeToggle";
+
 import NotificationToast from "@/components/ui/NotificationToast";
+import SearchBar from "@/components/ui/SearchBar";
 import { useState, useEffect } from "react";
 
 export default function Header() {
@@ -75,15 +76,7 @@ export default function Header() {
 
           {/* Search Bar - Desktop */}
           <div className="hidden md:flex items-center flex-1 max-w-md mx-8">
-            <div className="relative w-full group">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 group-hover:text-blue-400 transition-colors duration-300" />
-              <input
-                type="text"
-                placeholder="Find Coupons & Stores..."
-                className="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 hover:bg-gray-800/70"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-            </div>
+            <SearchBar className="w-full" />
           </div>
 
           {/* Right Side Actions */}
@@ -96,20 +89,9 @@ export default function Header() {
               {isSearchOpen ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
             </button>
 
-            {/* Theme Toggle */}
-            <div className="hidden sm:block">
-              <ThemeToggle />
-            </div>
 
-            {/* Notification Bell */}
-            <button className="relative p-2 text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-lg transition-all duration-300 group">
-              <Bell className="w-5 h-5" />
-              {isHydrated && state.notifications.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse font-semibold">
-                  {state.notifications.length}
-                </span>
-              )}
-            </button>
+
+
 
             {/* User Menu - Desktop */}
             {isHydrated && isAuthenticated && (
@@ -210,15 +192,11 @@ export default function Header() {
         {/* Mobile Search Bar */}
         {isSearchOpen && (
           <div className="md:hidden py-4 border-t border-gray-800/50">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Find Coupons & Stores..."
-                className="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300"
-                autoFocus
-              />
-            </div>
+            <SearchBar 
+              className="w-full" 
+              isMobile={true} 
+              onClose={() => setIsSearchOpen(false)}
+            />
           </div>
         )}
       </div>

@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 
-import { ThemeProvider } from './ThemeContext';
+
 import { AppProvider } from './AppContext';
 
 interface ProvidersProps {
@@ -20,11 +20,9 @@ export const Providers: React.FC<ProvidersProps> = ({ children, initialToken }) 
   }, []);
 
   return (
-    <ThemeProvider>
-      <AppProvider>
-        {children}
-      </AppProvider>
-    </ThemeProvider>
+    <AppProvider>
+      {children}
+    </AppProvider>
   );
 };
 

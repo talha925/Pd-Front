@@ -9,7 +9,7 @@ import config from '@/lib/config';
 interface Blog {
   _id: string;
   title: string;
-  slug?: string;
+  slug: string; // Required for consistent routing
   image?: {
     url: string;
     alt?: string;
