@@ -19,7 +19,6 @@ export async function middleware(req: NextRequest) {
 
   // Define protected routes (require authentication)
   const protectedRoutes = [
-    '/blog/create',
     '/admin',
     '/blog/edit',
   ];
@@ -79,8 +78,6 @@ export async function middleware(req: NextRequest) {
 // Configure which paths the middleware will run on
 export const config = {
   matcher: [
-    '/blog/create',
-    '/blog/create/:path*',
     '/admin/:path*',
   ],
 };

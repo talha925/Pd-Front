@@ -40,8 +40,8 @@ export default function LoginPage() {
         // Use the login function with credentials
         await login({ email, password });
         
-        // Always redirect to blog/create page after login
-        router.push('/blog/create');
+        // Always redirect to admin page after login
+        router.push('/admin/blogs');
       } else {
         setError(data.message || 'Login failed. Please check your credentials.');
       }

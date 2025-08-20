@@ -11,9 +11,10 @@ interface BlogCardProps {
       alt?: string;
     };
   };
+  variant?: string;
 }
 
-export default function BlogCard({ blog }: BlogCardProps) {
+export default function BlogCard({ blog, variant }: BlogCardProps) {
   return (
     <div className="group relative bg-gray-800 rounded-xl overflow-hidden transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-500/20">
       {blog.image?.url && (
