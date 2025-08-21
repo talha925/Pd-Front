@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { themeClasses } from '@/lib/theme/utils';
 
 export default function NewsletterSubscription() {
   const [email, setEmail] = useState('');
@@ -44,18 +45,18 @@ export default function NewsletterSubscription() {
           {message}
         </div>
       ) : (
-        <form className="flex gap-3" onSubmit={handleSubmit}>
+        <form className="flex flex-col sm:flex-row gap-3" onSubmit={handleSubmit}>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter your email"
-            className="flex-1 px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 text-white placeholder-gray-400 transition-all duration-300"
+            className={`flex-1 px-4 py-3 rounded-xl ${themeClasses.backgrounds.card} ${themeClasses.borders.light} focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 text-gray-900 placeholder-gray-500 transition-all duration-300`}
             disabled={status === 'loading'}
           />
           <button 
             type="submit"
-            className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl font-semibold hover:opacity-90 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-purple-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:opacity-90 hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             disabled={status === 'loading'}
           >
             {status === 'loading' ? 'Subscribing...' : 'Subscribe'}

@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { cookies } from 'next/headers'
 import Header from '@/components/Header'
+import ConditionalFooter from '@/components/ConditionalFooter'
 import { Providers } from '@/context/Providers'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import dynamic from 'next/dynamic'
@@ -111,11 +112,12 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
       </head>
-      <body className={`${inter.className} bg-gray-900 text-white`}>
+      <body className={inter.className}>
         <Providers initialToken={initialToken}>
           <ErrorBoundary>
             <Header />
             {children}
+            <ConditionalFooter />
             {/* Monitor performance metrics */}
             <PerformanceMonitor />
             <PerformanceTracker />

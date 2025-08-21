@@ -12,6 +12,7 @@ import { useBlogCategories } from "@/hooks/useBlogCategories";
 import NotificationToast from "@/components/ui/NotificationToast";
 import SearchBar from "@/components/ui/SearchBar";
 import { useState, useEffect } from "react";
+import { themeClasses } from "@/lib/theme/utils";
 
 export default function Header() {
   const { user, isAuthenticated, logout, isLoading } = useUnifiedAuth();
@@ -47,7 +48,7 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-gray-900/95 backdrop-blur-md shadow-2xl border-b border-gray-800/50">
+    <header className="sticky top-0 z-50 w-full bg-background-elevated/95 backdrop-blur-md shadow-2xl border-b border-border/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-20 items-center justify-between">
           {/* Logo and Brand */}
@@ -76,8 +77,8 @@ export default function Header() {
               <Link
                 key={name}
                 href={href}
-                className={`relative px-4 py-2 text-gray-300 hover:text-white transition-all duration-300 group ${
-                  pathname === href ? 'text-white' : ''
+                className={`relative px-4 py-2 text-foreground-secondary hover:text-foreground transition-all duration-300 group ${
+                  pathname === href ? 'text-foreground' : ''
                 }`}
               >
                 <span className="relative z-10 font-medium">{name}</span>
@@ -92,7 +93,7 @@ export default function Header() {
             {Array.isArray(categories) && categories.length > 0 && (
               <div className="relative group">
                 <button 
-                  className="relative px-4 py-2 text-gray-300 hover:text-white transition-all duration-300 group flex items-center space-x-1"
+                  className="relative px-4 py-2 text-foreground-secondary hover:text-foreground transition-all duration-300 group flex items-center space-x-1"
                   aria-expanded="false"
                   aria-haspopup="true"
                   aria-label="Blog categories menu"
@@ -106,7 +107,7 @@ export default function Header() {
                 
                 {/* Dropdown Menu */}
                 <div 
-                  className="absolute top-full left-0 mt-2 w-64 bg-gray-900/95 backdrop-blur-md border border-gray-800/50 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50"
+                  className="absolute top-full left-0 mt-2 w-64 bg-background-elevated/95 backdrop-blur-md border border-border/50 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50"
                   role="menu"
                   aria-label="Blog categories"
                 >
@@ -115,7 +116,7 @@ export default function Header() {
                       <Link
                         key={category._id}
                         href={`/blog/category/${category.slug}`}
-                        className="block px-4 py-3 text-gray-300 hover:text-white hover:bg-gradient-to-r hover:from-blue-600/20 hover:to-purple-600/20 rounded-lg transition-all duration-300 group/item focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+                        className="block px-4 py-3 text-foreground-secondary hover:text-foreground hover:bg-gradient-to-r hover:from-button-blue/20 hover:to-primary/20 rounded-lg transition-all duration-300 group/item focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background-elevated"
                         role="menuitem"
                         aria-label={`View ${category.name} blog posts`}
                       >
@@ -138,7 +139,7 @@ export default function Header() {
             {/* Mobile Search Toggle */}
             <button
               onClick={() => setIsSearchOpen(!isSearchOpen)}
-              className="md:hidden p-2 text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-lg transition-all duration-300"
+              className="md:hidden p-2 text-foreground-tertiary hover:text-foreground hover:bg-accent/50 rounded-lg transition-all duration-300"
             >
               {isSearchOpen ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
             </button>
@@ -150,12 +151,12 @@ export default function Header() {
             {/* User Menu - Desktop */}
             {isHydrated && isAuthenticated && (
               <div className="hidden lg:flex items-center space-x-3">
-                <div className="text-sm text-gray-300">
-                  Welcome, <span className="text-white font-medium">{user?.name}</span>
+                <div className="text-sm text-foreground-secondary">
+                  Welcome, <span className="text-foreground font-medium">{user?.name}</span>
                 </div>
                 <button
                   onClick={logout}
-                  className="flex items-center space-x-2 text-gray-400 hover:text-white hover:bg-gray-800/50 px-3 py-2 rounded-lg transition-all duration-300 group"
+                  className="flex items-center space-x-2 text-foreground-tertiary hover:text-foreground hover:bg-accent/50 px-3 py-2 rounded-lg transition-all duration-300 group"
                 >
                   <LogOut className="w-4 h-4" />
                   <span className="text-sm font-medium">Logout</span>
@@ -166,14 +167,14 @@ export default function Header() {
             {/* Mobile Menu */}
             <Sheet>
               <SheetTrigger asChild>
-                <button className="lg:hidden p-2 text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-lg transition-all duration-300">
+                <button className="lg:hidden p-2 text-foreground-tertiary hover:text-foreground hover:bg-accent/50 rounded-lg transition-all duration-300">
                   <Menu className="h-6 w-6" />
                 </button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-80 p-0 bg-gray-900 border-gray-800">
+              <SheetContent side="right" className="w-80 p-0 bg-background-elevated border-border">
                 <div className="flex flex-col h-full">
                   {/* Mobile Header */}
-                  <div className="p-6 border-b border-gray-800">
+                  <div className="p-6 border-b border-border">
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-xl flex items-center justify-center">
                         <Image
@@ -198,9 +199,9 @@ export default function Header() {
                         <Link
                           key={name}
                           href={href}
-                          className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 group focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 ${pathname === href
-                              ? 'bg-gradient-to-r from-blue-600/20 to-purple-600/20 text-white border border-blue-500/30'
-                              : 'text-gray-300 hover:text-white hover:bg-gray-800/50'
+                          className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 group focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background-elevated ${pathname === href
+                              ? 'bg-gradient-to-r from-button-blue/20 to-primary/20 text-foreground border border-primary/30'
+                              : 'text-foreground-secondary hover:text-foreground hover:bg-accent/50'
                             }`}
                           aria-current={pathname === href ? 'page' : undefined}
                         >
@@ -211,21 +212,21 @@ export default function Header() {
 
                     {/* Mobile User Section */}
                     {isHydrated && isAuthenticated && (
-                      <div className="mt-8 pt-6 border-t border-gray-800">
+                      <div className={`mt-8 pt-6 border-t ${themeClasses.borders.light}`}>
                         <div className="flex items-center space-x-3 mb-4">
                           <div className="w-10 h-10 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-full flex items-center justify-center">
-                            <span className="text-white font-semibold text-sm">
+                            <span className={`${themeClasses.text.inverse} font-semibold text-sm`}>
                               {user?.name?.charAt(0)?.toUpperCase()}
                             </span>
                           </div>
                           <div>
-                            <div className="text-white font-medium">{user?.name}</div>
-                            <div className="text-gray-400 text-sm">User Account</div>
+                            <div className={`${themeClasses.text.primary} font-medium`}>{user?.name}</div>
+                            <div className={`${themeClasses.text.secondary} text-sm`}>User Account</div>
                           </div>
                         </div>
                         <button
                           onClick={logout}
-                          className="w-full flex items-center justify-center space-x-2 text-gray-300 hover:text-white hover:bg-gray-800/50 px-4 py-3 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+                          className={`w-full flex items-center justify-center space-x-2 ${themeClasses.text.secondary} hover:${themeClasses.text.primary} hover:${themeClasses.backgrounds.secondary} px-4 py-3 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2`}
                           aria-label="Logout from your account"
                         >
                           <LogOut className="w-4 h-4" aria-hidden="true" />
