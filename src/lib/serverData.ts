@@ -15,13 +15,10 @@ export async function fetchStoresServer() {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    // ISR: Enable caching with revalidation for stores data
+    // Disable caching for instant data updates
     const response = await fetch(`${config.api.siteUrl}/api/proxy-stores`, {
       headers,
-      next: { 
-        revalidate: 300, // Revalidate every 5 minutes
-        tags: ['stores'] // Enable tag-based revalidation
-      }
+      cache: 'no-store' // Always fetch fresh data
     });
     
     if (!response.ok) {
@@ -50,13 +47,10 @@ export async function fetchCategoriesServer() {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    // ISR: Enable caching with revalidation for categories data
+    // Disable caching for instant data updates
     const response = await fetch(`${config.api.siteUrl}/api/proxy-categories`, {
       headers,
-      next: { 
-        revalidate: 300, // Revalidate every 5 minutes
-        tags: ['categories'] // Enable tag-based revalidation
-      }
+      cache: 'no-store' // Always fetch fresh data
     });
     
     if (!response.ok) {
@@ -88,13 +82,10 @@ export async function fetchStoreServer(storeId: string) {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    // ISR: Enable caching with revalidation for individual store data
+    // Disable caching for instant data updates
     const response = await fetch(`${config.api.siteUrl}/api/store/${storeId}`, {
       headers,
-      next: { 
-        revalidate: 300, // Revalidate every 5 minutes
-        tags: ['stores', `store-${storeId}`] // Enable tag-based revalidation
-      }
+      cache: 'no-store' // Always fetch fresh data
     });
     
     if (!response.ok) {

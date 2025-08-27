@@ -90,6 +90,68 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
 
+
+  // Helper function to refresh store data with no-cache
+  const refreshStoreData = async () => {
+    if (!initialStore?._id) return;
+    
+    try {
+  
+      const response = await fetch(`/api/store/${initialStore._id}`, {
+        cache: 'no-store', // Always fetch fresh data
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
+      
+      if (response.ok) {
+        const freshStore = await response.json();
+        setStore(freshStore);
+      }
+    } catch (error) {
+      console.error('Failed to refresh store data:', error);
+    } finally {
+
+    }
+  };
+
+  // Mount effect: Refresh data after initial load
+  useEffect(() => {
+    refreshStoreData();
+  }, []);
+
+  // Focus/Visibility effect: Refresh when tab becomes active
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshStoreData();
+      }
+    };
+    
+    const handleWindowFocus = () => {
+      refreshStoreData();
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleWindowFocus);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleWindowFocus);
+    };
+  }, []);
+
+  // Auto-refresh interval: Refresh every 10 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refreshStoreData();
+    }, 10000); // 10 seconds
+    
+    return () => clearInterval(interval);
+  }, []);
+
   // All useEffects and handlers remain the same as your old code
   useEffect(() => {
     const pendingCode = localStorage.getItem("pendingCode");
@@ -173,7 +235,7 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
       <Toaster position="top-right" />
       <CouponModal isOpen={showModal} onClose={handleCloseModal} code={selectedCode || ''} onContinue={handleContinueToStore} />
 
-      <div className="flex justify-center mb-12">
+      <div className="flex justify-center items-center mb-12">
         <h1 className="text-4xl md:text-5xl font-extrabold text-center text-gray-800">{store.name}</h1>
       </div>
 
@@ -183,7 +245,7 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
           {store.coupons.length === 0 ? (
             <p className="text-gray-500 text-center py-10 text-lg">No coupons available at the moment.</p>
           ) : (
-            store.coupons.filter(c => c.active && c.isValid).map((coupon) => (
+            store.coupons.filter(c => c.isValid).map((coupon) => (
               <div key={coupon._id} className="bg-gray-200 rounded-xl shadow-lg p-6 md:p-10 flex flex-col md:flex-row gap-6 items-center">
                 
                 {/* Logo Image (Repeated for each coupon like old UI) */}
@@ -198,9 +260,9 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
                   {/* Button + Code (Old UI Style) */}
                   <div className="relative w-full h-12 mt-2">
                     <button onClick={() => handleGetDeal(coupon)} className="absolute left-0 top-0 h-full w-full bg-gradient-to-r from-black to-blue-800 text-white font-bold uppercase tracking-wide rounded-md transition-all duration-200 active:scale-95 hover:opacity-90 flex items-center justify-center text-sm">
-                      {coupon.code ? 'GET CODE' : 'GET DEAL'}
+                      {coupon.active ? 'GET DEAL' : 'GET CODE'}
                     </button>
-                    {coupon.code && (
+                    {coupon.code && !coupon.active && (
                       <div className="absolute right-0 top-0 h-full w-[80px] bg-white border-dashed border-2 border-gray-400 rounded-tr-md rounded-br-md flex items-center justify-center text-xs font-bold text-black shadow-sm font-mono">
                         •••{coupon.code.slice(-3)}
                       </div>

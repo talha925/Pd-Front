@@ -198,4 +198,82 @@ body {
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 150ms;
   }
+
+  /* CLS Prevention Optimizations */
+  /* Prevent layout shifts from images */
+  img {
+    height: auto;
+    max-width: 100%;
+  }
+
+  /* Stable dimensions for common elements */
+  .stable-header {
+    min-height: 4rem; /* 64px */
+  }
+
+  .stable-nav {
+    min-height: 3rem; /* 48px */
+  }
+
+  /* Prevent font loading shifts */
+  .font-display-swap {
+    font-display: swap;
+  }
+
+  /* Skeleton loading states */
+  .skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+  }
+
+  @keyframes loading {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  /* Prevent content jumping during hydration */
+  .hydration-safe {
+    min-height: 1px;
+  }
+
+  /* Stable button dimensions */
+  .btn-stable {
+    min-height: 2.5rem; /* 40px */
+    min-width: 4rem; /* 64px */
+  }
+
+  /* Prevent layout shifts from dynamic content */
+  .content-container {
+    contain: layout style;
+  }
+
+  /* Optimize for Core Web Vitals */
+  .performance-optimized {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 500px;
+  }
+
+  /* Prevent shifts from loading states */
+  .loading-container {
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Stable grid layouts */
+  .stable-grid {
+    grid-template-rows: masonry;
+  }
+
+  /* Prevent text reflow */
+  .text-stable {
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
 }
