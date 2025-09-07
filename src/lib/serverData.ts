@@ -82,12 +82,8 @@ export async function fetchStoreServer(slug: string) {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    // Use relative URL for server-side requests to avoid self-referencing issues
-    const baseUrl = process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}` 
-      : 'http://localhost:3000';
-    
-    const response = await fetch(`${baseUrl}/api/store/${slug}`, {
+    // Use config for consistent URL handling
+    const response = await fetch(`${config.api.siteUrl}/api/store/${slug}`, {
       headers,
       cache: 'no-store' // Always fetch fresh data
     });
