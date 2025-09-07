@@ -12,7 +12,8 @@ interface CategoryPageProps {
 // Function to get category by slug
 async function getCategoryBySlug(slug: string) {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/blog-categories`, {
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || (process.env.NODE_ENV === 'production' ? 'https://www.pennyscroll.com' : 'http://localhost:3000');
+    const response = await fetch(`${baseUrl}/api/blog-categories`, {
       next: { revalidate: 300 } // Cache for 5 minutes
     });
     
@@ -41,7 +42,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
     };
   }
   
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://brandwell.com';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || (process.env.NODE_ENV === 'production' ? 'https://www.pennyscroll.com' : 'http://localhost:3000');
   
   return {
     title: `${category.name} | Blog Categories | BRANDWELL`,
@@ -121,7 +122,8 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 // Generate static params for known categories (optional, for better performance)
 export async function generateStaticParams() {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/blog-categories`, {
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || (process.env.NODE_ENV === 'production' ? 'https://www.pennyscroll.com' : 'http://localhost:3000');
+    const response = await fetch(`${baseUrl}/api/blog-categories`, {
       next: { revalidate: 3600 } // Cache for 1 hour
     });
     
