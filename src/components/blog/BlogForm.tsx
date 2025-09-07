@@ -48,6 +48,7 @@ interface BlogFormProps {
     metaCanonicalUrl: string;
     metaRobots: string;
     faqs: Array<{ question: string; answer: string }>;
+    frontBanner: boolean;
   }>;
   onSubmit?: (data: any, resetForm: () => void, setLoading: (b: boolean) => void, setMessage: (msg: string) => void, setErrors: (e: any) => void) => Promise<void>;
   submitLabel?: string;
@@ -75,6 +76,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
   const [imageUrl, setImageUrl] = useState(initialValues?.imageUrl || '');
   const [imageAlt, setImageAlt] = useState(initialValues?.imageAlt || '');
   const [isFeatured, setIsFeatured] = useState(initialValues?.isFeatured || false);
+  const [frontBanner, setFrontBanner] = useState(initialValues?.frontBanner || false);
   const [tags, setTags] = useState(initialValues?.tags || '');
 
   // Image Upload States
@@ -343,6 +345,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
       },
       status,
       isFeaturedForHome: isFeatured,
+      FrontBanner: frontBanner,
       // Only include image if we have a valid image URL
       ...(finalImageUrl && finalImageUrl.trim() && {
         image: {
@@ -398,6 +401,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
     setStoreUrl('');
     setStatus('draft');
     setIsFeatured(false);
+    setFrontBanner(false);
     setImageUrl('');
     setImageAlt('');
     setTags('');
@@ -631,6 +635,19 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
             />
             <label htmlFor="isFeatured" className="ml-2 text-sm font-medium text-gray-700 cursor-pointer">
               Featured for Home
+            </label>
+          </div>
+
+          <div className="flex items-center">
+            <input
+              id="frontBanner"
+              type="checkbox"
+              checked={frontBanner}
+              onChange={(e) => setFrontBanner(e.target.checked)}
+              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+            />
+            <label htmlFor="frontBanner" className="ml-2 text-sm font-medium text-gray-700 cursor-pointer">
+              Front Banner
             </label>
           </div>
         </div>

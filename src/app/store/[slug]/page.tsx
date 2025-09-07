@@ -6,12 +6,12 @@ import StoreClient from './StoreClient';
 import { Metadata } from 'next';
 
 interface StorePageProps {
-  params: { id: string };
+  params: { slug: string };
 }
 
 // Generate metadata for SEO (fetch data once)
 export async function generateMetadata({ params }: StorePageProps): Promise<Metadata> {
-  const result = await fetchStoreServer(params.id); // Fetch the data once
+  const result = await fetchStoreServer(params.slug); // Fetch the data once
   
   if (result.error) {
     return {
@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: StorePageProps): Promise<Meta
 
 // Server Component - fetches initial data with ISR
 export default async function StorePage({ params }: StorePageProps) {
-  const result = await fetchStoreServer(params.id); // Fetch the data for the page
+  const result = await fetchStoreServer(params.slug); // Fetch the data for the page
   
   if (result.error) {
     return (

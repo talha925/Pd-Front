@@ -66,30 +66,44 @@ export default function AdminBlogsPage() {
   }, [isAuthenticated, isLoading, router]);
 
   // Refresh blogs when window gains focus (user returns from edit/create)
+  // Only refresh if user was away for more than 5 seconds to avoid tab switching issues
   useEffect(() => {
+    let lastBlurTime = 0;
+    
+    const handleBlur = () => {
+      lastBlurTime = Date.now();
+    };
+    
     const handleFocus = () => {
-      // Refresh blogs when user returns to this page
-      setLoading(true);
-      const params = new URLSearchParams();
-      if (debouncedSearchTerm) params.append('search', debouncedSearchTerm);
-      if (selectedCategory) params.append('category', selectedCategory);
-      if (selectedDate) params.append('date', selectedDate);
-      params.append('page', page.toString());
-      params.append('limit', pageSize.toString());
-      
-      httpClient.get(`/api/blogs?${params.toString()}`)
-        .then((data) => {
-          setBlogs(data.blogs || data.data || []);
-          setTotalPages(data.totalPages || 1);
-        })
-        .catch((error) => {
-          console.error('Error fetching blogs:', error);
-        })
-        .finally(() => setLoading(false));
+      const timeSinceBlur = Date.now() - lastBlurTime;
+      // Only refresh if user was away for more than 5 seconds (likely from edit/create page)
+      if (timeSinceBlur > 5000) {
+        setLoading(true);
+        const params = new URLSearchParams();
+        if (debouncedSearchTerm) params.append('search', debouncedSearchTerm);
+        if (selectedCategory) params.append('category', selectedCategory);
+        if (selectedDate) params.append('date', selectedDate);
+        params.append('page', page.toString());
+        params.append('limit', pageSize.toString());
+        
+        httpClient.get(`/api/blogs?${params.toString()}`)
+          .then((data) => {
+            setBlogs(data.blogs || data.data || []);
+            setTotalPages(data.totalPages || 1);
+          })
+          .catch((error) => {
+            console.error('Error fetching blogs:', error);
+          })
+          .finally(() => setLoading(false));
+      }
     };
 
+    window.addEventListener('blur', handleBlur);
     window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
+    return () => {
+      window.removeEventListener('blur', handleBlur);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, [debouncedSearchTerm, selectedCategory, selectedDate, page, pageSize]);
 
   // Fetch categories

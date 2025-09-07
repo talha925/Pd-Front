@@ -69,7 +69,7 @@ export async function fetchCategoriesServer() {
 /**
  * Server-side data fetching for individual store
  */
-export async function fetchStoreServer(storeId: string) {
+export async function fetchStoreServer(slug: string) {
   try {
     const cookieStore = cookies();
     const token = cookieStore.get('authToken')?.value;
@@ -82,8 +82,12 @@ export async function fetchStoreServer(storeId: string) {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    // Disable caching for instant data updates
-    const response = await fetch(`${config.api.siteUrl}/api/store/${storeId}`, {
+    // Use relative URL for server-side requests to avoid self-referencing issues
+    const baseUrl = process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}` 
+      : 'http://localhost:3000';
+    
+    const response = await fetch(`${baseUrl}/api/store/${slug}`, {
       headers,
       cache: 'no-store' // Always fetch fresh data
     });

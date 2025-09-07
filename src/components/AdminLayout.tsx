@@ -30,7 +30,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <nav className="w-full bg-white shadow px-4 py-2 z-50 fixed top-0 left-0 h-14 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Image src="/image/Logo-ATT.png" alt="logo" width={40} height={40} className="h-10 w-auto" />
-          <span className="text-xl font-bold text-gray-800">BRANDWELL</span>
+          <span className="text-xl font-bold text-gray-800">PENNY SCROLL</span>
         </div>
         <div className="flex gap-6">
           {topNavLinks.map((link) => (
@@ -68,4 +68,4 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <main className="bg-gray-50 p-8 min-h-screen ml-64 pt-14">{children}</main>
     </div>
   );
-} 
+}

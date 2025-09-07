@@ -1,4 +1,4 @@
-// app/store/[id]/StoreClient.tsx
+// app/store/[slug]/StoreClient.tsx
 
 'use client';
 
@@ -20,6 +20,7 @@ type Coupon = {
 
 type Store = {
   _id: string;
+  slug: string;
   image: {
     url: string;
     alt: string;
@@ -93,11 +94,11 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
 
   // Helper function to refresh store data with no-cache
   const refreshStoreData = async () => {
-    if (!initialStore?._id) return;
+    if (!initialStore?.slug) return;
     
     try {
   
-      const response = await fetch(`/api/store/${initialStore._id}`, {
+      const response = await fetch(`/api/store/${initialStore.slug}`, {
         cache: 'no-store', // Always fetch fresh data
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',

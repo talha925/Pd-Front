@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Metadata } from "next";
-import Carousel from "@/components/ui/Carousel";
+import HeroBanner from "@/components/ui/HeroBanner";
 import BlogCard from "@/components/blog/BlogCard";
 import config from '@/lib/config';
 import { themeClasses } from '@/lib/theme/utils';
@@ -18,11 +18,11 @@ interface Blog {
 
 // Define metadata for SEO
 export const metadata: Metadata = {
-  title: 'Featured Blogs | Brandwell',
-  description: 'Discover our featured blogs with the latest trends, tips, and insights across travel, health, lifestyle, and technology.',
+  title: "Featured Blogs | Penny Scroll",
+  description: 'Discover the best deals, reviews, and lifestyle tips. Your ultimate guide to smart shopping and better living across travel, health, wellness, fashion, and technology.',
   openGraph: {
-    title: 'Featured Blogs | Brandwell',
-    description: 'Discover our featured blogs with the latest trends, tips, and insights across travel, health, lifestyle, and technology.',
+    title: "Featured Blogs | Penny Scroll",
+    description: 'Discover the best deals, reviews, and lifestyle tips. Your ultimate guide to smart shopping and better living across travel, health, wellness, fashion, and technology.',
     images: ['/image/travel1.jpg'],
   },
 };
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
 // Fetch data at build time or with revalidation
 async function fetchFeaturedBlogs() {
   try {
-    const res = await fetch(`${config.api.baseUrl}/api/blogs?featured=true&page=1&pageSize=6`, {
+    const res = await fetch(`${config.api.baseUrl}/api/blogs?isFeaturedForHome=true&page=1&pageSize=6`, {
       next: { revalidate: 3600, tags: ['featured-blogs'] } // Revalidate every hour or when tagged
     });
     
@@ -48,56 +48,24 @@ export default async function Blogs() {
   // Fetch data server-side
   const featuredBlogs = await fetchFeaturedBlogs();
   
-  // These will be client-side state variables
-  // We'll use them with "use client" directives in a client component
-  const images = [
-    "/image/travel1.jpg",
-    "/image/health1.jpg",
-    "/image/sport.png",
-    "/image/travel1.jpg",
-    "/image/app.png",
-    "/image/home-(3).png",
-    "/image/bali.png",
-    "/image/fashion1.jpg",
-  ];
-
-  // Client-side functionality will be moved to a separate component
-
   return (
-    <div className={`w-full ${themeClasses.backgrounds.primary}`}>
-      {/* Banner: full width, no padding */}
-      <section className="relative h-[80vh] overflow-hidden">
-        {/* Client component for carousel */}
-        <Carousel images={images} />
-        <div className="absolute inset-0">
-          <div className="max-w-7xl mx-auto h-full flex flex-col justify-center px-4 sm:px-6 lg:px-8">
-            <h1 className={`text-4xl md:text-6xl font-bold ${themeClasses.text.primary} mb-6 animate-fade-in leading-tight drop-shadow-lg`}>
-              Discover the Best Deals, Reviews, and
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600 drop-shadow-lg"> Lifestyle Tips</span>
-            </h1>
-            <p className={`text-xl ${themeClasses.text.secondary} mb-8 max-w-2xl leading-relaxed drop-shadow-md`}>
-              Your ultimate guide to smart shopping and better living
-            </p>
-    
-            <button className={`inline-flex items-center px-8 py-4 max-w-[220px] text-lg font-semibold ${themeClasses.text.inverse} bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/25 group`}>
-              Explore Now
-              <svg className="w-5 h-5 ml-2 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
+    <div className="w-full min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
+      {/* Banner: with proper spacing matching header */}
+      <section className="relative pt-2 px-4 md:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <HeroBanner className="w-full" />
         </div>
       </section>
 
       {/* Boxed content: max-w-7xl, centered, with padding */}
-      <section className={`max-w-7xl mx-auto py-20 px-4 md:px-12`}>
+      <section className={`max-w-7xl mx-auto py-8 px-4 md:px-12`}>
         <h2 className={`text-4xl font-bold text-center mb-16 ${themeClasses.text.primary} bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600`}>
           Browse Categories
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Travel Category */}
           <Link href="/blog/category/travel" className="block">
-            <div className="group relative overflow-hidden bg-card/80 backdrop-blur-md border-0 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer">
+            <div className="group relative overflow-hidden bg-white/70 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-[1.03] cursor-pointer hover:bg-white/80">
               <div className="relative h-80 overflow-hidden">
                 <Image
                   src="/image/travel1.jpg"
@@ -105,14 +73,14 @@ export default async function Blogs() {
                   width={800}
                   height={400}
                   loading="lazy"
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
               </div>
-              <div className="absolute bottom-0 w-full p-8 bg-gradient-to-t from-black/60 to-transparent">
-                <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-cyan-300 transition-colors duration-300">
+              <div className="absolute bottom-0 w-full p-8 bg-gradient-to-t from-black/70 via-black/30 to-transparent">
+                <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-cyan-300 transition-colors duration-300 drop-shadow-lg">
                   ✈️ Travel & Adventure
                 </h3>
-                <p className="text-white/90 text-base leading-relaxed group-hover:text-white transition-colors duration-300">
+                <p className="text-white/95 text-base leading-relaxed group-hover:text-white transition-colors duration-300 drop-shadow-md">
                   Discover amazing destinations and travel tips
                 </p>
               </div>
@@ -121,7 +89,7 @@ export default async function Blogs() {
 
           {/* Health & Wellness Category */}
           <Link href="/blog/category/health-and-beauty" className="block">
-            <div className="group relative overflow-hidden bg-card/80 backdrop-blur-md border-0 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer">
+            <div className="group relative overflow-hidden bg-white/70 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-[1.03] cursor-pointer hover:bg-white/80">
               <div className="relative h-80 overflow-hidden">
                 <Image
                   src="/image/health1.jpg"
@@ -129,7 +97,7 @@ export default async function Blogs() {
                   width={800}
                   height={400}
                   loading="lazy"
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
               </div>
               <div className="absolute bottom-0 w-full p-8 bg-gradient-to-t from-black/60 to-transparent">

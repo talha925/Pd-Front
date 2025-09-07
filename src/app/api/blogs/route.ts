@@ -9,7 +9,7 @@ const getBlogs = async (searchParams?: URLSearchParams) => {
     const apiUrl = new URL(API_URL);
     if (searchParams) {
       // Forward supported query parameters to the external API
-      const supportedParams = ['category', 'search', 'page', 'pageSize', 'limit', 'featured'];
+      const supportedParams = ['category', 'search', 'page', 'pageSize', 'limit', 'featured', 'isFeaturedForHome', 'frontBanner', 'status'];
       supportedParams.forEach(param => {
         const value = searchParams.get(param);
         if (value) {

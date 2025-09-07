@@ -48,6 +48,7 @@ export default function EditBlogPage() {
       authorAvatar: b.author?.avatar || "",
       status: b.status,
       isFeatured: b.isFeaturedForHome || false,
+      frontBanner: b.FrontBanner || false,
       imageUrl: b.image?.url || "",
       imageAlt: b.image?.alt || "",
       tags: Array.isArray(b.tags) ? b.tags.join(", ") : (b.tags || ""),

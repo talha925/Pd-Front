@@ -35,10 +35,10 @@ export default function NewsletterSubscription() {
 
   return (
     <div>
-      <h3 className="text-2xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
+      <h3 className="text-2xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600">
         Subscribe to Our Newsletter
       </h3>
-      <p className="text-gray-400 mb-6 text-lg leading-relaxed">Stay updated with our latest deals and articles</p>
+      <p className="text-slate-700 mb-6 text-lg leading-relaxed">Stay updated with our latest deals and articles</p>
       
       {status === 'success' ? (
         <div className="px-4 py-3 rounded-xl bg-green-900/30 border border-green-700 text-green-400">
@@ -51,12 +51,12 @@ export default function NewsletterSubscription() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter your email"
-            className={`flex-1 px-4 py-3 rounded-xl ${themeClasses.backgrounds.card} ${themeClasses.borders.light} focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 text-gray-900 placeholder-gray-500 transition-all duration-300`}
+            className="flex-1 px-4 py-3 rounded-xl bg-white/70 border border-indigo-200/50 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-slate-800 placeholder-slate-500 transition-all duration-300 backdrop-blur-sm"
             disabled={status === 'loading'}
           />
           <button 
             type="submit"
-            className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:opacity-90 hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white rounded-xl font-semibold hover:opacity-90 hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-lg hover:shadow-xl"
             disabled={status === 'loading'}
           >
             {status === 'loading' ? 'Subscribing...' : 'Subscribe'}

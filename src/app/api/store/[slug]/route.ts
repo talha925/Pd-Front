@@ -5,6 +5,7 @@ import config from '@/lib/config';
 
 type Store = {
   _id: string;
+  slug: string;
   name: string;
   image: { url: string; alt: string };
   about?: string;
@@ -21,7 +22,7 @@ type Store = {
 let storesCache: { data: Store[], timestamp: number } | null = null;
 const CACHE_DURATION = 30000; // 30 seconds cache
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: { params: { slug: string } }) {
   try {
     let stores: Store[] = [];
     
@@ -50,8 +51,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       storesCache = { data: stores, timestamp: now };
     }
     
-    // Find the specific store by ID
-    const store = stores.find((store: Store) => store._id === params.id);
+    // Find the specific store by slug
+    const store = stores.find((store: Store) => store.slug === params.slug);
     
     if (!store) {
       return NextResponse.json({ message: "Store not found" }, { status: 404 });

@@ -48,27 +48,29 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-background-elevated/95 backdrop-blur-md shadow-2xl border-b border-border/50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex h-20 items-center justify-between">
-          {/* Logo and Brand */}
-          <div className="flex items-center space-x-3">
-            <Link href="/" className="flex items-center space-x-3 group">
-              <div className="relative overflow-hidden rounded-xl p-2 bg-gradient-to-br from-blue-600/20 to-purple-600/20 group-hover:from-blue-500/30 group-hover:to-purple-500/30 transition-all duration-300">
-                <Image
-                  src="/image/Logo-ATT.png"
-                  alt="logo"
-                  width={40}
-                  height={40}
-                  priority
-                  className="w-10 h-10 transition-transform duration-300 group-hover:scale-110"
-                />
-              </div>
-              <h1 className="text-2xl md:text-3xl bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent font-bold tracking-tight">
-                BRANDWELL
-              </h1>
-            </Link>
-          </div>
+    <div className="pt-6 px-4 md:px-6 lg:px-8">
+      <header className="sticky top-0 z-50 w-full bg-gradient-to-r from-background-elevated/95 via-background-elevated/98 to-background-elevated/95 backdrop-blur-xl shadow-2xl border border-border/30 rounded-2xl mx-auto max-w-7xl">
+        <div className="px-6 sm:px-8 lg:px-10">
+          <div className="flex h-20 items-center justify-between">
+            {/* Logo and Brand */}
+            <div className="flex items-center space-x-4">
+              <Link href="/" className="flex items-center space-x-4 group">
+                <div className="relative overflow-hidden rounded-2xl p-3 bg-gradient-to-br from-blue-600/25 to-purple-600/25 group-hover:from-blue-500/35 group-hover:to-purple-500/35 transition-all duration-500 shadow-lg group-hover:shadow-xl">
+                  <Image
+                    src="/image/Logo-ATT.png"
+                    alt="logo"
+                    width={44}
+                    height={44}
+                    priority
+                    className="w-11 h-11 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                </div>
+                <h1 className="text-2xl md:text-3xl bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent font-bold tracking-tight group-hover:from-blue-300 group-hover:via-purple-400 group-hover:to-pink-400 transition-all duration-500">
+                  PENNY SCROLL
+                </h1>
+              </Link>
+            </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-2">
@@ -187,7 +189,7 @@ export default function Header() {
                         />
                       </div>
                       <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
-                        BRANDWELL
+                        PENNY SCROLL
                       </h2>
                     </div>
                   </div>
@@ -253,8 +255,9 @@ export default function Header() {
         )}
       </div>
 
-      {/* Notification Toast */}
-      <NotificationToast />
-    </header>
+        {/* Notification Toast */}
+        <NotificationToast />
+      </header>
+    </div>
   );
 }

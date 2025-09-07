@@ -1,5 +1,6 @@
 export interface Store {
   _id: string;
+  slug: string;
   name: string;
   trackingUrl?: string;
   image?: {
@@ -30,4 +31,4 @@ export interface StoreFormData {
   language: string;
   isTopStore: boolean;
   isEditorsChoice: boolean;
-} 
+}

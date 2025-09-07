@@ -31,28 +31,28 @@ const inter = Inter({
 // Enhanced metadata for better SEO
 export const metadata: Metadata = {
   title: {
-    default: 'Brandwell',
-    template: '%s | Brandwell'
+    default: "Penny Scroll - Discover the Best Deals, Reviews, and Lifestyle Tips",
+    template: "%s | Penny Scroll"
   },
-  description: 'Brandwell - Your Coupon and Blog Platform for exclusive deals and insightful content',
-  keywords: ['coupons', 'deals', 'blogs', 'discounts', 'savings', 'brandwell'],
-  authors: [{ name: 'Brandwell Team' }],
-  creator: 'Brandwell',
-  publisher: 'Brandwell',
+  description: "Your ultimate guide to smart shopping and better living. Discover amazing deals, expert reviews, travel tips, health advice, and lifestyle inspiration at Penny Scroll.",
+  keywords: ['deals', 'reviews', 'lifestyle tips', 'travel', 'health', 'wellness', 'fashion', 'technology', 'smart shopping', 'pennyscroll'],
+  authors: [{ name: "Penny Scroll Team" }],
+  creator: "Penny Scroll",
+  publisher: "Penny Scroll",
   formatDetection: {
     email: false,
     telephone: false,
     address: false,
   },
-  metadataBase: new URL('https://brandwell.com'),
+  metadataBase: new URL('https://www.pennyscroll.com'),
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    title: 'Brandwell',
-    description: 'Your Coupon and Blog Platform for exclusive deals and insightful content',
-    url: 'https://brandwell.com',
-    siteName: 'Brandwell',
+    title: "Penny Scroll - Discover the Best Deals, Reviews, and Lifestyle Tips",
+    description: "Your ultimate guide to smart shopping and better living. Discover amazing deals, expert reviews, travel tips, health advice, and lifestyle inspiration.",
+    url: 'https://www.pennyscroll.com',
+    siteName: "Penny Scroll",
     locale: 'en_US',
     type: 'website',
     images: [
@@ -60,14 +60,14 @@ export const metadata: Metadata = {
         url: '/images/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'Brandwell - Your Coupon and Blog Platform',
+        alt: "Penny Scroll - Your ultimate guide to smart shopping and better living",
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Brandwell',
-    description: 'Your Coupon and Blog Platform for exclusive deals and insightful content',
+    title: "Penny Scroll - Discover the Best Deals, Reviews, and Lifestyle Tips",
+    description: "Your ultimate guide to smart shopping and better living. Discover amazing deals, expert reviews, travel tips, health advice, and lifestyle inspiration.",
     images: ['/images/twitter-image.jpg'],
   },
   robots: {

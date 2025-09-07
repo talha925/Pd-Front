@@ -7,7 +7,7 @@ import { revalidatePath, revalidateTag } from 'next/cache';
  */
 export async function POST(request: NextRequest) {
   try {
-    const { type, path, tag, blogId, storeId, secret } = await request.json();
+    const { type, path, tag, blogId, storeSlug, secret } = await request.json();
 
     // Verify secret token for security
     if (secret !== process.env.REVALIDATION_SECRET) {
@@ -43,9 +43,9 @@ export async function POST(request: NextRequest) {
         // Revalidate stores-related pages and tags
         revalidatePath('/stores');
         revalidateTag('stores');
-        if (storeId) {
-          revalidatePath(`/store/${storeId}`);
-          revalidateTag(`store-${storeId}`);
+        if (storeSlug) {
+          revalidatePath(`/store/${storeSlug}`);
+          revalidateTag(`store-${storeSlug}`);
         }
         return NextResponse.json({ message: 'Revalidated stores pages' });
 

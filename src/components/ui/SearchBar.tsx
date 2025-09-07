@@ -135,7 +135,7 @@ const SearchBar = React.memo(function SearchBar({
         {results.stores.map((store) => (
           <Link
             key={store._id}
-            href={`/store/${store._id}`}
+            href={`/store/${store.slug}`}
             onClick={handleResultClick}
             className="flex items-center space-x-3 px-3 py-3 hover:bg-accent/50 transition-colors duration-200 group"
           >

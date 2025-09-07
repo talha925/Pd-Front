@@ -64,7 +64,7 @@ const StoreCard: React.FC<StoreCardProps> = ({ store }) => {
         
         {/* View Button */}
         <Link
-          href={`/store/${store._id}`}
+          href={`/store/${store.slug}`}
           className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold py-2 px-6 rounded-full shadow-md transition text-center"
         >
           View All Coupons

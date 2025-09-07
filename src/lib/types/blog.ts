@@ -21,6 +21,7 @@ export interface Blog {
   };
   status: 'draft' | 'published';
   isFeaturedForHome?: boolean;
+  frontBanner?: boolean;
   image?: {
     url: string;
     alt: string;
@@ -55,6 +56,7 @@ export interface BlogFormData {
   imageUrl: string;
   imageAlt: string;
   isFeatured: boolean;
+  frontBanner: boolean;
   tags: string;
   metaTitle: string;
   metaDescription: string;

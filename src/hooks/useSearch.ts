@@ -41,7 +41,7 @@ export function useSearch(options: UseSearchOptions = {}) {
 
   // Determine search type based on current route
   const searchType = useMemo(() => {
-    // Store search only for /stores and /store/[id] routes
+    // Store search only for /stores and /store/[slug] routes
     if (pathname === '/stores' || pathname.startsWith('/store/')) {
       return 'stores';
     }
