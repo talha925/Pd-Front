@@ -22,7 +22,7 @@ export function StoresClient({ initialStores, serverError }: StoresClientProps) 
     requireAuth: true,
     autoFetch: true,
     cacheKey: 'stores-list',
-    cacheTTL: 5 * 60 * 1000, // 5 minutes
+    cacheTTL: 60 * 1000, // 1 minute cache
     debug: false, // Disable debug in production
     onSuccess: (data) => {
       // Handle successful data fetch

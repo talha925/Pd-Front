@@ -1,25 +1,44 @@
-// ✅ FILE: src/app/api/proxy-stores/route.ts
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 import config from '@/lib/config';
+import { Store } from '@/lib/types/store';
+import { CacheManager, CACHE_CONFIG, generateStoreJsonLd } from '@/lib/cache';
 
-export async function GET() {
+// Initialize cache manager for stores
+const storesCache = new CacheManager<Store>('stores', CACHE_CONFIG.stores);
+
+export async function GET(req: Request) {
   try {
-    // ISR: Enable caching with revalidation for stores proxy API
-    const res = await fetch(`${config.api.baseUrl}/api/stores`, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-      next: { 
-        revalidate: 300, // Revalidate every 5 minutes
-        tags: ['stores'] // Enable tag-based revalidation
-      }
-    });
+    const { searchParams } = new URL(req.url);
+    const noCache = searchParams.get('noCache') === 'true';
+    const includeJsonLd = searchParams.get('jsonLd') === 'true';
 
-    const data = await res.json();
-    return NextResponse.json(data);
+    // Get stores with caching
+    const { data: stores, headers } = await storesCache.getData(
+      `${config.api.baseUrl}/api/stores`,
+      noCache
+    );
+
+    // Add JSON-LD structured data if requested
+    let responseData: any = { data: stores };
+    
+    if (includeJsonLd && stores.length > 0) {
+      const jsonLdData = stores.map(store => 
+        generateStoreJsonLd(store, config.api.siteUrl)
+      );
+      responseData.seo = {
+        jsonLd: jsonLdData
+      };
+    }
+
+    return NextResponse.json(responseData, { headers });
   } catch (error) {
-    console.error("Proxy Error:", error);
-    return NextResponse.json({ error: "Failed to fetch data from backend" }, { status: 500 });
+    console.error('Error fetching stores:', error);
+    return NextResponse.json(
+      {
+        message: 'Error fetching stores',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    );
   }
 }
-

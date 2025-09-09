@@ -8,6 +8,7 @@ export interface Store {
     alt: string;
   };
   heading?: string;
+  short_description?: string;
   language?: string;
   isTopStore?: boolean;
   isEditorsChoice?: boolean;

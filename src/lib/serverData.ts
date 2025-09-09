@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import config from './config';
 
 // Server-side data fetching utilities
-export async function fetchStoresServer() {
+export async function fetchStoresServer({ noCache = false }: { noCache?: boolean } = {}) {
   try {
     const cookieStore = cookies();
     const token = cookieStore.get('authToken')?.value;
@@ -15,10 +15,12 @@ export async function fetchStoresServer() {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    // Disable caching for instant data updates
-    const response = await fetch(`${config.api.siteUrl}/api/proxy-stores`, {
+    const url = noCache
+      ? `${config.api.siteUrl}/api/proxy-stores?noCache=true`
+      : `${config.api.siteUrl}/api/proxy-stores`;
+
+    const response = await fetch(url, {
       headers,
-      cache: 'no-store' // Always fetch fresh data
     });
     
     if (!response.ok) {

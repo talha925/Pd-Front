@@ -6,7 +6,7 @@ import { StoresClient } from './StoresClient';
 // Server Component - fetches initial data
 export default async function StorePage() {
   // Fetch data server-side
-  const { data: initialStores, error: serverError } = await fetchStoresServer();
+  const { data: initialStores, error: serverError } = await fetchStoresServer({ noCache: true });
   
   return (
     <StoresClient 
