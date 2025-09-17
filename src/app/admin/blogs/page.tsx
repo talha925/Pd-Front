@@ -88,8 +88,9 @@ export default function AdminBlogsPage() {
         
         httpClient.get(`/api/blogs?${params.toString()}`)
           .then((data) => {
-            setBlogs(data.blogs || data.data || []);
-            setTotalPages(data.totalPages || 1);
+            const { blogs, pagination } = data;
+            setBlogs(blogs || []);
+            setTotalPages((pagination && pagination.pages) || 1);
           })
           .catch((error) => {
             console.error('Error fetching blogs:', error);
@@ -125,10 +126,10 @@ export default function AdminBlogsPage() {
 
     httpClient.get(`/api/blogs?${params.toString()}`)
       .then((response) => {
-        const { blogs, success } = response;
-        if (success && blogs && Array.isArray(blogs.blogs)) {
-          setBlogs(blogs.blogs);
-          setTotalPages((blogs.pagination && blogs.pagination.pages) || 1);
+        const { blogs, success, pagination } = response;
+        if (success && blogs && Array.isArray(blogs)) {
+          setBlogs(blogs);
+          setTotalPages((pagination && pagination.pages) || 1);
         } else {
           setBlogs([]);
           setTotalPages(1);
