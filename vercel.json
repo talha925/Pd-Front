@@ -4,14 +4,14 @@
   "framework": "nextjs",
   "installCommand": "npm install",
   "env": {
-    "NEXT_PUBLIC_API_BASE_URL": "@next_public_api_base_url",
-    "NEXT_PUBLIC_SITE_URL": "@next_public_site_url",
-    "NEXT_PUBLIC_IMAGE_DOMAIN": "@next_public_image_domain",
-    "NEXT_PUBLIC_API_TIMEOUT": "@next_public_api_timeout",
-    "AWS_REGION": "@aws_region",
-    "AWS_S3_BUCKET_NAME": "@aws_s3_bucket_name",
-    "AWS_S3_ACCESS_KEY_ID": "@aws_s3_access_key_id",
-    "AWS_S3_SECRET_ACCESS_KEY": "@aws_s3_secret_access_key"
+    "NEXT_PUBLIC_API_BASE_URL": "@NEXT_PUBLIC_API_BASE_URL",
+    "NEXT_PUBLIC_SITE_URL": "@NEXT_PUBLIC_SITE_URL",
+    "NEXT_PUBLIC_IMAGE_DOMAIN": "@NEXT_PUBLIC_IMAGE_DOMAIN",
+    "NEXT_PUBLIC_API_TIMEOUT": "@NEXT_PUBLIC_API_TIMEOUT",
+    "AWS_REGION": "@AWS_REGION",
+    "AWS_S3_BUCKET_NAME": "@AWS_S3_BUCKET_NAME",
+    "AWS_S3_ACCESS_KEY_ID": "@AWS_S3_ACCESS_KEY_ID",
+    "AWS_S3_SECRET_ACCESS_KEY": "@AWS_S3_SECRET_ACCESS_KEY"
   },
   "functions": {
     "app/api/create-blog/route.ts": {
