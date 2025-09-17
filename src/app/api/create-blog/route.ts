@@ -6,23 +6,40 @@ const API_URL = `${config.api.baseUrl}/api/blogs`;
 
 const createBlog = async (blogData: any) => {
   try {
+    console.log('API_URL being used:', API_URL);
+    console.log('Environment NEXT_PUBLIC_API_BASE_URL:', process.env.NEXT_PUBLIC_API_BASE_URL);
+    
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(blogData),
+      // Add timeout for better error handling
+      signal: AbortSignal.timeout(30000)
     });
+
+    console.log('Response status:', response.status);
+    console.log('Response ok:', response.ok);
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      console.error('API Error Response:', errorData);
       throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
     }
 
     const data = await response.json();
+    console.log('API Success Response:', data);
     return data;
   } catch (error) {
     console.error('Error creating blog:', error);
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+    }
     throw error;
   }
 };
@@ -281,12 +298,43 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Failed to create blog:', error);
+    
+    // Determine error type and provide appropriate response
+    let errorMessage = 'Failed to create blog. Please try again.';
+    let statusCode = 500;
+    
+    if (error instanceof Error) {
+      if (error.message.includes('fetch') || error.name === 'TypeError') {
+        errorMessage = 'Unable to connect to the backend service. Please check your network connection.';
+        statusCode = 503; // Service Unavailable
+      } else if (error.message.includes('timeout') || error.name === 'AbortError') {
+        errorMessage = 'Request timeout. The server is taking too long to respond.';
+        statusCode = 408; // Request Timeout
+      } else if (error.message.includes('HTTP error! status:')) {
+        const statusMatch = error.message.match(/status: (\d+)/);
+        if (statusMatch) {
+          statusCode = parseInt(statusMatch[1]);
+          if (statusCode === 400) {
+            errorMessage = 'Invalid blog data. Please check all required fields.';
+          } else if (statusCode === 401) {
+            errorMessage = 'Authentication required. Please log in again.';
+          } else if (statusCode === 403) {
+            errorMessage = 'Permission denied. You do not have access to create blogs.';
+          } else if (statusCode >= 500) {
+            errorMessage = 'Backend server error. Please try again later.';
+          }
+        }
+      }
+    }
+    
     return NextResponse.json(
       { 
-        error: 'Failed to create blog. Please try again.',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        error: errorMessage,
+        details: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString(),
+        apiUrl: API_URL
       },
-      { status: 500 }
+      { status: statusCode }
     );
   }
 }

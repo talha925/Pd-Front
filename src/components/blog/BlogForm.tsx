@@ -374,6 +374,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
 
     try {
       const response = await httpClient.post('/api/create-blog', blogData);
+      console.log('Blog creation response:', response);
       setMessage('Blog created successfully!');
       // Reset form after successful save
       resetForm();
@@ -381,9 +382,35 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
       setTimeout(() => {
         router.push('/admin/blogs');
       }, 1500);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating blog:', error);
-      setMessage('Error creating blog. Please try again.');
+      
+      // Extract more detailed error information
+      let errorMessage = 'Error creating blog. Please try again.';
+      
+      if (error?.response) {
+        // API returned an error response
+        errorMessage = error.response.error || error.response.message || errorMessage;
+      } else if (error?.message) {
+        // Network or other error
+        if (error.message.includes('fetch')) {
+          errorMessage = 'Network error. Please check your internet connection and try again.';
+        } else if (error.message.includes('timeout')) {
+          errorMessage = 'Request timeout. Please try again.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      console.error('Detailed error info:', {
+        message: error?.message,
+        status: error?.status,
+        response: error?.response,
+        isNetworkError: error?.isNetworkError,
+        isTimeoutError: error?.isTimeoutError
+      });
+      
+      setMessage(errorMessage);
     }
 
     setLoading(false);
