@@ -76,6 +76,13 @@ export default function EditBlogPage() {
       try {
         await httpClient.put(`/api/blogs/${blogId}`, formData);
         setMessage("Blog updated successfully!");
+        
+        // Clear banner cache if this blog has FrontBanner enabled
+        if (formData.FrontBanner) {
+          localStorage.removeItem('heroBannerData');
+          console.log('Banner cache cleared due to FrontBanner blog update');
+        }
+        
         setTimeout(() => router.push("/admin/blogs"), 1200);
       } catch (err: any) {
         setMessage("Failed to update blog. Please try again.");

@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Blog } from '@/lib/types/blog';
 import { themeClasses } from '@/lib/theme/utils';
+import { BannerCache } from '@/lib/cache/bannerCache';
 
 interface HeroBannerProps {
   className?: string;
@@ -12,48 +13,140 @@ interface HeroBannerProps {
 
 export default function HeroBanner({ className = '' }: HeroBannerProps) {
   const [bannerBlogs, setBannerBlogs] = useState<Blog[]>([]);
-  const [currentSlide, setCurrentSlide] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
+  const [currentSlide, setCurrentSlide] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<{ [key: string]: boolean }>({});
 
-  const fetchBannerBlogs = async () => {
-    try {
-      setLoading(true);
-      // Add cache-busting headers and timestamp to ensure fresh data
-      const timestamp = Date.now();
-      const response = await fetch(`/api/blogs?status=published&limit=20&_t=${timestamp}`, {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
+  // Initialize with cached data to prevent skeleton flicker
+  useEffect(() => {
+    const cacheKey = 'heroBannerData';
+    const cached = localStorage.getItem(cacheKey);
+    
+    if (cached) {
+      try {
+        const { data, timestamp } = JSON.parse(cached);
+        const cacheAge = Date.now() - timestamp;
+        const isExpired = cacheAge > 5 * 60 * 1000; // 5 minutes
+        
+        // Always load cached data immediately for instant display
+        if (data?.length > 0) {
+          setBannerBlogs(data);
+          setLoading(false);
+          setIsFirstLoad(false);
+          
+          // If cache is expired, trigger a background refresh
+          if (isExpired) {
+            fetchBannerBlogs();
+          }
+        } else {
+          // No cached data, need to fetch
+          fetchBannerBlogs();
         }
-      });
+      } catch (error) {
+        console.error('Error parsing cached data:', error);
+        localStorage.removeItem(cacheKey);
+        fetchBannerBlogs();
+      }
+    } else {
+      // No cache, fetch fresh data
+      fetchBannerBlogs();
+    }
+  }, []);
+
+  // Cache invalidation function for urgent updates
+  const invalidateCache = () => {
+    localStorage.removeItem('heroBannerData');
+    fetchBannerBlogs(true);
+  };
+
+  // Listen for global cache invalidation events
+  useEffect(() => {
+    const handleCacheInvalidation = () => {
+      fetchBannerBlogs(true);
+    };
+    
+    window.addEventListener('bannerCacheInvalidated', handleCacheInvalidation);
+    return () => {
+      window.removeEventListener('bannerCacheInvalidated', handleCacheInvalidation);
+    };
+  }, []);
+
+  const fetchBannerBlogs = async (forceRefresh = false) => {
+    const cacheKey = 'heroBannerData';
+    
+    // Only check cache if not forcing refresh
+    if (!forceRefresh) {
+      const cached = localStorage.getItem(cacheKey);
+      
+      if (cached) {
+        try {
+          const { data, timestamp } = JSON.parse(cached);
+          const cacheAge = Date.now() - timestamp;
+          const isExpired = cacheAge > 5 * 60 * 1000; // 5 minutes
+          
+          // If cache is fresh and has data, use it immediately
+          if (!isExpired && data?.length > 0) {
+            setBannerBlogs(data);
+            setLoading(false);
+            return;
+          }
+        } catch (error) {
+          console.error('Error parsing cached data:', error);
+        }
+      }
+    }
+
+    try {
+      const response = await fetch('/api/blogs?frontBanner=true');
       
       if (!response.ok) {
-        throw new Error('Failed to fetch banner blogs');
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      const data = await response.json();
-      const allBlogs = data.blogs || [];
-        
-      console.log('HeroBanner - All blogs:', allBlogs.length);
-      console.log('HeroBanner - Sample blog:', allBlogs[0]);
+      const result = await response.json();
       
-      // Filter blogs with FrontBanner === true on frontend since backend filtering is not working
-      const filteredBlogs = allBlogs.filter((blog: any) => {
-        const isFrontBanner = blog.FrontBanner === true || blog.FrontBanner === 'True' || blog.FrontBanner === 'true';
-        console.log(`Blog "${blog.title}": FrontBanner=${blog.FrontBanner}, isFrontBanner=${isFrontBanner}`);
-        return isFrontBanner;
-      }).slice(0, 5);
+      let blogsArray = [];
+      if (Array.isArray(result)) {
+        blogsArray = result;
+      } else if (result.blogs && Array.isArray(result.blogs)) {
+        blogsArray = result.blogs;
+      } else if (result.data && Array.isArray(result.data)) {
+        blogsArray = result.data;
+      }
       
-      console.log('HeroBanner - Filtered blogs:', filteredBlogs.length);
+      // Filter for banner blogs - check both FrontBanner and frontBanner properties
+      const filteredBlogs = blogsArray.length > 0 
+        ? blogsArray
+            .filter((blog: Blog) => {
+              return blog.FrontBanner === true || blog.frontBanner === true;
+            })
+            .sort((a: Blog, b: Blog) => {
+              // Sort by creation date (newest first)
+              const dateA = new Date(a.createdAt || 0).getTime();
+              const dateB = new Date(b.createdAt || 0).getTime();
+              return dateB - dateA;
+            })
+            .slice(0, 3) // Limit to only 3 latest blogs
+        : [];
+      
       setBannerBlogs(filteredBlogs);
-      setError(null);
-    } catch (err) {
-      console.error('Error fetching banner blogs:', err);
-      setError('Failed to load banner blogs');
-      setBannerBlogs([]);
+      
+      // Cache the fresh data with current timestamp
+      if (filteredBlogs.length > 0) {
+        localStorage.setItem(cacheKey, JSON.stringify({
+          data: filteredBlogs,
+          timestamp: Date.now()
+        }));
+      }
+      
+    } catch (error) {
+      console.error('Error fetching banner blogs:', error);
+      // Only clear loading if we don't have cached data to show
+      if (bannerBlogs.length === 0) {
+        setBannerBlogs([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -76,7 +169,7 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
       const timeSinceBlur = Date.now() - lastBlurTime;
       // Only refresh if user was away for more than 5 seconds (likely from admin panel)
       if (timeSinceBlur > 5000) {
-        fetchBannerBlogs();
+        fetchBannerBlogs(true); // Force refresh when returning from admin
       }
     };
     
@@ -106,7 +199,7 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
     setCurrentSlide((prev) => (prev - 1 + bannerBlogs.length) % bannerBlogs.length);
   };
 
-  if (loading) {
+  if (loading && isFirstLoad) {
     return (
       <div className={`relative h-64 md:h-80 lg:h-96 ${className} overflow-hidden mt-8 mb-12 rounded-3xl shadow-2xl`}>
         {/* Enhanced Shimmer Background */}
@@ -149,7 +242,7 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
             <h2 className="text-2xl md:text-3xl font-bold mb-4 text-gray-800">No Featured Blogs</h2>
             <p className="text-lg text-gray-600 mb-6">No blogs are currently marked as front banner.</p>
             <button
-              onClick={fetchBannerBlogs}
+              onClick={() => fetchBannerBlogs(true)} // Force refresh on manual click
               disabled={loading}
               className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-colors duration-200 shadow-lg hover:shadow-xl"
             >
@@ -162,18 +255,31 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
   }
 
   const currentBlog = bannerBlogs[currentSlide];
+  const imageKey = currentBlog?._id || currentSlide;
+  const hasImageError = imageError[imageKey];
+  const imageUrl = hasImageError 
+    ? '/images/default-blog.jpg' 
+    : (currentBlog.image?.url || '/images/default-blog.jpg');
+
+  const handleImageError = () => {
+    setImageError(prev => ({
+      ...prev,
+      [imageKey]: true
+    }));
+  };
 
   return (
     <div className={`relative h-64 md:h-80 lg:h-96 overflow-hidden rounded-3xl mt-8 mb-12 shadow-2xl group ${className}`}>
       {/* Background Image */}
       <div className="absolute inset-0">
         <Image
-          src={currentBlog.image?.url || '/images/default-blog.jpg'}
+          src={imageUrl}
           alt={currentBlog.image?.alt || currentBlog.title}
           fill
           className="object-cover transition-transform duration-700 group-hover:scale-105"
           priority
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 100vw"
+          onError={handleImageError}
         />
         {/* Multi-layer Overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-black/20 via-black/10 to-black/25" />

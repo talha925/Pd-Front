@@ -22,6 +22,7 @@ export interface Blog {
   status: 'draft' | 'published';
   isFeaturedForHome?: boolean;
   frontBanner?: boolean;
+  FrontBanner?: boolean; // API response uses PascalCase
   image?: {
     url: string;
     alt: string;

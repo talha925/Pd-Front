@@ -376,6 +376,13 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
       const response = await httpClient.post('/api/create-blog', blogData);
       console.log('Blog creation response:', response);
       setMessage('Blog created successfully!');
+      
+      // Clear banner cache if this blog has FrontBanner enabled
+      if (frontBanner) {
+        localStorage.removeItem('heroBannerData');
+        console.log('Banner cache cleared due to FrontBanner blog creation');
+      }
+      
       // Reset form after successful save
       resetForm();
       // Redirect to admin blogs page after successful creation

@@ -144,13 +144,28 @@ export default function AdminBlogsPage() {
     async (id: string) => {
       if (!confirm("Are you sure you want to delete this blog?")) return;
       try {
+        // Find the blog to check if it has FrontBanner enabled
+        const blogToDelete = blogs.find(blog => blog._id === id);
+        
         await httpClient.delete(`/api/blogs/${id}`);
         setBlogs((prev) => prev.filter((blog) => blog._id !== id));
+        
+        // Clear banner cache if the deleted blog had FrontBanner enabled
+        // Note: We check for FrontBanner property, but it might not be in the list view
+        // So we clear cache for any deletion to be safe
+        if (blogToDelete && (blogToDelete as any).FrontBanner) {
+          localStorage.removeItem('heroBannerData');
+          console.log('Banner cache cleared due to FrontBanner blog deletion');
+        } else {
+          // Clear cache anyway since we can't be sure from list view
+          localStorage.removeItem('heroBannerData');
+          console.log('Banner cache cleared due to blog deletion (safety measure)');
+        }
       } catch (err) {
         alert("Failed to delete blog. Please try again.");
       }
     },
-    []
+    [blogs]
   );
 
   // Edit blog handler

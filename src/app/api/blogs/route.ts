@@ -50,12 +50,19 @@ export async function GET(request: NextRequest) {
     const blogData = blogs.data?.blogs || blogs.blogs || blogs.data || blogs || [];
     const pagination = blogs.data?.pagination || blogs.pagination || null;
     
-    return NextResponse.json({
+    const response = NextResponse.json({
       blogs: blogData,
       count: Array.isArray(blogData) ? blogData.length : 0,
       pagination,
       success: true
     });
+    
+    // Add proper cache headers for stale-while-revalidate
+    response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+    response.headers.set('CDN-Cache-Control', 'public, s-maxage=300');
+    response.headers.set('Vercel-CDN-Cache-Control', 'public, s-maxage=300');
+    
+    return response;
   } catch (error) {
     console.error('Failed to fetch blogs:', error);
     return NextResponse.json(
