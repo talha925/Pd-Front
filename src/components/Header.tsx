@@ -54,21 +54,17 @@ export default function Header() {
           <div className="flex h-20 items-center justify-between">
             {/* Logo and Brand */}
             <div className="flex items-center space-x-4">
-              <Link href="/" className="flex items-center space-x-4 group">
-                <div className="relative overflow-hidden rounded-2xl p-3 bg-gradient-to-br from-blue-600/25 to-purple-600/25 group-hover:from-blue-500/35 group-hover:to-purple-500/35 transition-all duration-500 shadow-lg group-hover:shadow-xl">
+              <Link href="/" className="flex items-center group">
+                <div className="relative p-2 transition-all duration-300 group-hover:scale-105">
                   <Image
                     src="/image/Logo-ATT.png"
-                    alt="logo"
-                    width={44}
-                    height={44}
+                    alt="Brand Logo"
+                    width={200}
+                    height={200}
                     priority
-                    className="w-11 h-11 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3"
+                    className="w-40 h-40 transition-transform duration-300"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 </div>
-                <h1 className="text-2xl md:text-3xl bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent font-bold tracking-tight group-hover:from-blue-300 group-hover:via-purple-400 group-hover:to-pink-400 transition-all duration-500">
-                  PENNY SCROLL
-                </h1>
               </Link>
             </div>
 
@@ -178,19 +174,16 @@ export default function Header() {
                   {/* Mobile Header */}
                   <div className="p-6 border-b border-border">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-xl flex items-center justify-center">
+                      <div className="flex items-center justify-center">
                         <Image
                           src="/image/Logo-ATT.png"
-                          alt="logo"
-                          width={24}
-                          height={24}
+                          alt="Brand Logo"
+                          width={80}
+                          height={80}
                           priority
-                          className="w-6 h-6"
+                          className="w-20 h-20"
                         />
                       </div>
-                      <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
-                        PENNY SCROLL
-                      </h2>
                     </div>
                   </div>
 

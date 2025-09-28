@@ -150,11 +150,9 @@ export default async function BlogDetailPage({ params }: { params: { id: string 
 
   if (!blog) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-emerald-50/20">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-50/50 to-emerald-50/20">
         {/* Decorative background elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-400/20 to-purple-600/20 rounded-full blur-3xl"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-emerald-400/20 to-blue-500/20 rounded-full blur-3xl"></div>
         </div>
 
         <div className="relative z-10 container mx-auto px-4 py-8">
@@ -181,7 +179,7 @@ export default async function BlogDetailPage({ params }: { params: { id: string 
               
               <a 
                 href="/blog" 
-                className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-2xl hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
+                className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-slate-600 to-emerald-600 text-white font-semibold rounded-2xl hover:from-slate-700 hover:to-emerald-700 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
               >
                 <span className="mr-2">📚</span>
                 Browse All Blogs
@@ -196,26 +194,22 @@ export default async function BlogDetailPage({ params }: { params: { id: string 
   const headings = blog.longDescription ? extractHeadings(blog.longDescription) : [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-emerald-50/20">
-      {/* Decorative background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-400/20 to-purple-600/20 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-emerald-400/20 to-blue-500/20 rounded-full blur-3xl"></div>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-50/50 to-emerald-50/20">
+
 
       <div className="relative z-10 container mx-auto px-4 py-8 pb-24">
           {/* 3-Column Grid Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)_240px] gap-8 lg:gap-10 xl:gap-12 max-w-7xl xl:max-w-8xl mx-auto">
             {/* Left Sidebar - Table of Contents */}
-            <aside className="hidden lg:block">
-              <div className="sticky top-24">
+            <aside className="hidden lg:block bg-transparent">
+              <div className="sticky top-24 bg-transparent">
                 <TableOfContents />
               </div>
             </aside>
 
            {/* Main Content */}
            <main>
-            <article className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 overflow-hidden">
+            <article className="overflow-hidden">
               {/* Hero Image */}
               {blog.image?.url && (
                 <div className="relative w-full h-64 md:h-80 lg:h-96">
@@ -232,9 +226,9 @@ export default async function BlogDetailPage({ params }: { params: { id: string 
               )}
 
               {/* Content */}
-              <div className="p-6 md:p-8 lg:p-12 xl:p-16 pb-20">
+              <div className="p-6 md:p-8 pb-20">
                 {/* Title */}
-                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 bg-gradient-to-r from-gray-900 via-blue-900 to-gray-900 bg-clip-text text-transparent leading-tight">
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
                   {blog.title}
                 </h1>
 
@@ -242,7 +236,7 @@ export default async function BlogDetailPage({ params }: { params: { id: string 
                 <div className="flex flex-wrap items-center gap-4 mb-8 text-sm text-gray-600">
                   {blog.author && (
                     <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                      <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
                       <span>By {typeof blog.author === 'object' ? blog.author.name : blog.author}</span>
                     </div>
                   )}
@@ -260,7 +254,7 @@ export default async function BlogDetailPage({ params }: { params: { id: string 
 
                 {/* Blog Content */}
                  {blog.longDescription ? (
-                   <article className="blog-content prose prose-lg md:prose-xl lg:prose-xl prose-slate w-full max-w-full md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto leading-relaxed space-y-6 prose-headings:scroll-mt-24 prose-headings:font-bold prose-headings:text-gray-900 prose-headings:leading-tight prose-headings:mt-12 prose-headings:mb-8 prose-h1:text-2xl md:prose-h1:text-3xl lg:prose-h1:text-4xl prose-h2:text-xl md:prose-h2:text-2xl lg:prose-h2:text-3xl prose-h2:mt-12 prose-h2:mb-8 prose-h3:text-lg md:prose-h3:text-xl lg:prose-h3:text-2xl prose-h3:mt-10 prose-h3:mb-6 prose-p:text-base md:prose-p:text-lg prose-p:text-gray-700 prose-p:leading-loose prose-p:mb-6 prose-a:text-blue-600 prose-a:font-medium prose-a:no-underline hover:prose-a:underline focus:prose-a:outline-none focus:prose-a:ring-2 focus:prose-a:ring-blue-500 focus:prose-a:ring-offset-2 prose-strong:text-gray-900 prose-strong:font-semibold prose-ul:text-base md:prose-ul:text-lg prose-ul:text-gray-700 prose-ul:space-y-2 prose-ol:text-base md:prose-ol:text-lg prose-ol:text-gray-700 prose-ol:space-y-2 prose-li:text-gray-700 prose-li:leading-relaxed prose-blockquote:border-l-4 prose-blockquote:border-blue-500 prose-blockquote:bg-blue-50/50 prose-blockquote:rounded-r-lg prose-blockquote:py-4 prose-blockquote:px-6 prose-blockquote:text-base md:prose-blockquote:text-lg prose-blockquote:italic prose-blockquote:leading-relaxed prose-code:text-sm prose-code:bg-gray-100 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:font-mono prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-lg prose-pre:p-4 prose-pre:overflow-x-auto prose-img:rounded-lg prose-img:shadow-lg prose-img:mx-auto prose-img:w-full prose-img:my-10">
+                   <article className="blog-content prose prose-lg md:prose-xl lg:prose-xl prose-slate w-full max-w-full md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto leading-relaxed space-y-6 prose-headings:scroll-mt-24 prose-headings:font-bold prose-headings:text-gray-900 prose-headings:leading-tight prose-headings:mt-12 prose-headings:mb-8 prose-h1:text-2xl md:prose-h1:text-3xl lg:prose-h1:text-4xl prose-h2:text-xl md:prose-h2:text-2xl lg:prose-h2:text-3xl prose-h2:mt-12 prose-h2:mb-8 prose-h3:text-lg md:prose-h3:text-xl lg:prose-h3:text-2xl prose-h3:mt-10 prose-h3:mb-6 prose-p:text-base md:prose-p:text-lg prose-p:text-gray-700 prose-p:leading-loose prose-p:mb-6 prose-a:text-emerald-600 prose-a:font-medium prose-a:no-underline hover:prose-a:underline focus:prose-a:outline-none focus:prose-a:ring-2 focus:prose-a:ring-emerald-500 focus:prose-a:ring-offset-2 prose-strong:text-gray-900 prose-strong:font-semibold prose-ul:text-base md:prose-ul:text-lg prose-ul:text-gray-700 prose-ul:space-y-2 prose-ol:text-base md:prose-ol:text-lg prose-ol:text-gray-700 prose-ol:space-y-2 prose-li:text-gray-700 prose-li:leading-relaxed prose-blockquote:border-l-4 prose-blockquote:border-emerald-500 prose-blockquote:bg-emerald-50/50 prose-blockquote:rounded-r-lg prose-blockquote:py-4 prose-blockquote:px-6 prose-blockquote:text-base md:prose-blockquote:text-lg prose-blockquote:italic prose-blockquote:leading-relaxed prose-code:text-sm prose-code:bg-gray-100 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:font-mono prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-lg prose-pre:p-4 prose-pre:overflow-x-auto prose-img:rounded-lg prose-img:shadow-lg prose-img:mx-auto prose-img:w-full prose-img:my-10">
                      {customParser(blog.longDescription)}
                    </article>
                 ) : (

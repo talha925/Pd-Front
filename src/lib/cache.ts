@@ -109,7 +109,7 @@ export const generateStoreJsonLd = (store: any, siteUrl: string) => ({
   "name": store.name,
   "image": store.image?.url || "",
   "description": store.short_description || store.heading || "",
-  "url": `${siteUrl}/stores/${store.slug}`
+  "url": `${siteUrl}/store/${store.slug}`
 });
 
 export const generateCategoryJsonLd = (category: any, siteUrl: string) => ({

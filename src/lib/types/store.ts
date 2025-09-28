@@ -1,6 +1,9 @@
+import { Category } from './category';
+
 export interface Store {
   _id: string;
   slug: string;
+  categories?: Category[];
   name: string;
   trackingUrl?: string;
   image?: {
@@ -9,10 +12,15 @@ export interface Store {
   };
   heading?: string;
   short_description?: string;
+  long_description?: string;
   language?: string;
   isTopStore?: boolean;
   isEditorsChoice?: boolean;
   coupons?: Coupon[];
+  seo?: SEO;
+  createdAt?: string;
+  updatedAt?: string;
+  __v?: number;
 }
 
 export interface Coupon {
@@ -21,6 +29,29 @@ export interface Coupon {
   code: string;
   active: boolean;
   isValid: boolean;
+  featuredForHome?: boolean;
+  hits?: number;
+  lastAccessed?: string | null;
+  order?: number;
+}
+
+export interface SEO {
+  meta_title?: string;
+  meta_description?: string;
+  meta_keywords?: string;
+  description?: string;
+  [key: string]: any;
+}
+
+
+
+export interface StoresApiResponse {
+  status: string;
+  data: Store[];
+  metadata?: {
+    totalStores: number;
+    timestamp: string;
+  };
 }
 
 export interface StoreFormData {

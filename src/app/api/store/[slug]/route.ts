@@ -1,16 +1,10 @@
 import { NextResponse } from 'next/server';
-import config from '@/lib/config';
-import { Store } from '@/lib/types/store';
+import { getStoreBySlug } from '@/lib/store-service';
 
 // Dev-only logging
 const log = (msg: string) => {
   if (process.env.NODE_ENV !== 'production') console.log(msg);
 };
-
-// --- In-memory cache ---
-let storesCache: { data: Store[]; timestamp: number } | null = null;
-const CACHE_DURATION = 30000; // 30s in-memory cache
-const ISR_REVALIDATE = 60; // 60s ISR for CDN
 
 export async function GET(req: Request, { params }: { params: { slug: string } }) {
   try {
@@ -24,64 +18,22 @@ export async function GET(req: Request, { params }: { params: { slug: string } }
     } else {
       headers.set(
         'Cache-Control',
-        `public, s-maxage=${ISR_REVALIDATE}, stale-while-revalidate=${ISR_REVALIDATE}`
+        'public, s-maxage=60, stale-while-revalidate=60'
       );
     }
 
-    log(`Fetching stores (noCache=${noCache}) for slug: ${params.slug}`);
+    log(`[API ROUTE] Fetching store via service layer (noCache=${noCache}) for slug: ${params.slug}`);
 
-    let stores: Store[] = [];
-    const now = Date.now();
-
-    // --- Use in-memory cache if valid ---
-    if (!noCache && storesCache && now - storesCache.timestamp < CACHE_DURATION) {
-      stores = storesCache.data;
-      log('Using in-memory cache');
-    } else {
-      // --- Fetch fresh data ---
-      const fetchOptions: RequestInit = noCache
-        ? { cache: 'no-store' }
-        : { next: { revalidate: ISR_REVALIDATE, tags: ['stores'] } };
-
-      const res = await fetch(`${config.api.baseUrl}/api/stores`, fetchOptions);
-
-      if (!res.ok) throw new Error(`Failed to fetch stores: ${res.status}`);
-
-      const response = await res.json();
-
-      if (!response.data || !Array.isArray(response.data)) {
-        throw new Error('Invalid response structure from API');
-      }
-
-      stores = response.data;
-
-      // --- Sync in-memory cache ---
-      storesCache = { data: stores, timestamp: now };
-      log('Fetched fresh data and updated in-memory cache');
-    }
-
-    // --- Find the specific store ---
-    const store = stores.find((s) => s.slug === params.slug);
+    // CRITICAL FIX: Use direct service layer instead of internal HTTP calls
+    const store = await getStoreBySlug(params.slug, noCache);
+    
     if (!store) {
       return NextResponse.json({ message: 'Store not found' }, { status: 404 });
     }
 
-    // --- Add SEO / JSON-LD structured data ---
-    const jsonLd = {
-      "@context": "https://schema.org",
-      "@type": "Store",
-      "name": store.name,
-      "image": store.image?.url || "",
-      "description": store.short_description || "",
-      "url": `${config.api.siteUrl}/stores/${store.slug}`
-    };
+    log(`[API ROUTE] Store found via service layer: ${store.name}`);
 
-    const body = {
-      ...store,
-      seo: jsonLd
-    };
-
-    return new NextResponse(JSON.stringify(body), {
+    return new NextResponse(JSON.stringify(store), {
       status: 200,
       headers
     });

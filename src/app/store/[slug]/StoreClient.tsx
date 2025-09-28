@@ -94,11 +94,13 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
 
   // Helper function to refresh store data with no-cache
   const refreshStoreData = async () => {
-    if (!initialStore?.slug) return;
+    if (!store?.slug && !initialStore?.slug) return;
+    
+    const slug = store?.slug || initialStore?.slug;
     
     try {
-  
-      const response = await fetch(`/api/store/${initialStore.slug}`, {
+      console.log(`[CLIENT REFRESH] Refreshing store data for slug: ${slug}`);
+      const response = await fetch(`/api/store/${slug}`, {
         cache: 'no-store', // Always fetch fresh data
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -110,29 +112,48 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
       if (response.ok) {
         const freshStore = await response.json();
         setStore(freshStore);
+        console.log(`[CLIENT REFRESH] Successfully refreshed store data`);
       }
     } catch (error) {
       console.error('Failed to refresh store data:', error);
-    } finally {
-
     }
   };
 
-  // Mount effect: Refresh data after initial load
+  // Mount effect: Only refresh if no initial data (error case)
   useEffect(() => {
-    refreshStoreData();
+    // ✅ CRITICAL FIX: Only refresh if initialStore is null (error case)
+    // This prevents duplicate fetches during normal hydration
+    if (!initialStore) {
+      console.log('[CLIENT MOUNT] No initial store data, refreshing...');
+      refreshStoreData();
+    } else {
+      console.log('[CLIENT MOUNT] Using initial store data, skipping refresh');
+    }
   }, []);
 
-  // Focus/Visibility effect: Refresh when tab becomes active
+  // Focus/Visibility effect: Refresh when tab becomes active (reduced frequency)
   useEffect(() => {
+    let lastRefresh = 0;
+    const FOCUS_REFRESH_COOLDOWN = 30000; // 30 seconds cooldown
+    
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        refreshStoreData();
+        const now = Date.now();
+        if (now - lastRefresh > FOCUS_REFRESH_COOLDOWN) {
+          console.log('[CLIENT FOCUS] Tab became visible, refreshing store data');
+          refreshStoreData();
+          lastRefresh = now;
+        }
       }
     };
     
     const handleWindowFocus = () => {
-      refreshStoreData();
+      const now = Date.now();
+      if (now - lastRefresh > FOCUS_REFRESH_COOLDOWN) {
+        console.log('[CLIENT FOCUS] Window focused, refreshing store data');
+        refreshStoreData();
+        lastRefresh = now;
+      }
     };
     
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -144,11 +165,12 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
     };
   }, []);
 
-  // Auto-refresh interval: Refresh every 10 seconds
+  // Auto-refresh interval: Refresh every 5 minutes (reduced from 10 seconds)
   useEffect(() => {
     const interval = setInterval(() => {
+      console.log('[CLIENT INTERVAL] Auto-refreshing store data (5min interval)');
       refreshStoreData();
-    }, 10000); // 10 seconds
+    }, 5 * 60 * 1000); // 5 minutes instead of 10 seconds
     
     return () => clearInterval(interval);
   }, []);
@@ -163,20 +185,9 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
     }
   }, []);
 
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        const pendingCode = localStorage.getItem("pendingCode");
-        const wasRedirected = localStorage.getItem("wasRedirected");
-        if (pendingCode && wasRedirected === "true" && !showModal) {
-          setSelectedCode(pendingCode);
-          setShowModal(true);
-        }
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [showModal]);
+  // CRITICAL FIX: Remove duplicate visibility change handler
+  // The visibility change is already handled above with cooldown
+  // This duplicate handler was causing unnecessary refreshes
 
   useEffect(() => {
     if (showModal) {

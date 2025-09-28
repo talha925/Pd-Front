@@ -23,7 +23,6 @@
     "critters": "^0.0.23",
     "html-entities": "^2.6.0",
     "html-react-parser": "^5.2.6",
-
     "jose": "^6.0.12",
     "jsdom": "^26.1.0",
     "lucide-react": "^0.539.0",
@@ -31,6 +30,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hot-toast": "^2.5.2",
+    "sharp": "^0.34.4",
     "tailwind-merge": "^3.3.1",
     "tinymce": "^8.0.1",
     "web-vitals": "^5.1.0",
