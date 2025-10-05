@@ -99,9 +99,10 @@ async function fetchBlogBySlugOrId(slugOrId: string): Promise<Blog | null> {
         }
 
         const detailData = await detailRes.json();
-        const fullBlog = detailData.blog || detailData.data;
+        const fullBlog = detailData.blog || detailData.data?.blog || detailData.data;
 
-        console.log('Successfully fetched full blog data.');
+        console.log('Successfully fetched full blog data:', fullBlog);
+        console.log('longDescription present:', !!fullBlog?.longDescription);
         return fullBlog || null;
 
     } catch (error) {
