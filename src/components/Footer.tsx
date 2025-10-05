@@ -21,10 +21,10 @@ export default function Footer() {
           <div>
             <h4 className="text-lg font-semibold mb-6 bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 bg-clip-text text-transparent">Quick Links</h4>
             <ul className="space-y-3">
-              <li><a href="#" className="text-slate-700 hover:text-indigo-600 transition-all duration-300 hover:translate-x-1 hover:scale-105">About Us</a></li>
-              <li><a href="#" className="text-slate-700 hover:text-indigo-600 transition-all duration-300 hover:translate-x-1 hover:scale-105">Privacy Policy</a></li>
-              <li><a href="#" className="text-slate-700 hover:text-indigo-600 transition-all duration-300 hover:translate-x-1 hover:scale-105">Terms & Conditions</a></li>
-              <li><a href="#" className="text-slate-700 hover:text-indigo-600 transition-all duration-300 hover:translate-x-1 hover:scale-105">Contact Us</a></li>
+              <li><a href="/about" className="text-slate-700 hover:text-indigo-600 transition-all duration-300 hover:translate-x-1 hover:scale-105">About Us</a></li>
+              <li><a href="/privacy" className="text-slate-700 hover:text-indigo-600 transition-all duration-300 hover:translate-x-1 hover:scale-105">Privacy Policy</a></li>
+              <li><a href="/terms" className="text-slate-700 hover:text-indigo-600 transition-all duration-300 hover:translate-x-1 hover:scale-105">Terms & Conditions</a></li>
+              <li><a href="/contact" className="text-slate-700 hover:text-indigo-600 transition-all duration-300 hover:translate-x-1 hover:scale-105">Contact Us</a></li>
             </ul>
           </div>
 
@@ -44,7 +44,7 @@ export default function Footer() {
         <div className="mt-12 text-center">
           <hr className="border-t border-gradient-to-r from-indigo-200/40 via-purple-200/40 to-pink-200/40 mb-6" />
           <p className="text-slate-600 text-lg font-medium bg-gradient-to-r from-slate-600 to-slate-700 bg-clip-text text-transparent">
-            2024 Bloggydeals. We may earn a commission if you use our links/coupons.
+            © 2025 PennyScroll — Your trusted source for savings, deals & shopping guides.
           </p>
         </div>
       </div>

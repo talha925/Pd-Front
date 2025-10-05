@@ -10,14 +10,12 @@ import dynamic from 'next/dynamic'
 import config from '@/lib/config'
 
 // Dynamically import performance monitoring components
-const PerformanceMonitor = dynamic(
-  () => import('@/components/ui/PerformanceMonitor'),
-  { ssr: false }
-)
-
-const PerformanceTracker = dynamic(
-  () => import('@/components/ui/PerformanceTracker'),
-  { ssr: false }
+const OptimizedPerformanceMonitor = dynamic(
+  () => import('@/components/ui/OptimizedPerformanceMonitor'),
+  { 
+    ssr: false,
+    loading: () => null // Explicit loading state for better performance
+  }
 )
 
 // Load Inter font with display: swap for better performance
@@ -119,8 +117,7 @@ export default function RootLayout({
             {children}
             <ConditionalFooter />
             {/* Monitor performance metrics */}
-            <PerformanceMonitor />
-            <PerformanceTracker />
+            <OptimizedPerformanceMonitor />
           </ErrorBoundary>
         </Providers>
       </body>
