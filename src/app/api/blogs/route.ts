@@ -57,8 +57,8 @@ export async function GET(request: NextRequest) {
       success: true
     });
     
-    // Add proper cache headers for stale-while-revalidate
-    response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+    // Add proper cache headers without stale-while-revalidate
+    response.headers.set('Cache-Control', 'public, s-maxage=300, must-revalidate');
     response.headers.set('CDN-Cache-Control', 'public, s-maxage=300');
     response.headers.set('Vercel-CDN-Cache-Control', 'public, s-maxage=300');
     

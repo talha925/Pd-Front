@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+        'Cache-Control': 'public, s-maxage=300, must-revalidate',
       },
       next: {
         revalidate: 300, // Cache for 5 minutes for search results
@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
     });
     
     // Add minimal caching for error responses
-    errorResponse.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120');
+    errorResponse.headers.set('Cache-Control', 'public, s-maxage=60, must-revalidate');
     
     return errorResponse;
   }

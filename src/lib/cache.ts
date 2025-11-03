@@ -122,7 +122,7 @@ export class CacheManager<T> {
     } else {
       headers.set(
         'Cache-Control',
-        `public, s-maxage=${this.isrRevalidate}, stale-while-revalidate=${this.isrRevalidate}`
+        `public, s-maxage=${this.isrRevalidate}, must-revalidate`
       );
     }
 
