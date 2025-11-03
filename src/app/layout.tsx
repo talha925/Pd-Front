@@ -9,12 +9,12 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 import dynamic from 'next/dynamic'
 import config from '@/lib/config'
 
-// Dynamically import performance monitoring components
-const OptimizedPerformanceMonitor = dynamic(
-  () => import('@/components/ui/OptimizedPerformanceMonitor'),
+// Dynamically import WebSocket components for real-time functionality
+const RealTimeUpdates = dynamic(
+  () => import('@/components/common/RealTimeUpdates').then(mod => ({ default: mod.RealTimeUpdates })),
   { 
     ssr: false,
-    loading: () => null // Explicit loading state for better performance
+    loading: () => null
   }
 )
 
@@ -116,8 +116,9 @@ export default function RootLayout({
             <Header />
             {children}
             <ConditionalFooter />
-            {/* Monitor performance metrics */}
-            <OptimizedPerformanceMonitor />
+            {/* Performance monitoring is available in admin dashboard only */}
+            {/* Real-time updates notifications */}
+            <RealTimeUpdates />
           </ErrorBoundary>
         </Providers>
       </body>

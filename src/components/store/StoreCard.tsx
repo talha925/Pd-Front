@@ -1,10 +1,10 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { Store } from '@/lib/types';
 import { decodeHTML } from '@/lib/utils/formatting';
+import SafeImage from '@/components/ui/SafeImage';
 
 interface StoreCardProps {
   store: Store;
@@ -36,14 +36,15 @@ const StoreCard: React.FC<StoreCardProps> = ({ store }) => {
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-6 flex flex-col justify-between items-center shadow-sm hover:shadow-md transition-all">
       <div className="h-28 flex items-center justify-center mb-4">
-        <Image
+        <SafeImage
           src={store.image?.url || '/placeholder-store.png'}
           alt={store.image?.alt || store.name}
           width={160}
           height={80}
           sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          loading="lazy"
+          priority={false}
           className="object-contain max-h-24"
+          fallbackSrc="/placeholder-store.png"
         />
       </div>
 

@@ -7,6 +7,7 @@ import Image from 'next/image';
 const navLinks = [
   { href: '/admin/blogs/create', label: 'Create Blog' },
   { href: '/admin/blogs', label: 'All Blogs' },
+  { href: '/admin/performance-dashboard', label: 'Performance Dashboard' },
 ];
 
 const topNavLinks = [
@@ -16,10 +17,27 @@ const topNavLinks = [
   { href: '/blog', label: 'Blog' },
 ];
 
-function handleLogout() {
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('authToken');
-    window.location.href = '/login';
+async function handleLogout() {
+  try {
+    // Call logout API to clear server-side cookies
+    await fetch('/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include'
+    });
+    
+    // Clear client-side storage
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('authToken');
+      // Force redirect to login
+      window.location.href = '/login';
+    }
+  } catch (error) {
+    console.error('Logout error:', error);
+    // Even if API fails, clear local storage and redirect
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('authToken');
+      window.location.href = '/login';
+    }
   }
 }
 

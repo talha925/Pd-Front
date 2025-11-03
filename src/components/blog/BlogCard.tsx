@@ -1,4 +1,4 @@
-import Image from 'next/image';
+import SafeImage from '@/components/ui/SafeImage';
 import Link from 'next/link';
 import { themeClasses } from '@/lib/theme/utils';
 
@@ -22,7 +22,7 @@ export default function BlogCard({ blog, variant }: BlogCardProps) {
       <div className="group relative bg-white/80 backdrop-blur-sm border border-indigo-200/40 rounded-2xl overflow-hidden transform transition-all duration-500 hover:scale-[1.03] shadow-xl hover:shadow-2xl hover:border-indigo-300/60 hover:bg-white/90 cursor-pointer">
       {blog.image?.url && (
         <div className="relative h-48 overflow-hidden">
-          <Image
+          <SafeImage
             src={blog.image.url}
             alt={blog.image.alt || blog.title}
             width={800}
@@ -30,6 +30,7 @@ export default function BlogCard({ blog, variant }: BlogCardProps) {
             sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
             loading="lazy" // Use lazy loading for non-critical images
+            fallbackSrc="/placeholder-blog.png"
           />
 
         </div>

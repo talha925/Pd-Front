@@ -22,7 +22,9 @@ export async function GET(request: Request, { params }: { params: { id: string }
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    return NextResponse.json({ blog: data.data || data || null });
+    // Unwrap common response shapes to return the actual blog object
+    const blog = (data?.data?.blog) ?? (data?.blog) ?? (data?.data) ?? data ?? null;
+    return NextResponse.json({ blog });
   } catch (error) {
     return NextResponse.json({ message: 'Failed to fetch blog', error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
   }
@@ -54,7 +56,8 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     revalidateTag('featured-blogs'); // Add featured blogs tag
     revalidateTag(`blog-${id}`);
     
-    return NextResponse.json({ updatedBlog: data.data || data || null });
+    const updatedBlog = (data?.data?.blog) ?? (data?.blog) ?? (data?.data) ?? data ?? null;
+    return NextResponse.json({ updatedBlog });
   } catch (error) {
     return NextResponse.json({ message: 'Failed to update blog', error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
   }

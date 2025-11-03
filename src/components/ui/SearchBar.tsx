@@ -3,10 +3,10 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Search, X, Loader2, Store as StoreIcon, FileText } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useSearch } from '@/hooks/useSearch';
 import { cn } from '@/lib/utils';
 import { themeClasses, componentThemes } from '@/lib/theme/utils';
+import SafeImage from '@/components/ui/SafeImage';
 
 interface SearchBarProps {
   className?: string;
@@ -141,12 +141,13 @@ const SearchBar = React.memo(function SearchBar({
           >
             {store.image?.url ? (
               <div className="w-8 h-8 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                <Image
+                <SafeImage
                   src={store.image.url}
                   alt={store.image.alt || store.name}
                   width={32}
                   height={32}
                   className="w-full h-full object-cover"
+                  fallbackSrc="/placeholder-store.png"
                 />
               </div>
             ) : (
@@ -193,12 +194,13 @@ const SearchBar = React.memo(function SearchBar({
           >
             {blog.image?.url ? (
               <div className="w-12 h-8 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                <Image
+                <SafeImage
                   src={blog.image.url}
                   alt={blog.image.alt || blog.title}
                   width={48}
                   height={32}
                   className="w-full h-full object-cover"
+                  fallbackSrc="/placeholder-blog.png"
                 />
               </div>
             ) : (

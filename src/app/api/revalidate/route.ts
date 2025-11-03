@@ -1,13 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath, revalidateTag } from 'next/cache';
+import { invalidateStoreCache } from '@/lib/store-service';
 
 /**
  * API route for on-demand revalidation of cached pages and data
  * Supports revalidation by path, tag, or specific content types
+ * Enhanced for WebSocket-triggered real-time updates
  */
 export async function POST(request: NextRequest) {
   try {
-    const { type, path, tag, blogId, storeSlug, secret } = await request.json();
+    const { 
+      type, 
+      path, 
+      tag, 
+      blogId, 
+      storeSlug, 
+      couponId, 
+      categorySlug,
+      secret,
+      source = 'api' // Track if revalidation is from WebSocket or direct API call
+    } = await request.json();
 
     // Verify secret token for security
     if (secret !== process.env.REVALIDATION_SECRET) {
@@ -20,14 +32,22 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Path is required for path revalidation' }, { status: 400 });
         }
         revalidatePath(path);
-        return NextResponse.json({ message: `Revalidated path: ${path}` });
+        return NextResponse.json({ 
+          message: `Revalidated path: ${path}`,
+          source,
+          timestamp: new Date().toISOString()
+        });
 
       case 'tag':
         if (!tag) {
           return NextResponse.json({ error: 'Tag is required for tag revalidation' }, { status: 400 });
         }
         revalidateTag(tag);
-        return NextResponse.json({ message: `Revalidated tag: ${tag}` });
+        return NextResponse.json({ 
+          message: `Revalidated tag: ${tag}`,
+          source,
+          timestamp: new Date().toISOString()
+        });
 
       case 'blog':
         // Revalidate blog-related pages and tags
@@ -37,7 +57,11 @@ export async function POST(request: NextRequest) {
           revalidatePath(`/blog/${blogId}`);
           revalidateTag(`blog-${blogId}`);
         }
-        return NextResponse.json({ message: 'Revalidated blog pages' });
+        return NextResponse.json({ 
+          message: 'Revalidated blog pages',
+          source,
+          timestamp: new Date().toISOString()
+        });
 
       case 'stores':
         // Revalidate stores-related pages and tags
@@ -46,14 +70,46 @@ export async function POST(request: NextRequest) {
         if (storeSlug) {
           revalidatePath(`/store/${storeSlug}`);
           revalidateTag(`store-${storeSlug}`);
+          // Also revalidate store coupons
+          revalidateTag(`store-${storeSlug}-coupons`);
         }
-        return NextResponse.json({ message: 'Revalidated stores pages' });
+        // Ensure service-layer caches are cleared so fresh data is fetched
+        invalidateStoreCache();
+        return NextResponse.json({ 
+          message: 'Revalidated stores pages',
+          source,
+          timestamp: new Date().toISOString()
+        });
+
+      case 'coupons':
+        // Revalidate coupon-related pages and tags
+        revalidateTag('coupons');
+        if (couponId) {
+          revalidateTag(`coupon-${couponId}`);
+        }
+        if (storeSlug) {
+          // Revalidate store-specific coupons
+          revalidateTag(`store-${storeSlug}-coupons`);
+          revalidatePath(`/store/${storeSlug}`);
+        }
+        return NextResponse.json({ 
+          message: 'Revalidated coupon pages',
+          source,
+          timestamp: new Date().toISOString()
+        });
 
       case 'categories':
         // Revalidate categories-related pages and tags
         revalidatePath('/Categories');
         revalidateTag('categories');
-        return NextResponse.json({ message: 'Revalidated categories pages' });
+        if (categorySlug) {
+          revalidateTag(`category-${categorySlug}`);
+        }
+        return NextResponse.json({ 
+          message: 'Revalidated categories pages',
+          source,
+          timestamp: new Date().toISOString()
+        });
 
       case 'all':
         // Revalidate all pages
@@ -63,7 +119,14 @@ export async function POST(request: NextRequest) {
         revalidateTag('stores');
         revalidatePath('/Categories');
         revalidateTag('categories');
-        return NextResponse.json({ message: 'Revalidated all pages' });
+        revalidateTag('coupons');
+        // Also clear service-layer caches globally
+        invalidateStoreCache();
+        return NextResponse.json({ 
+          message: 'Revalidated all pages',
+          source,
+          timestamp: new Date().toISOString()
+        });
 
       default:
         return NextResponse.json({ error: 'Invalid revalidation type' }, { status: 400 });

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import SafeImage from '@/components/ui/SafeImage';
 
 interface Blog {
   _id: string;
@@ -134,12 +134,13 @@ export default function RecentBlogs({ currentBlogId, limit = 5 }: RecentBlogsPro
                   <div className="flex gap-2">
                     {imageUrl && (
                       <div className="flex-shrink-0">
-                        <Image
+                        <SafeImage
                           src={imageUrl}
                           alt={blog.title}
                           width={60}
                           height={60}
                           className="rounded-lg object-cover"
+                          fallbackSrc="/placeholder-blog.png"
                         />
                       </div>
                     )}

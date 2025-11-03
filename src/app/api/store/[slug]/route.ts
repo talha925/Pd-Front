@@ -9,7 +9,12 @@ const log = (msg: string) => {
 export async function GET(req: Request, { params }: { params: { slug: string } }) {
   try {
     const { searchParams } = new URL(req.url);
-    const noCache = searchParams.get('noCache') === 'true';
+    const noCacheParam = searchParams.get('noCache') === 'true';
+    // Honor client cache-busting headers
+    const cacheControl = req.headers.get('cache-control')?.toLowerCase() || '';
+    const pragma = req.headers.get('pragma')?.toLowerCase() || '';
+    const noCacheHeader = cacheControl.includes('no-cache') || cacheControl.includes('no-store') || cacheControl.includes('must-revalidate') || pragma.includes('no-cache');
+    const noCache = noCacheParam || noCacheHeader;
 
     // Cache headers
     const headers = new Headers();

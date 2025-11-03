@@ -1,24 +1,38 @@
 // Comprehensive caching utility for Next.js App Router
+import { cacheOptimizer } from './cache-optimizer';
 
 // Dev-only logging
 export const log = (msg: string) => {
   if (process.env.NODE_ENV !== 'production') console.log(msg);
 };
 
-// Cache configuration
+// Cache configuration - Enhanced for better performance
 export const CACHE_CONFIG = {
   categories: {
-    inMemoryDuration: 30000, // 30s
+    inMemoryDuration: 60000, // 1 minute (increased from 30s)
     isrRevalidate: 300, // 5 minutes
+    tags: ['categories'],
   },
   stores: {
-    inMemoryDuration: 30000, // 30s
+    inMemoryDuration: 45000, // 45 seconds (increased from 30s)
     isrRevalidate: 60, // 60s
+    tags: ['stores'],
   },
   coupons: {
-    // Always fresh - no caching
+    // Always fresh - no caching for real-time offers
     inMemoryDuration: 0,
     isrRevalidate: 0,
+    tags: ['coupons'],
+  },
+  blogs: {
+    inMemoryDuration: 300000, // 5 minutes
+    isrRevalidate: 3600, // 1 hour
+    tags: ['blogs'],
+  },
+  'featured-blogs': {
+    inMemoryDuration: 600000, // 10 minutes
+    isrRevalidate: 3600, // 1 hour
+    tags: ['featured-blogs'],
   },
 };
 
@@ -36,11 +50,17 @@ export class CacheManager<T> {
   private cacheKey: string;
   private inMemoryDuration: number;
   private isrRevalidate: number;
+  private tags: string[];
 
-  constructor(cacheKey: string, config: { inMemoryDuration: number; isrRevalidate: number }) {
+  constructor(cacheKey: string, config: { 
+    inMemoryDuration: number; 
+    isrRevalidate: number; 
+    tags?: string[];
+  }) {
     this.cacheKey = cacheKey;
     this.inMemoryDuration = config.inMemoryDuration;
     this.isrRevalidate = config.isrRevalidate;
+    this.tags = config.tags || [cacheKey];
   }
 
   // Get data from cache or fetch fresh
@@ -48,6 +68,7 @@ export class CacheManager<T> {
     apiUrl: string,
     noCache: boolean = false
   ): Promise<{ data: T[]; headers: Headers }> {
+    const startTime = Date.now();
     const now = Date.now();
     let data: T[] = [];
     const cache = cacheStorage.get(this.cacheKey) as CacheEntry<T> | undefined;
@@ -56,11 +77,20 @@ export class CacheManager<T> {
     if (!noCache && cache && now - cache.timestamp < this.inMemoryDuration) {
       data = cache.data;
       log(`Serving ${this.cacheKey} from in-memory cache`);
+      
+      // Record cache hit
+      const responseTime = Date.now() - startTime;
+      cacheOptimizer.recordHit(this.cacheKey, responseTime);
     } else {
       // Fetch fresh data
       const fetchOptions: RequestInit = noCache || this.isrRevalidate === 0
         ? { cache: 'no-store' }
-        : { next: { revalidate: this.isrRevalidate, tags: [this.cacheKey] } };
+        : { 
+            next: { 
+              revalidate: this.isrRevalidate, 
+              tags: this.tags 
+            } 
+          };
 
       log(`Fetching ${this.cacheKey} from API (noCache=${noCache})`);
       const res = await fetch(apiUrl, fetchOptions);
@@ -77,6 +107,10 @@ export class CacheManager<T> {
         cacheStorage.set(this.cacheKey, { data, timestamp: now });
         log(`Fetched fresh ${this.cacheKey} and updated in-memory cache`);
       }
+
+      // Record cache miss
+      const responseTime = Date.now() - startTime;
+      cacheOptimizer.recordMiss(this.cacheKey, responseTime);
     }
 
     // Generate appropriate cache headers
@@ -98,6 +132,7 @@ export class CacheManager<T> {
   // Clear cache for this key
   clearCache(): void {
     cacheStorage.delete(this.cacheKey);
+    cacheOptimizer.recordInvalidation(this.cacheKey);
     log(`Cleared cache for ${this.cacheKey}`);
   }
 }
@@ -124,6 +159,7 @@ export const generateCategoryJsonLd = (category: any, siteUrl: string) => ({
 export const invalidateCache = (cacheKeys: string[]) => {
   cacheKeys.forEach(key => {
     cacheStorage.delete(key);
+    cacheOptimizer.recordInvalidation(key);
     log(`Invalidated cache for ${key}`);
   });
 };

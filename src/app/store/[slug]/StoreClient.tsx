@@ -2,35 +2,19 @@
 
 'use client';
 
-import Image from 'next/image';
+import SafeImage from '@/components/ui/SafeImage';
 import { useEffect, useState } from 'react';
 import { decodeHTML } from '@/lib/utils/formatting';
 import toast, { Toaster } from 'react-hot-toast';
+import { Store } from '@/lib/types/store';
 
-// --- Types (No changes) ---
+// --- Types (Updated to use global Store type) ---
 type Coupon = {
   _id: string;
   offerDetails: string;
   code: string;
   active: boolean;
   isValid: boolean;
-  expires?: string;
-  usedCount?: number;
-};
-
-type Store = {
-  _id: string;
-  slug: string;
-  image: {
-    url: string;
-    alt: string;
-  };
-  name: string;
-  about?: string;
-  short_description?: string;
-  long_description?: string;
-  trackingUrl?: string;
-  coupons: Coupon[];
 };
 
 interface StoreClientProps {
@@ -100,7 +84,8 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
     
     try {
       console.log(`[CLIENT REFRESH] Refreshing store data for slug: ${slug}`);
-      const response = await fetch(`/api/store/${slug}`, {
+      // Force fresh data from server by bypassing StoreService caches
+      const response = await fetch(`/api/store/${slug}?noCache=true`, {
         cache: 'no-store', // Always fetch fresh data
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -175,19 +160,68 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
     return () => clearInterval(interval);
   }, []);
 
-  // All useEffects and handlers remain the same as your old code
-  useEffect(() => {
+  // Check for pending coupon code on component mount and page show
+  const checkPendingCode = () => {
+    console.log('[checkPendingCode] Function called');
     const pendingCode = localStorage.getItem("pendingCode");
     const wasRedirected = localStorage.getItem("wasRedirected");
+    console.log(`[checkPendingCode] Found in localStorage: pendingCode=${pendingCode}, wasRedirected=${wasRedirected}`);
+
     if (pendingCode && wasRedirected === "true") {
+      console.log('[checkPendingCode] Conditions met. Removing localStorage items and showing modal.');
+      // CRITICAL CHANGE: Remove items immediately to prevent re-triggering.
+      localStorage.removeItem("pendingCode");
+      localStorage.removeItem("wasRedirected");
+      
       setSelectedCode(pendingCode);
       setShowModal(true);
+    } else {
+      console.log('[checkPendingCode] Conditions not met. Modal will not be shown.');
     }
-  }, []);
+  };
 
-  // CRITICAL FIX: Remove duplicate visibility change handler
-  // The visibility change is already handled above with cooldown
-  // This duplicate handler was causing unnecessary refreshes
+  useEffect(() => {
+    // Check on initial mount
+    console.log('[MOUNT] Component mounted, checking for pending code');
+    checkPendingCode();
+    
+    // Add multiple event listeners to handle different navigation scenarios
+    const handlePageShow = (event: any) => {
+      console.log(`[PAGESHOW] Event fired - persisted: ${event.persisted}, type: ${event.type}`);
+      console.log('[PAGESHOW] Checking for pending code after pageshow');
+      checkPendingCode();
+    };
+    
+    const handleWindowFocus = () => {
+      console.log('[FOCUS] Window focused, checking for pending code');
+      checkPendingCode();
+    };
+    
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('[VISIBILITY] Document became visible, checking for pending code');
+        checkPendingCode();
+      }
+    };
+    
+    // Add all event listeners
+    window.addEventListener('pageshow', handlePageShow);
+    window.addEventListener('focus', handleWindowFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Also add a slight delay check for back navigation
+    const delayedCheck = setTimeout(() => {
+      console.log('[DELAYED] Running delayed check for pending code');
+      checkPendingCode();
+    }, 100);
+    
+    return () => {
+      window.removeEventListener('pageshow', handlePageShow);
+      window.removeEventListener('focus', handleWindowFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      clearTimeout(delayedCheck);
+    };
+  }, []);
 
   useEffect(() => {
     if (showModal) {
@@ -239,7 +273,7 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
   if (serverError) return <p className="text-center py-20 text-red-600 font-semibold text-xl">Error: {serverError}</p>;
   if (!store) return <p className="text-center py-20 text-red-600 font-semibold text-xl">Store not found</p>;
 
-  const aboutText = store.about || store.long_description || store.short_description || 'Discover amazing offers from this store!';
+  const aboutText = store.long_description || store.short_description || 'Discover amazing offers from this store!';
 
   // UPDATED: UI is now exactly like your old code
   return (
@@ -254,7 +288,7 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
       <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
         {/* Coupons Section */}
         <main className="w-full lg:flex-1 space-y-6">
-          {store.coupons.length === 0 ? (
+          {!store.coupons || store.coupons.length === 0 ? (
             <p className="text-gray-500 text-center py-10 text-lg">No coupons available at the moment.</p>
           ) : (
             store.coupons.filter(c => c.isValid).map((coupon) => (
@@ -262,7 +296,14 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
                 
                 {/* Logo Image (Repeated for each coupon like old UI) */}
                 <div className="bg-white rounded-lg w-[100px] h-[100px] flex-shrink-0 flex items-center justify-center shadow-sm">
-                  <Image src={store.image.url} alt={store.image.alt} width={100} height={100} className="object-contain p-2" />
+                  <SafeImage 
+                    src={store.image?.url || '/placeholder-store.png'} 
+                    alt={store.image?.alt || store.name} 
+                    width={100} 
+                    height={100} 
+                    className="object-contain p-2"
+                    fallbackSrc="/placeholder-store.png"
+                  />
                 </div>
 
                 {/* Coupon Info */}
@@ -279,12 +320,6 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
                         •••{coupon.code.slice(-3)}
                       </div>
                     )}
-                  </div>
-                  
-                  {/* Expiry & Usage */}
-                  <div className="text-xs text-gray-600 pt-2 space-y-1">
-                    {coupon.expires && <p>EXPIRES: {new Date(coupon.expires).toLocaleDateString()}</p>}
-                    {coupon.usedCount !== undefined && <p>USED: {coupon.usedCount}</p>}
                   </div>
                 </div>
               </div>

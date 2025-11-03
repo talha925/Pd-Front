@@ -1,4 +1,4 @@
-  'use client';
+'use client';
 
   import { useState, useEffect } from 'react';
   import { useRouter } from 'next/navigation';
@@ -664,30 +664,32 @@
               placeholder="Enter tags separated by commas (e.g., technology, web development, tips)"
             />
 
-            <div className="flex items-center">
-              <input
-                id="isFeatured"
-                type="checkbox"
-                checked={isFeatured}
-                onChange={(e) => setIsFeatured(e.target.checked)}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-              />
-              <label htmlFor="isFeatured" className="ml-2 text-sm font-medium text-gray-700 cursor-pointer">
-                Featured for Home
-              </label>
-            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+              <div className="flex items-center p-3 bg-white rounded-lg border border-gray-200">
+                <input
+                  id="isFeatured"
+                  type="checkbox"
+                  checked={isFeatured}
+                  onChange={(e) => setIsFeatured(e.target.checked)}
+                  className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                />
+                <label htmlFor="isFeatured" className="ml-3 text-sm font-medium text-gray-700 cursor-pointer">
+                  Featured for Home
+                </label>
+              </div>
 
-            <div className="flex items-center">
-              <input
-                id="frontBanner"
-                type="checkbox"
-                checked={frontBanner}
-                onChange={(e) => setFrontBanner(e.target.checked)}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-              />
-              <label htmlFor="frontBanner" className="ml-2 text-sm font-medium text-gray-700 cursor-pointer">
-                Front Banner
-              </label>
+              <div className="flex items-center p-3 bg-white rounded-lg border border-gray-200">
+                <input
+                  id="frontBanner"
+                  type="checkbox"
+                  checked={frontBanner}
+                  onChange={(e) => setFrontBanner(e.target.checked)}
+                  className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                />
+                <label htmlFor="frontBanner" className="ml-3 text-sm font-medium text-gray-700 cursor-pointer">
+                  Front Banner
+                </label>
+              </div>
             </div>
           </div>
 

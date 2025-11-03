@@ -27,9 +27,15 @@ interface StoreCacheEntry {
 let storesCache: CacheEntry | null = null;
 let storeCache = new Map<string, StoreCacheEntry>();
 
-// CRITICAL: Proper TTL configuration as per requirements
-const CACHE_TTL = 60000; // 60s fresh cache
-const STALE_WHILE_REVALIDATE = 300000; // 5min stale-while-revalidate
+// CRITICAL: Proper TTL configuration with environment overrides
+// In development, default to no caching to avoid stale data
+const DEV_MODE = process.env.NODE_ENV !== 'production';
+const CACHE_TTL = Number(
+  process.env.STORE_CACHE_TTL_MS ?? (DEV_MODE ? 0 : 60000)
+); // ms
+const STALE_WHILE_REVALIDATE = Number(
+  process.env.STORE_CACHE_STALE_MS ?? (DEV_MODE ? 0 : 300000)
+); // ms
 
 // Dev-only logging for debugging cache behavior
 const log = (msg: string) => {
@@ -108,10 +114,16 @@ async function fetchAllStores(forceRefresh: boolean = false): Promise<Store[]> {
         headers['Authorization'] = `Bearer ${token}`;
       }
       
-      const response = await fetch(`${config.api.baseUrl}/api/stores`, {
-        headers,
-        next: { revalidate: 60, tags: ['stores'] }
-      });
+      // In dev or when forcing refresh, bypass Next.js fetch cache entirely
+      const fetchOptions = (DEV_MODE || forceRefresh)
+        ? { headers, cache: 'no-store' as const }
+        : { headers, next: { revalidate: 60, tags: ['stores'] } };
+
+      const apiUrl = new URL(`${config.api.baseUrl}/api/stores`);
+      if (DEV_MODE || forceRefresh) {
+        apiUrl.searchParams.set('_ts', String(Date.now()));
+      }
+      const response = await fetch(apiUrl.toString(), fetchOptions);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch stores: ${response.status}`);

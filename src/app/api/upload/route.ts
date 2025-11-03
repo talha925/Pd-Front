@@ -31,16 +31,18 @@ function sanitizeFilename(filename: string): string {
   const sanitized = cleanedFilename
     .normalize('NFD') // Normalize to decompose combined characters
     .replace(/[̀-ͯ]/g, '') // Remove diacritics using Unicode range
-    .replace(/[^a-zA-Z0-9_.-]/g, '-') // Replace non-alphanumeric, non-underscore, non-hyphen, non-period with hyphen
-    .replace(/--+/g, '-') // Replace multiple hyphens with a single hyphen
-    .replace(/^-+|-+$/g, ''); // Trim hyphens from start/end
+    .replace(/\s+/g, '_') // Replace spaces with underscores first
+    .replace(/[^a-zA-Z0-9_.-]/g, '_') // Replace non-alphanumeric, non-underscore, non-period with underscore
+    .replace(/__+/g, '_') // Replace multiple underscores with a single underscore
+    .replace(/^_+|_+$/g, '') // Trim underscores from start/end
+    .toLowerCase(); // Convert to lowercase for consistency
 
   const fileExtension = sanitized.split('.').pop();
   const baseFilename = fileExtension ? sanitized.substring(0, sanitized.lastIndexOf('.')) : sanitized;
 
   // Append a unique timestamp to avoid collisions
   const uniqueSuffix = Date.now();
-  return `${baseFilename}-${uniqueSuffix}.${fileExtension}`;
+  return `${uniqueSuffix}_${baseFilename}.${fileExtension}`;
 }
 
 export async function POST(request: Request): Promise<NextResponse<UploadResponse>> {
