@@ -4,8 +4,8 @@ import { fetchStoresServer } from '@/lib/serverData';
 import { StoresClient } from './StoresClient';
 import type { Metadata } from 'next';
 
-// Enable ISR with 1 hour revalidation
-export const revalidate = 3600;
+// Disable ISR caching to ensure fresh data
+export const revalidate = 0;
 
 // Generate metadata for SEO
 export const metadata: Metadata = {
@@ -19,8 +19,8 @@ export const metadata: Metadata = {
 
 // Server Component - fetches initial data
 export default async function StorePage() {
-  // Fetch data server-side with caching enabled for ISR
-  const { data: initialStores, error: serverError } = await fetchStoresServer({ noCache: false });
+  // Fetch data server-side with no caching for fresh data
+  const { data: initialStores, error: serverError } = await fetchStoresServer({ noCache: true });
   
   return (
     <StoresClient 
