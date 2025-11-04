@@ -134,10 +134,10 @@ export async function GET(request: NextRequest) {
       success: true
     });
     
-    // Add caching headers for better performance
-    jsonResponse.headers.set('Cache-Control', 'public, s-maxage=300, must-revalidate');
-    jsonResponse.headers.set('CDN-Cache-Control', 'public, s-maxage=300');
-    jsonResponse.headers.set('Vercel-CDN-Cache-Control', 'public, s-maxage=300');
+    // Add caching headers for deployment consistency
+    jsonResponse.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    jsonResponse.headers.set('CDN-Cache-Control', 'no-store, no-cache, must-revalidate');
+    jsonResponse.headers.set('Vercel-CDN-Cache-Control', 'no-store, no-cache, must-revalidate');
     
     return jsonResponse;
   } catch (error) {
