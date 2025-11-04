@@ -57,10 +57,10 @@ export async function GET(request: NextRequest) {
       success: true
     });
     
-    // Add proper cache headers for deployment consistency
-    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
-    response.headers.set('CDN-Cache-Control', 'no-store, no-cache, must-revalidate');
-    response.headers.set('Vercel-CDN-Cache-Control', 'no-store, no-cache, must-revalidate');
+    // Restore prior cache headers
+    response.headers.set('Cache-Control', 'public, s-maxage=300, must-revalidate');
+    response.headers.set('CDN-Cache-Control', 'public, s-maxage=300');
+    response.headers.set('Vercel-CDN-Cache-Control', 'public, s-maxage=300');
     
     return response;
   } catch (error) {

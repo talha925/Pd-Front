@@ -15,7 +15,8 @@ interface StorePageProps {
 
 // Helper function to get store data directly from store-service
 function getStorePromise(slug: string) {
-  return getStoreBySlug(slug);
+  // Force fresh data on server render to avoid stale cache on refresh
+  return getStoreBySlug(slug, true);
 }
 
 export async function generateMetadata({ params }: StorePageProps): Promise<Metadata> {
