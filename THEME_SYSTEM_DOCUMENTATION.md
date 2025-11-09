@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the centralized theme system implemented for the Brandwell application. The theme system provides a consistent, maintainable, and accessible color palette that complements the existing button colors while introducing a modern white and grey design.
+This document describes the centralized theme system implemented for the Penny Scroll application. The theme system provides a consistent, maintainable, and accessible color palette that complements the existing button colors while introducing a modern white and grey design.
 
 ## Architecture
 

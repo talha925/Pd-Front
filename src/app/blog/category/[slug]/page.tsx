@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   
   if (!category) {
     return {
-      title: 'Category Not Found | BRANDWELL',
+      title: 'Category Not Found | Penny Scroll',
       description: 'The requested blog category could not be found.',
     };
   }
@@ -45,20 +45,20 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || (process.env.NODE_ENV === 'production' ? 'https://www.pennyscroll.com' : 'http://localhost:3000');
   
   return {
-    title: `${category.name} | Blog Categories | BRANDWELL`,
+    title: `${category.name} | Blog Categories | Penny Scroll`,
     description: `Explore all blog posts in the ${category.name} category. Discover insights, tips, and stories related to ${category.name}.`,
-    keywords: `${category.name}, blog, articles, ${category.name} posts, BRANDWELL`,
+    keywords: `${category.name}, blog, articles, ${category.name} posts, Penny Scroll`,
     openGraph: {
-      title: `${category.name} | Blog Categories | BRANDWELL`,
+      title: `${category.name} | Blog Categories | Penny Scroll`,
       description: `Explore all blog posts in the ${category.name} category.`,
       type: 'website',
       url: `${baseUrl}/blog/category/${params.slug}`,
-      siteName: 'BRANDWELL',
+      siteName: 'Penny Scroll',
       locale: 'en_US',
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${category.name} | Blog Categories | BRANDWELL`,
+      title: `${category.name} | Blog Categories | Penny Scroll`,
       description: `Explore all blog posts in the ${category.name} category.`,
     },
     alternates: {
@@ -111,7 +111,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
         },
         publisher: {
           '@type': 'Organization',
-          name: 'BRANDWELL',
+          name: 'Penny Scroll',
           url: baseUrl,
         },
       }),

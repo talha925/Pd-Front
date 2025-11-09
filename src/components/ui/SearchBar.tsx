@@ -34,13 +34,29 @@ const SearchBar = React.memo(function SearchBar({
     isSearching, 
     hasResults, 
     updateQuery, 
-    clearSearch 
-  } = useSearch({ debounceMs: 300, minQueryLength: 2, limit: 8 });
+    clearSearch,
+    loadMore
+  } = useSearch({ debounceMs: 300, minQueryLength: 2, limit: 20 });
 
   // Prevent hydration mismatch
   useEffect(() => {
     setIsHydrated(true);
   }, []);
+
+  // Infinite scroll in results dropdown
+  const resultsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = resultsRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 40;
+      if (nearBottom && results.hasMore && !isSearching) {
+        loadMore();
+      }
+    };
+    el.addEventListener('scroll', onScroll);
+    return () => el.removeEventListener('scroll', onScroll);
+  }, [results.hasMore, isSearching, loadMore]);
 
   // Auto-focus for mobile
   useEffect(() => {
@@ -292,7 +308,7 @@ const SearchBar = React.memo(function SearchBar({
 
       {/* Search Results Dropdown */}
       {isOpen && (query.length >= 2) && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-background-elevated/95 backdrop-blur-md border border-border rounded-xl shadow-theme-xl z-50 max-h-96 overflow-y-auto">
+        <div ref={resultsRef} className="absolute top-full left-0 right-0 mt-2 bg-background-elevated/95 backdrop-blur-md border border-border rounded-xl shadow-theme-xl z-50 max-h-96 overflow-y-auto">
           {isSearching ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-6 h-6 text-button-blue animate-spin mr-2" />
@@ -301,8 +317,11 @@ const SearchBar = React.memo(function SearchBar({
           ) : hasCurrentResults ? (
             <div>
               {searchType === 'stores' ? renderStoreResults : renderBlogResults}
+              {results.hasMore && (
+                <div className="px-3 py-2 text-xs text-foreground-tertiary text-center">Scroll down to load more…</div>
+              )}
             </div>
-          ) : query.length >= 2 ? (
+        ) : query.length >= 2 ? (
             <div className="flex flex-col items-center justify-center py-8 text-foreground-secondary">
               <Search className="w-8 h-8 mb-2 opacity-50" />
               <span>No {searchType} found for "{query}"</span>

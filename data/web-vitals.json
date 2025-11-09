@@ -1,85 +1,13 @@
 [
   {
-    "metric": "CLS",
-    "value": 0.03344972286196455,
-    "rating": "good",
-    "id": "1762693324994-v4yf84hm4",
-    "url": "http://localhost:3000/admin/health",
-    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
-    "timestamp": 1762693343779
-  },
-  {
-    "metric": "INP",
-    "value": 477.19999998807907,
-    "rating": "needs-improvement",
-    "id": "1762693297742-kftaqg93s",
-    "url": "http://localhost:3000/admin/performance-dashboard",
-    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
-    "timestamp": 1762693357270
-  },
-  {
-    "metric": "TTFB",
-    "value": 430.7000000476837,
-    "rating": "good",
-    "id": "1762693358455-owkhcrfuh",
-    "url": "http://localhost:3000/admin/performance-dashboard",
-    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
-    "timestamp": 1762693358455
-  },
-  {
-    "metric": "TTFB",
-    "value": 430.7000000476837,
-    "rating": "good",
-    "id": "1762693358534-h5n3c0pbm",
-    "url": "http://localhost:3000/admin/performance-dashboard",
-    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
-    "timestamp": 1762693358534
-  },
-  {
-    "metric": "CLS",
-    "value": 0.1953483222532751,
-    "rating": "needs-improvement",
-    "id": "1762693358727-xhco2h523",
-    "url": "http://localhost:3000/admin/performance-dashboard",
-    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
-    "timestamp": 1762693358727
-  },
-  {
-    "metric": "LCP",
-    "value": 1496,
-    "rating": "good",
-    "id": "1762693358792-6b0m2qbqx",
-    "url": "http://localhost:3000/admin/performance-dashboard",
-    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
-    "timestamp": 1762693358792
-  },
-  {
-    "metric": "CLS",
-    "value": 0.19610363433978928,
-    "rating": "needs-improvement",
-    "id": "1762693358944-joakim7q0",
-    "url": "http://localhost:3000/admin/performance-dashboard",
-    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
-    "timestamp": 1762693358944
-  },
-  {
     "metric": "FID",
     "value": 1.5,
     "rating": "good",
     "id": "1762693361097-8w57bkt5v",
     "url": "http://localhost:3000/admin/performance-dashboard",
     "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
-    "timestamp": 1762693361097
-  },
-  {
-    "metric": "FID",
-    "value": 1.5,
-    "rating": "good",
-    "id": "1762693361097-8w57bkt5v",
-    "url": "http://localhost:3000/admin/performance-dashboard",
-    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
-    "timestamp": 1762693362806
+    "timestamp": 1762694696052
   }
-]estamp": 1762693362804
+]estamp": 1762694696050
   }
 ]

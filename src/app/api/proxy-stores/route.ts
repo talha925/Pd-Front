@@ -13,8 +13,13 @@ export async function GET(req: Request) {
     const includeJsonLd = searchParams.get('jsonLd') === 'true';
 
     // Get stores with caching
+    const apiUrl = new URL(`${config.api.baseUrl}/api/stores`);
+    // Fetch more stores to improve local search accuracy
+    apiUrl.searchParams.set('limit', '1000');
+    apiUrl.searchParams.set('page', '1');
+
     const { data: stores, headers } = await storesCache.getData(
-      `${config.api.baseUrl}/api/stores`,
+      apiUrl.toString(),
       noCache
     );
 

@@ -42,6 +42,15 @@ export const metadata: Metadata = {
     telephone: false,
     address: false,
   },
+  // Explicitly set icons to override any default favicon
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      '/image/app.png'
+    ],
+    shortcut: ['/favicon.svg'],
+    apple: '/image/app.png',
+  },
   metadataBase: new URL('https://www.pennyscroll.com'),
   alternates: {
     canonical: '/',
@@ -109,6 +118,9 @@ export default function RootLayout({
           href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
         />
+        {/* Explicit favicon to replace default Vercel/Next icon */}
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/image/app.png" sizes="32x32" type="image/png" />
       </head>
       <body className={inter.className}>
         <Providers initialToken={initialToken}>
