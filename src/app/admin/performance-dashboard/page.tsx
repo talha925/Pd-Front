@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { coreWebVitalsMonitor, WebVitalsMetric } from '@/lib/core-web-vitals';
 import { prefetchOptimizer } from '@/lib/prefetch-optimizer';
 import { websocketHealthMonitor } from '@/lib/websocket-health';
+import config from '@/lib/config';
 import PerformanceMonitor from '@/components/common/PerformanceMonitor';
 
 interface AnalyticsData {
@@ -133,13 +134,59 @@ const PerformanceDashboard: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">WebSocket Health</p>
-                <p className={`text-3xl font-bold ${websocketHealth?.isHealthy ? 'text-green-600' : 'text-red-600'}`}>
-                  {websocketHealth?.isHealthy ? 'Healthy' : 'Issues'}
-                </p>
+                {(() => {
+                  const wsMode = config.realtime.mode;
+                  const wsEnabled = wsMode === 'ws-managed' && (!!config.realtime.wsUrl || !!config.realtime.managedProvider);
+                  const status = wsEnabled ? websocketHealth?.status : 'disabled';
+
+                  const textClass = !wsEnabled
+                    ? 'text-gray-600'
+                    : status === 'healthy'
+                      ? 'text-green-600'
+                      : status === 'degraded'
+                        ? 'text-yellow-600'
+                        : 'text-red-600';
+
+                  const label = !wsEnabled
+                    ? 'Disabled'
+                    : status === 'healthy'
+                      ? 'Healthy'
+                      : status === 'degraded'
+                        ? 'Degraded'
+                        : 'Unhealthy';
+
+                  return (
+                    <p className={`text-3xl font-bold ${textClass}`}>{label}</p>
+                  );
+                })()}
               </div>
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${websocketHealth?.isHealthy ? 'bg-green-100' : 'bg-red-100'}`}>
-                <div className={`w-3 h-3 rounded-full ${websocketHealth?.isHealthy ? 'bg-green-500' : 'bg-red-500'}`}></div>
-              </div>
+              {(() => {
+                const wsMode = config.realtime.mode;
+                const wsEnabled = wsMode === 'ws-managed' && (!!config.realtime.wsUrl || !!config.realtime.managedProvider);
+                const status = wsEnabled ? websocketHealth?.status : 'disabled';
+
+                const bgClass = !wsEnabled
+                  ? 'bg-gray-100'
+                  : status === 'healthy'
+                    ? 'bg-green-100'
+                    : status === 'degraded'
+                      ? 'bg-yellow-100'
+                      : 'bg-red-100';
+
+                const dotClass = !wsEnabled
+                  ? 'bg-gray-500'
+                  : status === 'healthy'
+                    ? 'bg-green-500'
+                    : status === 'degraded'
+                      ? 'bg-yellow-500'
+                      : 'bg-red-500';
+
+                return (
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${bgClass}`}>
+                    <div className={`w-3 h-3 rounded-full ${dotClass}`}></div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>

@@ -266,6 +266,40 @@ export async function getStoreBySlug(slug: string, forceRefresh: boolean = false
       }
       
       log(`Store fetch failed for ${slug}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      
+      // Graceful fallback: when forceRefresh fails, return stale cache if available
+      if (forceRefresh) {
+        // Prefer individual store cache if it has data
+        if (existing && typeof existing.data !== 'undefined') {
+          log(`Returning stale cached store for slug: ${slug}`);
+          return existing.data ?? null;
+        }
+        // Fallback to global stores cache if present
+        if (storesCache?.data && Array.isArray(storesCache.data)) {
+          const fallbackStore = storesCache.data.find(s => s.slug === slug) || null;
+          if (fallbackStore) {
+            const jsonLd = {
+              "@context": "https://schema.org",
+              "@type": "Store",
+              "name": fallbackStore.name,
+              "image": fallbackStore.image?.url || "",
+              "description": fallbackStore.short_description || "",
+              "url": `${config.api.siteUrl}/store/${fallbackStore.slug}`
+            };
+            const finalSeoObject = { ...jsonLd, ...fallbackStore.seo };
+            const enrichedFallback: Store = { ...fallbackStore, seo: finalSeoObject } as Store;
+            // Cache the fallback result to avoid repeated failures
+            storeCache.set(cacheKey, {
+              data: enrichedFallback,
+              timestamp: storesCache.timestamp ?? now,
+              promise: undefined,
+              error
+            });
+            log(`Returned stale store from global cache for slug: ${slug}`);
+            return enrichedFallback;
+          }
+        }
+      }
       throw error;
     }
   })();

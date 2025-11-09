@@ -1,5 +1,6 @@
 import { revalidationClient } from './revalidation-client';
 import { websocketHealthMonitor } from './websocket-health';
+import config from './config';
 
 /**
  * WebSocket Client Options Interface
@@ -775,11 +776,77 @@ class WebSocketClient {
 let wsClient: WebSocketClient | null = null;
 
 /**
+ * No-op WebSocket client used when realtime mode is not ws-managed
+ * Implements the same surface so hooks/components don't need conditionals
+ */
+class NoopWebSocketClient {
+  public ws: WebSocket | null = null;
+  public enableLogging = false;
+  private messageHandlers: Set<(message: any) => void> = new Set();
+  private connectionHandlers: Set<(connected: boolean) => void> = new Set();
+  private errorHandlers: Set<(error: string) => void> = new Set();
+
+  setMessageHandler(handler: (message: any) => void): () => void {
+    this.messageHandlers.add(handler);
+    return () => this.messageHandlers.delete(handler);
+  }
+
+  setConnectionHandler(handler: (connected: boolean) => void): () => void {
+    this.connectionHandlers.add(handler);
+    // Immediately reflect disconnected status
+    try { handler(false); } catch {}
+    return () => this.connectionHandlers.delete(handler);
+  }
+
+  setErrorHandler(handler: (error: string) => void): () => void {
+    this.errorHandlers.add(handler);
+    return () => this.errorHandlers.delete(handler);
+  }
+
+  isConnected(): boolean { return false; }
+  connect(): void {
+    // Notify that connection is not available (avoid for..of for ES5 target)
+    this.connectionHandlers.forEach((h) => { try { h(false); } catch {} });
+  }
+  close(): void { /* no-op */ }
+  subscribe(): void { /* no-op */ }
+  unsubscribe(): void { /* no-op */ }
+  send(): void { /* no-op */ }
+  getHealthStatus(): any {
+    return {
+      status: 'healthy',
+      score: 100,
+      issues: [],
+      recommendations: ['Realtime disabled: mode is not ws-managed'],
+    };
+  }
+  getHealthMetrics(): any {
+    return {
+      connectionAttempts: 0,
+      successfulConnections: 0,
+      failedConnections: 0,
+      reconnectionAttempts: 0,
+      messagesReceived: 0,
+      messagesSent: 0,
+      averageLatency: 0,
+      lastConnectionTime: null,
+      lastDisconnectionTime: null,
+      connectionDuration: 0,
+      errors: [],
+    };
+  }
+}
+
+/**
  * Get or create WebSocket client instance
  */
 export function getWebSocketClient(options: WebSocketClientOptions = {}): WebSocketClient {
+  // Only instantiate a real WebSocket client when explicitly enabled
+  const mode = (config as any)?.realtime?.mode || process.env.NEXT_PUBLIC_REALTIME_MODE || 'http-only';
+  const shouldUseWS = mode === 'ws-managed' || mode === 'ws';
+
   if (!wsClient) {
-    wsClient = new WebSocketClient(options);
+    wsClient = shouldUseWS ? new WebSocketClient(options) : (new NoopWebSocketClient() as unknown as WebSocketClient);
   }
   return wsClient;
 }

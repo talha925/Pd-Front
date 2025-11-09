@@ -315,5 +315,4 @@ class WebSocketHealthMonitor {
 export const websocketHealthMonitor = new WebSocketHealthMonitor();
 
 // Export types
-export type { HealthMetrics, HealthStatus };
-export { WebSocketHealthMonitor };
+export type { HealthMetrics, HealthStatus };export { WebSocketHealthMonitor };

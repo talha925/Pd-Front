@@ -20,6 +20,17 @@ const config = {
     timeout: parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || '30000', 10),
   },
   
+  // Realtime configuration
+  realtime: {
+    // Choose between 'http-only' | 'sse' | 'ws-managed'
+    mode: process.env.NEXT_PUBLIC_REALTIME_MODE || 'http-only',
+    // Optional URLs for providers
+    wsUrl: process.env.NEXT_PUBLIC_WS_URL || '',
+    sseUrl: process.env.NEXT_PUBLIC_SSE_URL || '',
+    // Managed provider id (e.g., 'pusher', 'ably') when using ws-managed
+    managedProvider: process.env.NEXT_PUBLIC_WS_PROVIDER || '',
+  },
+  
   // Image configuration
   images: {
     domain: process.env.NEXT_PUBLIC_IMAGE_DOMAIN || 'coupon-app-image.s3.us-east-1.amazonaws.com',
