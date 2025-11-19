@@ -1,4 +1,4 @@
-  /**
+/**
    * Centralized Store Service
    * Direct service layer access that bypasses API routes for server components
    * Implements proper TTL caching with promise coalescing to eliminate duplicate fetches
@@ -279,48 +279,60 @@
             ...store.seo
           };
 
-          let hydratedCoupons: Coupon[] = [];
-          try {
-            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-            const fetchOptions = (DEV_MODE || forceRefresh)
-              ? { headers, cache: 'no-store' as const }
-              : { headers, next: { revalidate: 60, tags: [`store-${store.slug}-coupons`] } };
-            const listRes = await fetch(`${config.api.baseUrl}/api/coupons?storeId=${store._id}`, fetchOptions);
-            if (listRes.ok) {
-              const listJson = await listRes.json();
-              const allCoupons: Coupon[] = Array.isArray(listJson?.data) ? listJson.data : [];
-              const storeCouponIds = Array.isArray(store.coupons) ? (store.coupons as any[]).filter((x) => typeof x === 'string') as string[] : [];
-              if (storeCouponIds.length > 0) {
-                const idSet = new Set(storeCouponIds);
-                hydratedCoupons = allCoupons.filter((c) => idSet.has(c._id));
-                hydratedCoupons.sort((a, b) => storeCouponIds.indexOf(a._id) - storeCouponIds.indexOf(b._id));
-              } else {
-                hydratedCoupons = allCoupons.filter((c: any) => c.storeId === store._id);
-              }
-            }
-            if (hydratedCoupons.length === 0) {
-              const storeCouponIds = Array.isArray(store.coupons) ? (store.coupons as any[]).filter((x) => typeof x === 'string') as string[] : [];
-              if (storeCouponIds.length > 0) {
-                const fetchOptionsId = (DEV_MODE || forceRefresh)
-                  ? { cache: 'no-store' as const }
-                  : { next: { revalidate: 60, tags: storeCouponIds.map((id) => `coupon-${id}`) } };
-                const byId = await Promise.all(
-                  storeCouponIds.map(async (id) => {
-                    try {
-                      const r = await fetch(`${config.api.baseUrl}/api/coupons/${id}`, fetchOptionsId);
-                      if (!r.ok) return null;
-                      const j = await r.json();
-                      return j?.data || null;
-                    } catch {
-                      return null;
-                    }
-                  })
-                );
-                hydratedCoupons = (byId.filter(Boolean) as Coupon[]);
+        const existingCouponsObjs: Coupon[] = Array.isArray(store.coupons)
+          ? (store.coupons as any[]).filter((x) => typeof x === 'object') as Coupon[]
+          : [];
+        let hydratedCoupons: Coupon[] = existingCouponsObjs;
+        try {
+          const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+          const fetchOptions = (DEV_MODE || forceRefresh)
+            ? { headers, cache: 'no-store' as const }
+            : { headers, next: { revalidate: 60, tags: [`store-${store.slug}-coupons`] } };
+          const listRes = await fetch(`${config.api.baseUrl}/api/coupons?storeId=${store._id}`, fetchOptions);
+          if (listRes.ok) {
+            const listJson = await listRes.json();
+            const allCoupons: Coupon[] = Array.isArray(listJson?.data) ? listJson.data : [];
+            const storeCouponIds = Array.isArray(store.coupons) ? (store.coupons as any[]).filter((x) => typeof x === 'string') as string[] : [];
+            if (storeCouponIds.length > 0) {
+              const idSet = new Set(storeCouponIds);
+              const matched = allCoupons.filter((c) => idSet.has(c._id));
+              if (matched.length > 0) {
+                hydratedCoupons = matched;
                 hydratedCoupons.sort((a, b) => storeCouponIds.indexOf(a._id) - storeCouponIds.indexOf(b._id));
               }
+            } else {
+              const byStore = allCoupons.filter((c: any) => c.storeId === store._id);
+              if (byStore.length > 0) {
+                hydratedCoupons = byStore;
+              }
             }
-          } catch {}
+          }
+          if (hydratedCoupons.length === 0) {
+            const storeCouponIds = Array.isArray(store.coupons) ? (store.coupons as any[]).filter((x) => typeof x === 'string') as string[] : [];
+            if (storeCouponIds.length > 0) {
+              const fetchOptionsId = (DEV_MODE || forceRefresh)
+                ? { cache: 'no-store' as const }
+                : { next: { revalidate: 60, tags: storeCouponIds.map((id) => `coupon-${id}`) } };
+              const byId = await Promise.all(
+                storeCouponIds.map(async (id) => {
+                  try {
+                    const r = await fetch(`${config.api.baseUrl}/api/coupons/${id}`, fetchOptionsId);
+                    if (!r.ok) return null;
+                    const j = await r.json();
+                    return j?.data || null;
+                  } catch {
+                    return null;
+                  }
+                })
+              );
+              const resolved = (byId.filter(Boolean) as Coupon[]);
+              if (resolved.length > 0) {
+                hydratedCoupons = resolved;
+                hydratedCoupons.sort((a, b) => storeCouponIds.indexOf(a._id) - storeCouponIds.indexOf(b._id));
+              }
+            }
+          }
+        } catch {}
 
           enrichedStore = {
             ...store,
