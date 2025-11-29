@@ -40,7 +40,7 @@ export default function AdminBlogsPage() {
   const { isAuthenticated, isLoading } = useUnifiedAuth();
   const router = useRouter();
   const httpClient = new HttpClient();
-  
+
   // All hooks must be called before any conditional returns
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,11 +69,11 @@ export default function AdminBlogsPage() {
   // Only refresh if user was away for more than 5 seconds to avoid tab switching issues
   useEffect(() => {
     let lastBlurTime = 0;
-    
+
     const handleBlur = () => {
       lastBlurTime = Date.now();
     };
-    
+
     const handleFocus = () => {
       const timeSinceBlur = Date.now() - lastBlurTime;
       // Only refresh if user was away for more than 5 seconds (likely from edit/create page)
@@ -85,7 +85,7 @@ export default function AdminBlogsPage() {
         if (selectedDate) params.append('date', selectedDate);
         params.append('page', page.toString());
         params.append('limit', pageSize.toString());
-        
+
         httpClient.get(`/api/blogs?${params.toString()}`)
           .then((data) => {
             const { blogs, pagination } = data;
@@ -135,7 +135,7 @@ export default function AdminBlogsPage() {
           setTotalPages(1);
         }
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
   }, [debouncedSearchTerm, selectedCategory, selectedDate, page]);
 
@@ -146,10 +146,10 @@ export default function AdminBlogsPage() {
       try {
         // Find the blog to check if it has FrontBanner enabled
         const blogToDelete = blogs.find(blog => blog._id === id);
-        
+
         await httpClient.delete(`/api/blogs/${id}`);
         setBlogs((prev) => prev.filter((blog) => blog._id !== id));
-        
+
         // Clear banner cache if the deleted blog had FrontBanner enabled
         // Note: We check for FrontBanner property, but it might not be in the list view
         // So we clear cache for any deletion to be safe
@@ -181,7 +181,7 @@ export default function AdminBlogsPage() {
   if (isLoading) {
     return <div className="flex justify-center items-center h-40"><span className="text-lg text-gray-600">Loading...</span></div>;
   }
-  
+
   if (!isAuthenticated) {
     return null;
   }

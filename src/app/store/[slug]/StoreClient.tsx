@@ -3,63 +3,141 @@
 'use client';
 
 import SafeImage from '@/components/ui/SafeImage';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { decodeHTML } from '@/lib/utils/formatting';
 import toast, { Toaster } from 'react-hot-toast';
-import { Store } from '@/lib/types/store';
-
-// --- Types (Updated to use global Store type) ---
-type Coupon = {
-  _id: string;
-  offerDetails: string;
-  code: string;
-  active: boolean;
-  isValid: boolean;
-};
+import { Store, Coupon } from '@/lib/types/store';
 
 interface StoreClientProps {
   initialStore: Store | null;
   serverError?: string;
 }
 
-// --- CouponModal Component (No changes) ---
-const CouponModal = ({ isOpen, onClose, code, onContinue }: { isOpen: boolean; onClose: () => void; code: string; onContinue: () => void; }) => {
-  const handleCopy = () => {
-    navigator.clipboard.writeText(code);
-    toast.success(`Code "${code}" copied to clipboard!`);
-  };
+// --- Confetti Animation Helper ---
+const triggerConfetti = (x: number, y: number) => {
+  const count = 20;
+  for (let i = 0; i < count; i++) {
+    const particle = document.createElement('div');
+    particle.classList.add('confetti');
+    document.body.appendChild(particle);
 
-  const handleContinue = () => {
-    onContinue();
-    onClose();
-  };
+    const destinationX = (Math.random() - 0.5) * 200;
+    const destinationY = (Math.random() - 0.5) * 200;
+    const rotation = Math.random() * 520;
+    const delay = Math.random() * 200;
+
+    particle.style.left = `${x}px`;
+    particle.style.top = `${y}px`;
+    particle.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+    particle.style.transform = `rotate(${rotation}deg)`;
+
+    particle.animate([
+      { transform: `translate(0,0) rotate(0deg)`, opacity: 1 },
+      { transform: `translate(${destinationX}px, ${destinationY}px) rotate(${rotation}deg)`, opacity: 0 }
+    ], {
+      duration: 1000 + Math.random() * 1000,
+      easing: 'cubic-bezier(0, .9, .57, 1)',
+      delay: delay
+    }).onfinish = () => particle.remove();
+  }
+};
+
+// --- CouponModal Component ---
+interface CouponModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  code: string;
+  onContinue: () => void;
+}
+
+const CouponModal = ({ isOpen, onClose, code, onContinue }: CouponModalProps) => {
+  const handleCopy = useCallback((e: React.MouseEvent) => {
+    navigator.clipboard.writeText(code);
+    triggerConfetti(e.clientX, e.clientY);
+    toast.success(`Code "${code}" copied!`);
+  }, [code]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      onClose();
+    }
+  }, [onClose]);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = 'unset';
+      };
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+      onKeyDown={handleKeyDown}
+    >
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-md animate-fade-in"
+        onClick={onClose}
+        aria-label="Close modal"
+      />
+      <div className="relative bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full animate-scale-up overflow-hidden">
+        <div className="absolute -top-20 -right-20 w-64 h-64 bg-purple-200 rounded-full blur-3xl opacity-50 pointer-events-none" aria-hidden="true"></div>
+        <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-blue-200 rounded-full blur-3xl opacity-50 pointer-events-none" aria-hidden="true"></div>
+
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg p-1"
+          aria-label="Close modal"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
         </button>
-        <div className="text-center space-y-6">
+
+        <div className="text-center space-y-6 relative z-10">
+          <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto shadow-inner" aria-hidden="true">
+            <span className="text-4xl" role="img" aria-label="gift">🎁</span>
+          </div>
+
           <div className="space-y-2">
-            <div className="text-4xl">🎁</div>
-            <h2 className="text-2xl font-bold text-gray-800">Your Coupon Code</h2>
-            <p className="text-gray-600">Copy this code and use it at checkout!</p>
+            <h2 id="modal-title" className="text-2xl font-bold text-gray-900">Here's Your Code</h2>
+            <p className="text-gray-500 text-sm">Copy this code and paste it at checkout to save!</p>
           </div>
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-dashed border-blue-300 rounded-xl p-6">
-            <div className="text-3xl font-mono font-bold text-gray-800 tracking-wider">{code}</div>
+
+          <div className="bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl p-6 relative group hover:border-blue-400 transition-colors">
+            <div className="text-3xl font-mono font-bold text-gray-800 tracking-wider select-all" aria-label={`Coupon code: ${code}`}>{code}</div>
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 backdrop-blur-sm rounded-xl cursor-pointer" onClick={handleCopy}>
+              <span className="font-semibold text-blue-600">Click to Copy</span>
+            </div>
           </div>
+
           <div className="space-y-3">
-            <button onClick={handleCopy} className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center space-x-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-              <span>Copy Code</span>
+            <button
+              onClick={handleCopy}
+              className="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2"
+              aria-label="Copy coupon code to clipboard"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              Copy Code
             </button>
-            <button onClick={handleContinue} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center space-x-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+            <button
+              onClick={() => { onContinue(); onClose(); }}
+              className="w-full bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold py-3.5 px-6 rounded-xl transition-colors flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              aria-label="Continue to store website"
+            >
               <span>Continue to Store</span>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
             </button>
           </div>
         </div>
@@ -68,277 +146,369 @@ const CouponModal = ({ isOpen, onClose, code, onContinue }: { isOpen: boolean; o
   );
 };
 
+// --- Empty State Component ---
+const EmptyState = ({ message }: { message: string }) => (
+  <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+    <div className="text-center max-w-md">
+      <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
+        <svg className="w-12 h-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+        </svg>
+      </div>
+      <h2 className="text-2xl font-bold text-slate-900 mb-2">Store Not Found</h2>
+      <p className="text-slate-600 mb-6">{message}</p>
+      <a
+        href="/"
+        className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Back to Home
+      </a>
+    </div >
+  </div >
+);
+
+// --- Loading State Component ---
+const LoadingState = () => (
+  <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+    <div className="text-center">
+      <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+      <p className="text-slate-600 font-medium">Loading store...</p>
+    </div>
+  </div>
+);
 
 // --- Main Client Component ---
 export default function StoreClient({ initialStore, serverError }: StoreClientProps) {
-  const [store, setStore] = useState<Store | null>(initialStore);
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
+  // Memoize computed values
+  const activeCoupons = useMemo(() =>
+    initialStore?.coupons?.filter(c => c.isValid) || [],
+    [initialStore?.coupons]
+  );
 
-  // Helper function to refresh store data with no-cache
-  const refreshStoreData = async () => {
-    if (!store?.slug && !initialStore?.slug) return;
-    
-    const slug = store?.slug || initialStore?.slug;
-    
-    try {
-      console.log(`[CLIENT REFRESH] Refreshing store data for slug: ${slug}`);
-      // Force fresh data from server by bypassing StoreService caches
-      const response = await fetch(`/api/store/${slug}?noCache=true`, {
-        cache: 'no-store', // Always fetch fresh data
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
+  const totalCoupons = useMemo(() =>
+    initialStore?.coupons?.length || 0,
+    [initialStore?.coupons]
+  );
+
+  // Inject styles client-side only to avoid hydration mismatch
+  useEffect(() => {
+    if (!document.getElementById('store-premium-styles')) {
+      const styleEl = document.createElement('style');
+      styleEl.id = 'store-premium-styles';
+      styleEl.textContent = `
+        @keyframes float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
         }
-      });
-      
-      if (response.ok) {
-        const freshStore = await response.json();
-        setStore(freshStore);
-        console.log(`[CLIENT REFRESH] Successfully refreshed store data`);
-      }
-    } catch (error) {
-      console.error('Failed to refresh store data:', error);
-    }
-  };
-
-  // Mount effect: Only refresh if no initial data (error case)
-  useEffect(() => {
-    // ✅ CRITICAL FIX: Only refresh if initialStore is null (error case)
-    // This prevents duplicate fetches during normal hydration
-    if (!initialStore) {
-      console.log('[CLIENT MOUNT] No initial store data, refreshing...');
-      refreshStoreData();
-    } else {
-      console.log('[CLIENT MOUNT] Using initial store data, skipping refresh');
-    }
-  }, []);
-
-  // Focus/Visibility effect: Refresh when tab becomes active (reduced frequency)
-  useEffect(() => {
-    let lastRefresh = 0;
-    const FOCUS_REFRESH_COOLDOWN = 30000; // 30 seconds cooldown
-    
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        const now = Date.now();
-        if (now - lastRefresh > FOCUS_REFRESH_COOLDOWN) {
-          console.log('[CLIENT FOCUS] Tab became visible, refreshing store data');
-          refreshStoreData();
-          lastRefresh = now;
+        @keyframes pulse-glow {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+          50% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
         }
-      }
-    };
-    
-    const handleWindowFocus = () => {
-      const now = Date.now();
-      if (now - lastRefresh > FOCUS_REFRESH_COOLDOWN) {
-        console.log('[CLIENT FOCUS] Window focused, refreshing store data');
-        refreshStoreData();
-        lastRefresh = now;
-      }
-    };
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleWindowFocus);
-    
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleWindowFocus);
-    };
-  }, []);
-
-  // Auto-refresh interval: Refresh every 5 minutes (reduced from 10 seconds)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      console.log('[CLIENT INTERVAL] Auto-refreshing store data (5min interval)');
-      refreshStoreData();
-    }, 5 * 60 * 1000); // 5 minutes instead of 10 seconds
-    
-    return () => clearInterval(interval);
-  }, []);
-
-  // Check for pending coupon code on component mount and page show
-  const checkPendingCode = () => {
-    console.log('[checkPendingCode] Function called');
-    const pendingCode = localStorage.getItem("pendingCode");
-    const wasRedirected = localStorage.getItem("wasRedirected");
-    console.log(`[checkPendingCode] Found in localStorage: pendingCode=${pendingCode}, wasRedirected=${wasRedirected}`);
-
-    if (pendingCode && wasRedirected === "true") {
-      console.log('[checkPendingCode] Conditions met. Removing localStorage items and showing modal.');
-      // CRITICAL CHANGE: Remove items immediately to prevent re-triggering.
-      localStorage.removeItem("pendingCode");
-      localStorage.removeItem("wasRedirected");
-      
-      setSelectedCode(pendingCode);
-      setShowModal(true);
-    } else {
-      console.log('[checkPendingCode] Conditions not met. Modal will not be shown.');
+        @keyframes scale-up {
+          from { transform: scale(0.95); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+        @keyframes fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        .animate-pulse-glow { animation: pulse-glow 2s infinite; }
+        .animate-scale-up { animation: scale-up 0.2s ease-out; }
+        .animate-fade-in { animation: fade-in 0.2s ease-out; }
+        .glass-panel {
+          background: rgba(255, 255, 255, 0.7);
+          backdrop-filter: blur(12px);
+          border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        .confetti {
+          position: fixed;
+          width: 10px;
+          height: 10px;
+          pointer-events: none;
+          z-index: 9999;
+        }
+      `;
+      document.head.appendChild(styleEl);
     }
-  };
-
-  useEffect(() => {
-    // Check on initial mount
-    console.log('[MOUNT] Component mounted, checking for pending code');
-    checkPendingCode();
-    
-    // Add multiple event listeners to handle different navigation scenarios
-    const handlePageShow = (event: any) => {
-      console.log(`[PAGESHOW] Event fired - persisted: ${event.persisted}, type: ${event.type}`);
-      console.log('[PAGESHOW] Checking for pending code after pageshow');
-      checkPendingCode();
-    };
-    
-    const handleWindowFocus = () => {
-      console.log('[FOCUS] Window focused, checking for pending code');
-      checkPendingCode();
-    };
-    
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        console.log('[VISIBILITY] Document became visible, checking for pending code');
-        checkPendingCode();
-      }
-    };
-    
-    // Add all event listeners
-    window.addEventListener('pageshow', handlePageShow);
-    window.addEventListener('focus', handleWindowFocus);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    // Also add a slight delay check for back navigation
-    const delayedCheck = setTimeout(() => {
-      console.log('[DELAYED] Running delayed check for pending code');
-      checkPendingCode();
-    }, 100);
-    
-    return () => {
-      window.removeEventListener('pageshow', handlePageShow);
-      window.removeEventListener('focus', handleWindowFocus);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      clearTimeout(delayedCheck);
-    };
   }, []);
 
-  useEffect(() => {
-    if (showModal) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => { document.body.style.overflow = 'unset'; };
-  }, [showModal]);
+  const handleGetDeal = useCallback((coupon: Coupon, e: React.MouseEvent) => {
+    if (!initialStore) return;
 
-  const handleGetDeal = (coupon: Coupon) => {
     if (coupon.code) {
-      localStorage.setItem("pendingCode", coupon.code);
-      localStorage.setItem("wasRedirected", "true");
-      if (store?.trackingUrl) {
-        window.open(decodeHTML(store.trackingUrl), '_blank');
-      } else {
-        toast.error('Tracking URL not available.');
-        localStorage.removeItem("pendingCode");
-        localStorage.removeItem("wasRedirected");
+      setSelectedCode(coupon.code);
+      setShowModal(true);
+      if (initialStore.trackingUrl) {
+        window.open(decodeHTML(initialStore.trackingUrl), '_blank', 'noopener,noreferrer');
       }
     } else {
-      if (store?.trackingUrl) {
-        window.open(decodeHTML(store.trackingUrl), '_blank');
-      } else {
-        toast.error('Tracking URL not available.');
+      if (initialStore.trackingUrl) {
+        window.open(decodeHTML(initialStore.trackingUrl), '_blank', 'noopener,noreferrer');
       }
+      toast.success('Deal activated! Redirecting...');
     }
-  };
+  }, [initialStore]);
 
-  const handleContinueToStore = () => {
-    if (store?.trackingUrl) {
-      window.open(decodeHTML(store.trackingUrl), '_blank');
-    } else {
-      toast.error('Tracking URL not available.');
-    }
-    localStorage.removeItem("pendingCode");
-    localStorage.removeItem("wasRedirected");
-  };
-
-  const handleCloseModal = () => {
+  const handleCloseModal = useCallback(() => {
     setShowModal(false);
     setSelectedCode(null);
-    localStorage.removeItem("pendingCode");
-    localStorage.removeItem("wasRedirected");
-  };
+  }, []);
 
-  // --- Render Logic ---
-  if (serverError) return <p className="text-center py-20 text-red-600 font-semibold text-xl">Error: {serverError}</p>;
-  if (!store) return <p className="text-center py-20 text-red-600 font-semibold text-xl">Store not found</p>;
+  // Error handling
+  if (serverError) {
+    return <EmptyState message={serverError} />;
+  }
 
-  const aboutText = store.long_description || store.short_description || 'Discover amazing offers from this store!';
+  // Loading state
+  if (isLoading) {
+    return <LoadingState />;
+  }
 
-  // UPDATED: UI is now exactly like your old code
+  // Empty state
+  if (!initialStore) {
+    return <EmptyState message="This store is currently unavailable. Please try again later." />;
+  }
+
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-8 py-12 bg-gray-50 min-h-screen">
-      <Toaster position="top-right" />
-      <CouponModal isOpen={showModal} onClose={handleCloseModal} code={selectedCode || ''} onContinue={handleContinueToStore} />
+    <>
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          style: { background: '#333', color: '#fff', borderRadius: '12px' },
+          duration: 3000,
+          ariaProps: {
+            role: 'status',
+            'aria-live': 'polite',
+          },
+        }}
+      />
 
-      <div className="flex justify-center items-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-center text-gray-800">{store.name}</h1>
-      </div>
+      <CouponModal
+        isOpen={showModal}
+        onClose={handleCloseModal}
+        code={selectedCode || ''}
+        onContinue={() => { }}
+      />
 
-      <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
-        {/* Coupons Section */}
-        <main className="w-full lg:flex-1 space-y-6">
-          {!store.coupons || store.coupons.length === 0 ? (
-            <p className="text-gray-500 text-center py-10 text-lg">No coupons available at the moment.</p>
-          ) : (
-            store.coupons.filter(c => c.isValid).map((coupon) => (
-              <div key={coupon._id} className="bg-gray-200 rounded-xl shadow-lg p-6 md:p-10 flex flex-col md:flex-row gap-6 items-center">
-                
-                {/* Logo Image (Repeated for each coupon like old UI) */}
-                <div className="bg-white rounded-lg w-[100px] h-[100px] flex-shrink-0 flex items-center justify-center shadow-sm">
-                  <SafeImage 
-                    src={store.image?.url || '/placeholder-store.png'} 
-                    alt={store.image?.alt || store.name} 
-                    width={100} 
-                    height={100} 
-                    className="object-contain p-2"
-                    fallbackSrc="/placeholder-store.png"
-                  />
+      <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-blue-100 selection:text-blue-900">
+
+        {/* HERO SECTION */}
+        <header className="relative bg-slate-900 text-white overflow-hidden pb-16 md:pb-24">
+          <div className="absolute inset-0 overflow-hidden" aria-hidden="true">
+            <div className="absolute -top-[40%] -left-[20%] w-[80%] h-[120%] rounded-full bg-gradient-to-br from-blue-600/30 to-purple-600/30 blur-3xl animate-float" style={{ animationDuration: '15s' }}></div>
+            <div className="absolute top-[20%] -right-[20%] w-[60%] h-[100%] rounded-full bg-gradient-to-bl from-indigo-500/20 to-pink-500/20 blur-3xl animate-float" style={{ animationDelay: '2s', animationDuration: '20s' }}></div>
+          </div>
+
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pt-8 sm:pt-12 md:pt-20">
+            <div className="flex flex-col md:flex-row items-center gap-6 sm:gap-8 md:gap-12">
+              <div className="relative group flex-shrink-0">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-500" aria-hidden="true"></div>
+                <div className="relative w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 bg-white rounded-2xl p-3 sm:p-4 shadow-2xl flex items-center justify-center transform group-hover:scale-105 transition duration-300">
+                  {initialStore.image?.url ? (
+                    <SafeImage
+                      src={initialStore.image.url}
+                      alt={`${initialStore.name} logo`}
+                      width={120}
+                      height={120}
+                      className="object-contain w-full h-full"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center w-full h-full bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
+                      <span className="text-3xl sm:text-4xl md:text-5xl" role="img" aria-label={`${initialStore.name} store`}>
+                        🏪
+                      </span>
+                    </div>
+                  )}
                 </div>
+                <div className="absolute -bottom-2 -right-2 sm:-bottom-3 sm:-right-3 bg-blue-500 text-white p-1 sm:p-1.5 rounded-full border-2 sm:border-4 border-slate-900 shadow-lg" title="Verified Store" aria-label="Verified store badge">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
 
-                {/* Coupon Info */}
-                <div className="flex-1 space-y-3 text-center md:text-left w-full">
-                  <h3 className="text-base md:text-lg font-semibold text-gray-800">{decodeHTML(coupon.offerDetails)}</h3>
-                  
-                  {/* Button + Code (Old UI Style) */}
-                  <div className="relative w-full h-12 mt-2">
-                    <button onClick={() => handleGetDeal(coupon)} className="absolute left-0 top-0 h-full w-full bg-gradient-to-r from-black to-blue-800 text-white font-bold uppercase tracking-wide rounded-md transition-all duration-200 active:scale-95 hover:opacity-90 flex items-center justify-center text-sm">
-                      {coupon.active ? 'GET DEAL' : 'GET CODE'}
-                    </button>
-                    {coupon.code && !coupon.active && (
-                      <div className="absolute right-0 top-0 h-full w-[80px] bg-white border-dashed border-2 border-gray-400 rounded-tr-md rounded-br-md flex items-center justify-center text-xs font-bold text-black shadow-sm font-mono">
-                        •••{coupon.code.slice(-3)}
-                      </div>
-                    )}
+              <div className="text-center md:text-left flex-1">
+                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-3 sm:mb-4">
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-blue-200">
+                    {initialStore.name}
+                  </span>
+                </h1>
+                <p className="text-base sm:text-lg md:text-xl text-blue-100/90 max-w-2xl leading-relaxed mb-4 sm:mb-6">
+                  {initialStore.short_description || initialStore.long_description}
+                </p>
+
+                <div className="flex flex-wrap justify-center md:justify-start gap-3 sm:gap-4 md:gap-8">
+                  <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-full border border-white/10">
+                    <span className="text-xl sm:text-2xl" role="img" aria-label="coupon">🏷️</span>
+                    <div className="text-left">
+                      <div className="text-xs sm:text-sm font-bold text-white">{totalCoupons} Active</div>
+                      <div className="text-xs text-blue-200">Coupons Available</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-full border border-white/10">
+                    <span className="text-xl sm:text-2xl" role="img" aria-label="fire">🔥</span>
+                    <div className="text-left">
+                      <div className="text-xs sm:text-sm font-bold text-white">1.2k Used</div>
+                      <div className="text-xs text-blue-200">Today</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-full border border-white/10">
+                    <span className="text-xl sm:text-2xl" role="img" aria-label="star">⭐</span>
+                    <div className="text-left">
+                      <div className="text-xs sm:text-sm font-bold text-white">Verified</div>
+                      <div className="text-xs text-blue-200">Official Store</div>
+                    </div>
                   </div>
                 </div>
               </div>
-            ))
-          )}
+            </div>
+          </div>
+        </header>
+
+        {/* MAIN CONTENT */}
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 sm:-mt-16 relative z-20 pb-12 sm:pb-20">
+          <div className="flex flex-col lg:flex-row gap-6 sm:gap-8">
+
+            <div className="flex-1">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-2">
+                <h2 className="text-xl sm:text-2xl font-bold text-blue-800">Top Deals & Coupons</h2>
+                <div className="text-xs sm:text-sm text-slate-500">Last updated: Today</div>
+              </div>
+
+              {activeCoupons.length === 0 ? (
+                <div className="bg-white rounded-2xl p-8 sm:p-12 text-center border border-slate-100">
+                  <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-900 mb-2">No Active Coupons</h3>
+                  <p className="text-slate-600">Check back soon for new deals and offers!</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                  {activeCoupons.map((coupon) => (
+                    <article
+                      key={coupon._id}
+                      className={`group relative bg-white rounded-2xl p-4 sm:p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 overflow-hidden ${coupon.isBestValue ? 'ring-2 ring-blue-500 ring-offset-2' : ''}`}
+                    >
+                      {coupon.isBestValue && (
+                        <div className="absolute top-0 right-0 bg-gradient-to-bl from-blue-600 to-blue-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl shadow-sm z-10" aria-label="Best value offer">
+                          BEST VALUE
+                        </div>
+                      )}
+                      {coupon.isExclusive && (
+                        <div className="absolute top-0 right-0 bg-gradient-to-bl from-purple-600 to-purple-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl shadow-sm z-10" aria-label="Exclusive offer">
+                          EXCLUSIVE
+                        </div>
+                      )}
+
+                      <div className="flex flex-col h-full">
+                        <div className="flex items-start gap-3 sm:gap-4 mb-4">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-slate-50 flex items-center justify-center text-xl sm:text-2xl shadow-inner flex-shrink-0" aria-hidden="true">
+                            {coupon.active ? '⚡' : '✂️'}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-bold text-base sm:text-lg text-slate-900 leading-tight group-hover:text-blue-600 transition-colors break-words">
+                              {decodeHTML(coupon.offerDetails)}
+                            </h3>
+                            <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                              {coupon.usedCount ? `${coupon.usedCount} used today` : 'Popular offer'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-auto pt-4 border-t border-slate-100 border-dashed">
+                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+                            {coupon.code && !coupon.active ? (
+                              <div className="flex-1 bg-slate-100 rounded-lg px-3 py-2 text-center font-mono text-slate-600 text-sm border border-slate-200 relative overflow-hidden">
+                                <span className="relative z-10">••••{coupon.code.slice(-3)}</span>
+                                <div className="absolute inset-0 bg-slate-200/50 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500" aria-hidden="true"></div>
+                              </div>
+                            ) : (
+                              <div className="flex-1 text-sm font-medium text-green-600 flex items-center justify-center sm:justify-start gap-1">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                No Code Needed
+                              </div>
+                            )}
+
+                            <button
+                              onClick={(e) => handleGetDeal(coupon, e)}
+                              className={`px-4 sm:px-6 py-2.5 rounded-xl font-bold text-sm shadow-md hover:shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-offset-2 whitespace-nowrap ${coupon.active
+                                ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white focus:ring-green-500'
+                                : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white animate-pulse-glow focus:ring-blue-500'
+                                }`}
+                              aria-label={coupon.active ? 'Get deal' : 'Show coupon code'}
+                            >
+                              {coupon.active ? 'GET DEAL' : 'SHOW CODE'}
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <aside className="w-full lg:w-80 space-y-6 sm:space-y-8">
+              <div className="glass-panel rounded-2xl p-4 sm:p-6 shadow-lg">
+                <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+                  <span className="w-1 h-6 bg-blue-500 rounded-full" aria-hidden="true"></span>
+                  About Store
+                </h3>
+                <p className="text-sm text-slate-600 leading-relaxed mb-6">
+                  {decodeHTML(initialStore.long_description || initialStore.short_description || 'No description available.')}
+                </p>
+                <button
+                  onClick={() => initialStore.trackingUrl && window.open(decodeHTML(initialStore.trackingUrl), '_blank', 'noopener,noreferrer')}
+                  className="w-full py-3 rounded-xl border-2 border-slate-200 text-slate-700 font-bold hover:border-blue-500 hover:text-blue-600 transition-all flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!initialStore.trackingUrl}
+                  aria-label="Visit store website"
+                >
+                  Visit Website
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-100">
+                <h3 className="font-bold text-slate-900 mb-4">How to use coupons</h3>
+                <ol className="space-y-4" aria-label="Steps to use coupons">
+                  <li className="flex gap-3">
+                    <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold flex-shrink-0" aria-hidden="true">1</div>
+                    <p className="text-sm text-slate-600">Click "Show Code" to reveal the coupon.</p>
+                  </li>
+                  <li className="flex gap-3">
+                    <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold flex-shrink-0" aria-hidden="true">2</div>
+                    <p className="text-sm text-slate-600">Copy the code from the popup.</p>
+                  </li>
+                  <li className="flex gap-3">
+                    <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold flex-shrink-0" aria-hidden="true">3</div>
+                    <p className="text-sm text-slate-600">Paste it at checkout on the store's website.</p>
+                  </li>
+                </ol>
+              </div>
+            </aside>
+
+          </div>
         </main>
 
-        {/* Sidebar: About Section */}
-        <aside className="w-full lg:w-80 bg-white shadow-xl rounded-xl p-6 flex flex-col items-center text-center">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4">About {store.name}</h2>
-          <p className="text-sm text-gray-700 leading-relaxed mb-6">{decodeHTML(aboutText)}</p>
-          <button 
-            onClick={() => window.open(decodeHTML(store.trackingUrl || ''), '_blank')}
-            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-md text-sm font-medium transition-colors"
-          >
-            Visit Store
-          </button>
-        </aside>
       </div>
-    </div>
+    </>
   );
 }

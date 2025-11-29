@@ -33,9 +33,9 @@ async function fetchFeaturedBlogs() {
     const res = await fetch(`${config.api.baseUrl}/api/blogs?isFeaturedForHome=true&page=1&pageSize=6`, {
       next: { revalidate: 60, tags: ['featured-blogs'] } // Revalidate every minute or when tagged
     });
-    
+
     if (!res.ok) throw new Error('Failed to fetch blogs');
-    
+
     const data = await res.json();
     return data.blogs?.blogs || data.data?.blogs || [];
   } catch (error) {
@@ -47,7 +47,7 @@ async function fetchFeaturedBlogs() {
 export default async function Blogs() {
   // Fetch data server-side
   const featuredBlogs = await fetchFeaturedBlogs();
-  
+
   return (
     <div className="w-full min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
       {/* Banner: with proper spacing matching header */}

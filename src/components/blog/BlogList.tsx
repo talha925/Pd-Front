@@ -85,7 +85,7 @@ const BlogList: React.FC<BlogListProps> = ({
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600 shadow-lg"></div>
             <p className="mt-6 text-lg text-gray-700 font-medium">Loading blog posts...</p>
             <p className="mt-2 text-sm text-gray-500">Please wait while we fetch the latest content</p>
-            
+
             {/* Skeleton loading cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12 max-w-6xl mx-auto">
               {[...Array(6)].map((_, index) => (
@@ -123,12 +123,12 @@ const BlogList: React.FC<BlogListProps> = ({
                   </svg>
                 </div>
               </div>
-              
+
               <h2 className="text-xl font-semibold text-gray-800 mb-2">Unable to Load Blog Posts</h2>
               <p className="text-gray-600 mb-6">{error}</p>
-              
+
               <div className="space-y-3">
-                <button 
+                <button
                   onClick={fetchBlogPosts}
                   className="w-full bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors font-medium"
                   aria-label="Retry loading blog posts"
@@ -138,8 +138,8 @@ const BlogList: React.FC<BlogListProps> = ({
                   </svg>
                   Try Again
                 </button>
-                
-                <Link 
+
+                <Link
                   href="/blog"
                   className="block w-full bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors font-medium"
                 >
@@ -163,7 +163,7 @@ const BlogList: React.FC<BlogListProps> = ({
             <p className="text-gray-600 mb-8">{description}</p>
           )}
           {showCreateButton && (
-            <Link 
+            <Link
               href="/admin/blogs"
               className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
             >
@@ -187,13 +187,13 @@ const BlogList: React.FC<BlogListProps> = ({
                   </svg>
                 </div>
               </div>
-              
+
               <h3 className="text-2xl font-semibold text-gray-800 mb-3">{emptyStateMessage}</h3>
               <p className="text-gray-600 mb-8 leading-relaxed">{emptyStateDescription}</p>
-              
+
               <div className="space-y-4">
                 {showCreateButton && (
-                  <Link 
+                  <Link
                     href="/admin/blogs"
                     className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg"
                     aria-label="Create your first blog post"
@@ -204,9 +204,9 @@ const BlogList: React.FC<BlogListProps> = ({
                     Create Your First Post
                   </Link>
                 )}
-                
+
                 <div className="pt-4">
-                  <Link 
+                  <Link
                     href="/blog"
                     className="text-blue-600 hover:text-blue-800 font-medium transition-colors focus:outline-none focus:underline"
                   >
@@ -219,10 +219,10 @@ const BlogList: React.FC<BlogListProps> = ({
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {blogPosts.map((post) => (
-              <BlogCard 
-                key={post._id} 
-                blog={post} 
-                variant="list" 
+              <BlogCard
+                key={post._id}
+                blog={post}
+                variant="list"
               />
             ))}
           </div>

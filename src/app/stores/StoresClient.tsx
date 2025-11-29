@@ -1,8 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { StoreGrid } from '@/components/store';
-import { useUnifiedDataFetching } from '@/hooks/useUnifiedDataFetching';
 import { Store } from '@/lib/types/store';
 
 interface StoresClientProps {
@@ -11,34 +10,21 @@ interface StoresClientProps {
 }
 
 export function StoresClient({ initialStores, serverError }: StoresClientProps) {
-  // Use unified data fetching with server-side initial data
-  const { 
-    data, 
-    isLoading: loading, 
-    error, 
-    isInitialized 
-  } = useUnifiedDataFetching('/api/proxy-stores?fields=_id,name,image.url,image.alt,coupons.code,trackingUrl', {
-    method: 'GET',
-    requireAuth: true,
-    autoFetch: true,
-    cacheKey: 'stores-list',
-    cacheTTL: 60 * 1000, // 1 minute cache
-    debug: false, // Disable debug in production
-    onSuccess: (data) => {
-      // Handle successful data fetch
-    }
-  });
+  // Use server-provided data directly
+  const [stores] = useState<Store[]>(initialStores);
+  const [error] = useState<string | null>(serverError);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Use server data initially, then client data once initialized
-  const stores = data?.data || initialStores;
-  const finalError = error?.message || serverError;
-  const isLoading = loading; // Show loading state
+  // Set loading to false after mount (hydration complete)
+  useEffect(() => {
+    setIsLoading(false);
+  }, []);
 
   return (
-    <StoreGrid 
-      stores={stores} 
-      loading={isLoading} 
-      error={finalError} 
+    <StoreGrid
+      stores={stores}
+      loading={isLoading}
+      error={error}
     />
   );
 }

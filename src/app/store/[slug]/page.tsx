@@ -15,15 +15,18 @@ interface StorePageProps {
 
 // Helper function to get store data directly from store-service
 function getStorePromise(slug: string) {
-  // Force fresh data on server render to avoid stale cache on refresh
-  return getStoreBySlug(slug, true);
+  // Environment-aware caching strategy:
+  // - Development: Force fresh data (forceRefresh = true) for testing
+  // - Production: Use cache (forceRefresh = false) for performance
+  const isDevelopment = process.env.NODE_ENV !== 'production';
+  return getStoreBySlug(slug, isDevelopment);
 }
 
 export async function generateMetadata({ params }: StorePageProps): Promise<Metadata> {
   try {
     // Use shared promise to prevent duplicate fetch
     const store = await getStorePromise(params.slug);
-    
+
     if (!store) {
       return {
         title: 'Store Not Found',
@@ -34,7 +37,7 @@ export async function generateMetadata({ params }: StorePageProps): Promise<Meta
         },
       };
     }
-    
+
     // ✅ Production-safe debug logging
     // Helper function to clean text
     const cleanText = (text: string | null | undefined): string => {
@@ -121,19 +124,19 @@ export async function generateMetadata({ params }: StorePageProps): Promise<Meta
 export default async function StorePage({ params }: StorePageProps) {
   // Use shared promise to prevent duplicate fetch
   const store = await getStorePromise(params.slug);
-  
+
   if (!store) {
     return (
-      <StoreClient 
-        initialStore={null} 
+      <StoreClient
+        initialStore={null}
         serverError="Store not found"
       />
     );
   }
 
   return (
-    <StoreClient 
-      initialStore={store} 
+    <StoreClient
+      initialStore={store}
       serverError={undefined}
     />
   );

@@ -1,494 +1,490 @@
 'use client';
 
-  import { useState, useEffect } from 'react';
-  import { useRouter } from 'next/navigation';
-  import HttpClient from '@/services/HttpClient';
-  import Image from 'next/image';
-  import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
-  import config from '@/lib/config';
-  import { 
-    FormField, 
-    CategorySelector, 
-    StoreSelector, 
-    FAQSection, 
-    SEOMetadataSection 
-  } from './index';
-  import OptimizedRichTextEditor from '@/components/ui/OptimizedRichTextEditor';
-  import { Category, Store, BlogValidationErrors } from '@/lib/types';
-  import { 
-    isValidUrl, 
-    isValidEmail, 
-    stripHtml, 
-    sanitizeHtml, 
-    cleanAndFormatUrl 
-  } from '@/lib/utils/validation';
-  import { processTags } from '@/lib/utils/formatting';
-  import { BLOG_STATUS_OPTIONS } from '@/lib/constants/options';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import HttpClient from '@/services/HttpClient';
+import Image from 'next/image';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import config from '@/lib/config';
+import {
+  FormField,
+  CategorySelector,
+  StoreSelector,
+  FAQSection,
+  SEOMetadataSection
+} from './index';
+import OptimizedRichTextEditor from '@/components/ui/OptimizedRichTextEditor';
+import { Category, Store, BlogValidationErrors } from '@/lib/types';
+import {
+  isValidUrl,
+  isValidEmail,
+  stripHtml,
+  sanitizeHtml,
+  cleanAndFormatUrl
+} from '@/lib/utils/validation';
+import { processTags } from '@/lib/utils/formatting';
+import { BLOG_STATUS_OPTIONS } from '@/lib/constants/options';
 
-  interface BlogFormProps {
-    initialValues?: Partial<{
-      _id: string;
-      title: string;
-      shortDescription: string;
-      longDescription: string;
-      categoryId: string;
-      storeId: string;
-      storeUrl: string;
-      authorName: string;
-      authorEmail: string;
-      authorAvatar: string;
-      status: string;
-      isFeatured: boolean;
-      imageUrl: string;
-      imageAlt: string;
-      tags: string;
-      metaTitle: string;
-      metaDescription: string;
-      metaKeywords: string;
-      metaCanonicalUrl: string;
-      metaRobots: string;
-      faqs: Array<{ question: string; answer: string }>;
-      frontBanner: boolean;
-    }>;
-    onSubmit?: (data: any, resetForm: () => void, setLoading: (b: boolean) => void, setMessage: (msg: string) => void, setErrors: (e: any) => void) => Promise<void>;
-    submitLabel?: string;
-    loadingOverride?: boolean;
-  }
+interface BlogFormProps {
+  initialValues?: Partial<{
+    _id: string;
+    title: string;
+    shortDescription: string;
+    longDescription: string;
+    categoryId: string;
+    storeId: string;
+    storeUrl: string;
+    authorName: string;
+    authorEmail: string;
+    authorAvatar: string;
+    status: string;
+    isFeatured: boolean;
+    imageUrl: string;
+    imageAlt: string;
+    tags: string;
+    metaTitle: string;
+    metaDescription: string;
+    metaKeywords: string;
+    metaCanonicalUrl: string;
+    metaRobots: string;
+    faqs: Array<{ question: string; answer: string }>;
+    frontBanner: boolean;
+  }>;
+  onSubmit?: (data: any, resetForm: () => void, setLoading: (b: boolean) => void, setMessage: (msg: string) => void, setErrors: (e: any) => void) => Promise<void>;
+  submitLabel?: string;
+  loadingOverride?: boolean;
+}
 
-  const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: BlogFormProps = {}) => {
-    const router = useRouter();
-    const { isAuthenticated, isLoading, token } = useUnifiedAuth();
-    const httpClient = new HttpClient();
-    
-    // Required Fields
-    const [title, setTitle] = useState(initialValues?.title || '');
-    const [shortDescription, setShortDescription] = useState(initialValues?.shortDescription || '');
-    const [longDescription, setLongDescription] = useState(initialValues?.longDescription || '');
-    const [categoryId, setCategoryId] = useState(initialValues?.categoryId || '');
-    const [storeId, setStoreId] = useState(initialValues?.storeId || '');
-    const [storeUrl, setStoreUrl] = useState(initialValues?.storeUrl || '');
-    const [authorName, setAuthorName] = useState(initialValues?.authorName || '');
-    const [status, setStatus] = useState(initialValues?.status || 'draft');
+const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: BlogFormProps = {}) => {
+  const router = useRouter();
+  const { isAuthenticated, isLoading, token } = useUnifiedAuth();
+  const httpClient = new HttpClient();
 
-    // Optional Fields
-    const [authorEmail, setAuthorEmail] = useState(initialValues?.authorEmail || '');
-    const [authorAvatar, setAuthorAvatar] = useState(initialValues?.authorAvatar || '');
-    const [imageUrl, setImageUrl] = useState(initialValues?.imageUrl || '');
-    const [imageAlt, setImageAlt] = useState(initialValues?.imageAlt || '');
-    const [isFeatured, setIsFeatured] = useState(initialValues?.isFeatured || false);
-    const [frontBanner, setFrontBanner] = useState(initialValues?.frontBanner || false);
-    const [tags, setTags] = useState(initialValues?.tags || '');
+  // Required Fields
+  const [title, setTitle] = useState(initialValues?.title || '');
+  const [shortDescription, setShortDescription] = useState(initialValues?.shortDescription || '');
+  const [longDescription, setLongDescription] = useState(initialValues?.longDescription || '');
+  const [categoryId, setCategoryId] = useState(initialValues?.categoryId || '');
+  const [storeId, setStoreId] = useState(initialValues?.storeId || '');
+  const [storeUrl, setStoreUrl] = useState(initialValues?.storeUrl || '');
+  const [authorName, setAuthorName] = useState(initialValues?.authorName || '');
+  const [status, setStatus] = useState(initialValues?.status || 'draft');
 
-    // Image Upload States
-    const [imageFile, setImageFile] = useState<File | null>(null);
-    const [imageUploadMessage, setImageUploadMessage] = useState('');
+  // Optional Fields
+  const [authorEmail, setAuthorEmail] = useState(initialValues?.authorEmail || '');
+  const [authorAvatar, setAuthorAvatar] = useState(initialValues?.authorAvatar || '');
+  const [imageUrl, setImageUrl] = useState(initialValues?.imageUrl || '');
+  const [imageAlt, setImageAlt] = useState(initialValues?.imageAlt || '');
+  const [isFeatured, setIsFeatured] = useState(initialValues?.isFeatured || false);
+  const [frontBanner, setFrontBanner] = useState(initialValues?.frontBanner || false);
+  const [tags, setTags] = useState(initialValues?.tags || '');
 
-    // SEO Metadata Fields
-    const [metaTitle, setMetaTitle] = useState(initialValues?.metaTitle || '');
-    const [metaDescription, setMetaDescription] = useState(initialValues?.metaDescription || '');
-    const [metaKeywords, setMetaKeywords] = useState(initialValues?.metaKeywords || '');
-    const [metaCanonicalUrl, setMetaCanonicalUrl] = useState(initialValues?.metaCanonicalUrl || '');
-    const [metaRobots, setMetaRobots] = useState(initialValues?.metaRobots || 'index,follow');
+  // Image Upload States
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageUploadMessage, setImageUploadMessage] = useState('');
 
-    // FAQs Section (only declare once, with initialValues support)
-    const [faqs, setFaqs] = useState<Array<{ question: string; answer: string }>>(initialValues?.faqs || []);
+  // SEO Metadata Fields
+  const [metaTitle, setMetaTitle] = useState(initialValues?.metaTitle || '');
+  const [metaDescription, setMetaDescription] = useState(initialValues?.metaDescription || '');
+  const [metaKeywords, setMetaKeywords] = useState(initialValues?.metaKeywords || '');
+  const [metaCanonicalUrl, setMetaCanonicalUrl] = useState(initialValues?.metaCanonicalUrl || '');
+  const [metaRobots, setMetaRobots] = useState(initialValues?.metaRobots || 'index,follow');
 
-    // Form State
-    const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState('');
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [stores, setStores] = useState<Store[]>([]);
-    const [categoriesLoading, setCategoriesLoading] = useState(true);
-    const [storesLoading, setStoresLoading] = useState(true);
+  // FAQs Section (only declare once, with initialValues support)
+  const [faqs, setFaqs] = useState<Array<{ question: string; answer: string }>>(initialValues?.faqs || []);
 
-    // Validation States
-    const [errors, setErrors] = useState<BlogValidationErrors>({});
+  // Form State
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [stores, setStores] = useState<Store[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [storesLoading, setStoresLoading] = useState(true);
 
-    // Image Upload Handlers
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (e.target.files && e.target.files[0]) {
-        setImageFile(e.target.files[0]);
-        setImageUploadMessage('');
-      }
-    };
+  // Validation States
+  const [errors, setErrors] = useState<BlogValidationErrors>({});
 
-    // Fetch Blog Categories from API
-    useEffect(() => {
-      const fetchCategories = async () => {
-        try {
-          setCategoriesLoading(true);
-          const data = await httpClient.get('/api/blog-categories');
-          setCategories(data.data || data || []);
-        } catch (error) {
-          console.error('Error fetching categories:', error);
-        } finally {
-          setCategoriesLoading(false);
-        }
-      };
+  // Image Upload Handlers
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setImageFile(e.target.files[0]);
+      setImageUploadMessage('');
+    }
+  };
 
-      fetchCategories();
-    }, []);
-
-    // Fetch Stores from API
-    useEffect(() => {
-      const fetchStores = async () => {
-        try {
-          setStoresLoading(true);
-          const data = await httpClient.get('/api/proxy-stores');
-          const storesData = data.data || data || [];
-          setStores(storesData);
-        } catch (error) {
-          console.error('Error fetching stores:', error);
-        } finally {
-          setStoresLoading(false);
-        }
-      };
-
-      fetchStores();
-    }, []);
-
-    const handleStoreChange = (selectedStoreId: string, selectedStoreUrl: string) => {
-      setStoreId(selectedStoreId);
-      setStoreUrl(selectedStoreUrl);
-    };
-
-    const handleMetaChange = (field: string, value: string) => {
-      switch (field) {
-        case 'metaTitle':
-          setMetaTitle(value);
-          break;
-        case 'metaDescription':
-          setMetaDescription(value);
-          break;
-        case 'metaKeywords':
-          setMetaKeywords(value);
-          break;
-        case 'metaCanonicalUrl':
-          setMetaCanonicalUrl(value);
-          break;
-        case 'metaRobots':
-          setMetaRobots(value);
-          break;
-      }
-    };
-
-    // Validation function
-    const validateForm = () => {
-      const newErrors: BlogValidationErrors = {};
-
-      // Required field validations
-      if (!title.trim()) {
-        newErrors.title = 'Title is required';
-      } else if (title.trim().length < 3) {
-        newErrors.title = 'Title must be at least 3 characters long';
-      }
-
-      if (!shortDescription.trim()) {
-        newErrors.shortDescription = 'Short description is required';
-      } else if (shortDescription.trim().length < 10) {
-        newErrors.shortDescription = 'Short description must be at least 10 characters long';
-      } else if (shortDescription.trim().length > 500) {
-        newErrors.shortDescription = 'Short description must not exceed 500 characters';
-      }
-
-      const plainLongDescription = stripHtml(longDescription);
-      
-      if (!plainLongDescription.trim()) {
-        newErrors.longDescription = 'Long description is required';
-      } else if (plainLongDescription.trim().length < 50) {
-        newErrors.longDescription = 'Long description must be at least 50 characters long';
-      }
-
-      if (!categoryId) {
-        newErrors.category = 'Category is required';
-      }
-
-      if (!storeId) {
-        newErrors.store = 'Store is required';
-      } else if (!storeUrl) {
-        newErrors.store = 'Selected store must have a valid URL';
-      }
-
-      if (!authorName.trim()) {
-        newErrors.authorName = 'Author name is required';
-      }
-
-      // Optional field validations
-      if (authorEmail && !isValidEmail(authorEmail)) {
-        newErrors.authorEmail = 'Please enter a valid email address';
-      }
-
-      if (authorAvatar && !isValidUrl(authorAvatar)) {
-        newErrors.authorAvatar = 'Please enter a valid URL';
-      }
-
-      if (imageUrl && !isValidUrl(imageUrl)) {
-        newErrors.imageUrl = 'Please enter a valid URL';
-      }
-
-      // SEO metadata validations
-      if (metaTitle && metaTitle.length > 60) {
-        newErrors.metaTitle = 'Meta title should not exceed 60 characters';
-      }
-
-      if (metaDescription && metaDescription.length > 160) {
-        newErrors.metaDescription = 'Meta description should not exceed 160 characters';
-      }
-
-      if (metaCanonicalUrl && !isValidUrl(metaCanonicalUrl)) {
-        newErrors.metaCanonicalUrl = 'Please enter a valid canonical URL';
-      }
-
-      // FAQ validations
-      faqs.forEach((faq, index) => {
-        if (!faq.question.trim()) {
-          newErrors[`faqQuestion${index}`] = 'FAQ question is required';
-        }
-        if (!faq.answer.trim()) {
-          newErrors[`faqAnswer${index}`] = 'FAQ answer is required';
-        }
-      });
-
-      setErrors(newErrors);
-      return Object.keys(newErrors).length === 0;
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault();
-
-      if (!validateForm()) {
-        setMessage('Please fix the errors above before submitting.');
-        return;
-      }
-
-      setLoading(true);
-      setMessage('');
-
-      // Find the selected category and store objects
-      const selectedCategory = categories.find(cat => cat._id === categoryId);
-      const selectedStore = stores.find(store => store._id === storeId);
-
-      if (!selectedCategory || !selectedStore) {
-        setMessage('Invalid category or store selection.');
-        setLoading(false);
-        return;
-      }
-
-      // Clean the URL before validation to ensure it's properly formatted
-      const cleanUrl = cleanAndFormatUrl(storeUrl);
-      
-      // Additional URL validation
+  // Fetch Blog Categories from API
+  useEffect(() => {
+    const fetchCategories = async () => {
       try {
-        new URL(cleanUrl);
+        setCategoriesLoading(true);
+        const data = await httpClient.get('/api/blog-categories');
+        setCategories(data.data || data || []);
       } catch (error) {
-        setMessage('Invalid store URL format. Please check the URL and try again.');
-        setLoading(false);
-        return;
+        console.error('Error fetching categories:', error);
+      } finally {
+        setCategoriesLoading(false);
       }
-
-      // Handle image upload if there's a selected file but no imageUrl
-      let finalImageUrl = imageUrl;
-      if (imageFile && !imageUrl.trim()) {
-        try {
-          setMessage('Uploading image...');
-          const formData = new FormData();
-          formData.append('file', imageFile);
-
-          const uploadResponse = await fetch(`/api/upload`, {
-            method: 'POST',
-            body: formData,
-            headers: token ? { 'Authorization': `Bearer ${token}` } : undefined,
-          });
-
-          if (!uploadResponse.ok) {
-            throw new Error(`Image upload failed: ${uploadResponse.status}`);
-          }
-
-          const uploadData = await uploadResponse.json();
-          finalImageUrl = uploadData.imageUrl;
-          setImageUrl(uploadData.imageUrl); // Update state with uploaded URL
-          setImageFile(null); // Clear the file input
-          setMessage('Image uploaded successfully! Proceeding with blog creation...');
-        } catch (uploadError) {
-          console.error('Error uploading image:', uploadError);
-          setMessage('Failed to upload image. Please try uploading the image again or provide an image URL.');
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Process tags
-      const processedTags = processTags(tags);
-
-      // Sanitize the HTML content from TinyMCE
-      const sanitizedLongDescription = sanitizeHtml(longDescription);
-
-      // Build the blog data object
-      const blogData = {
-        title: title.trim(),
-        shortDescription: shortDescription.trim(),
-        longDescription: sanitizedLongDescription,
-        author: {
-          name: authorName.trim(),
-          email: authorEmail.trim() || undefined,
-          avatar: authorAvatar.trim() || undefined,
-        },
-        category: {
-          id: selectedCategory._id,
-          name: selectedCategory.name,
-          slug: selectedCategory.name.toLowerCase().replace(/\s+/g, '-'),
-        },
-        store: {
-          id: selectedStore._id,
-          name: selectedStore.name,
-          url: cleanUrl,
-        },
-        status,
-        isFeaturedForHome: isFeatured,
-        FrontBanner: frontBanner,
-        // Only include image if we have a valid image URL
-        ...(finalImageUrl && finalImageUrl.trim() && {
-          image: {
-            url: finalImageUrl.trim(),
-            alt: imageAlt.trim() || title.trim()
-          }
-        }),
-        tags: processedTags.length > 0 ? processedTags : undefined,
-        // SEO Metadata
-        meta: {
-          title: metaTitle.trim() || undefined,
-          description: metaDescription.trim() || undefined,
-          keywords: typeof metaKeywords === 'string' ? metaKeywords.split(',').map(k => k.trim()).filter(Boolean) : undefined,
-          canonicalUrl: metaCanonicalUrl.trim() || undefined,
-          robots: metaRobots.trim() || 'index,follow',
-        },
-        // FAQs
-        faqs: faqs.length > 0 ? faqs : undefined,
-      };
-
-      if (onSubmit) {
-        await onSubmit(blogData, resetForm, setLoading, setMessage, setErrors);
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const response = await httpClient.post('/api/create-blog', blogData);
-        console.log('Blog creation response:', response);
-        setMessage('Blog created successfully!');
-        
-        // Clear banner cache if this blog has FrontBanner enabled
-        if (frontBanner) {
-          localStorage.removeItem('heroBannerData');
-          console.log('Banner cache cleared due to FrontBanner blog creation');
-        }
-        
-        // Reset form after successful save
-        resetForm();
-        // Redirect to admin blogs page after successful creation
-        setTimeout(() => {
-          router.push('/admin/blogs');
-        }, 1500);
-      } catch (error: any) {
-        console.error('Error creating blog:', error);
-        
-        // Extract more detailed error information
-        let errorMessage = 'Error creating blog. Please try again.';
-        
-        if (error?.response) {
-          // API returned an error response
-          errorMessage = error.response.error || error.response.message || errorMessage;
-        } else if (error?.message) {
-          // Network or other error
-          if (error.message.includes('fetch')) {
-            errorMessage = 'Network error. Please check your internet connection and try again.';
-          } else if (error.message.includes('timeout')) {
-            errorMessage = 'Request timeout. Please try again.';
-          } else {
-            errorMessage = error.message;
-          }
-        }
-        
-        console.error('Detailed error info:', {
-          message: error?.message,
-          status: error?.status,
-          response: error?.response,
-          isNetworkError: error?.isNetworkError,
-          isTimeoutError: error?.isTimeoutError
-        });
-        
-        setMessage(errorMessage);
-      }
-
-      setLoading(false);
     };
 
-    const resetForm = () => {
-      setTitle('');
-      setShortDescription('');
-      setLongDescription('');
-      setAuthorName('');
-      setAuthorEmail('');
-      setAuthorAvatar('');
-      setCategoryId('');
-      setStoreId('');
-      setStoreUrl('');
-      setStatus('draft');
-      setIsFeatured(false);
-      setFrontBanner(false);
-      setImageUrl('');
-      setImageAlt('');
-      setTags('');
-      setImageFile(null);
-      // Reset SEO metadata
-      setMetaTitle('');
-      setMetaDescription('');
-      setMetaKeywords('');
-      setMetaCanonicalUrl('');
-      setMetaRobots('index,follow');
-      // Reset FAQs
-      setFaqs([]);
-      setErrors({});
-      // Clear localStorage draft
-      localStorage.removeItem('blogDraft');
-    };
+    fetchCategories();
+  }, []);
 
-    useEffect(() => {
+  // Fetch Stores from API
+  useEffect(() => {
+    const fetchStores = async () => {
       try {
-        const saved = localStorage.getItem('blogDraft');
-        if (saved) setLongDescription(saved);
+        setStoresLoading(true);
+        const data = await httpClient.get('/api/proxy-stores');
+        const storesData = data.data || data || [];
+        setStores(storesData);
       } catch (error) {
-        console.error('Error loading draft from localStorage:', error);
+        console.error('Error fetching stores:', error);
+      } finally {
+        setStoresLoading(false);
       }
-    }, []);
+    };
 
-    // Check if user is authenticated
-    useEffect(() => {
-      if (!isLoading && !isAuthenticated) {
-        router.push('/login');
-      }
-    }, [isAuthenticated, isLoading, router]);
+    fetchStores();
+  }, []);
 
-    // If still loading auth state or not authenticated, show loading state
-    if (isLoading || !isAuthenticated) {
-      return (
-        <div className="flex justify-center items-center h-screen">
-          <div className="text-xl">Loading...</div>
-        </div>
-      );
+  const handleStoreChange = (selectedStoreId: string, selectedStoreUrl: string) => {
+    setStoreId(selectedStoreId);
+    setStoreUrl(selectedStoreUrl);
+  };
+
+  const handleMetaChange = (field: string, value: string) => {
+    switch (field) {
+      case 'metaTitle':
+        setMetaTitle(value);
+        break;
+      case 'metaDescription':
+        setMetaDescription(value);
+        break;
+      case 'metaKeywords':
+        setMetaKeywords(value);
+        break;
+      case 'metaCanonicalUrl':
+        setMetaCanonicalUrl(value);
+        break;
+      case 'metaRobots':
+        setMetaRobots(value);
+        break;
+    }
+  };
+
+  // Validation function
+  const validateForm = () => {
+    const newErrors: BlogValidationErrors = {};
+
+    // Required field validations
+    if (!title.trim()) {
+      newErrors.title = 'Title is required';
+    } else if (title.trim().length < 3) {
+      newErrors.title = 'Title must be at least 3 characters long';
     }
 
-    return (
-      <div className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-lg">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">
-          Create a New Blog Post
-        </h1>
-        
+    if (!shortDescription.trim()) {
+      newErrors.shortDescription = 'Short description is required';
+    } else if (shortDescription.trim().length < 10) {
+      newErrors.shortDescription = 'Short description must be at least 10 characters long';
+    } else if (shortDescription.trim().length > 500) {
+      newErrors.shortDescription = 'Short description must not exceed 500 characters';
+    }
+
+    const plainLongDescription = stripHtml(longDescription);
+
+    if (!plainLongDescription.trim()) {
+      newErrors.longDescription = 'Long description is required';
+    } else if (plainLongDescription.trim().length < 50) {
+      newErrors.longDescription = 'Long description must be at least 50 characters long';
+    }
+
+    if (!categoryId) {
+      newErrors.category = 'Category is required';
+    }
+
+    if (!storeId) {
+      newErrors.store = 'Store is required';
+    } else if (!storeUrl) {
+      newErrors.store = 'Selected store must have a valid URL';
+    }
+
+    if (!authorName.trim()) {
+      newErrors.authorName = 'Author name is required';
+    }
+
+    // Optional field validations
+    if (authorEmail && !isValidEmail(authorEmail)) {
+      newErrors.authorEmail = 'Please enter a valid email address';
+    }
+
+    if (authorAvatar && !isValidUrl(authorAvatar)) {
+      newErrors.authorAvatar = 'Please enter a valid URL';
+    }
+
+    if (imageUrl && !isValidUrl(imageUrl)) {
+      newErrors.imageUrl = 'Please enter a valid URL';
+    }
+
+    // SEO metadata validations
+    if (metaTitle && metaTitle.length > 60) {
+      newErrors.metaTitle = 'Meta title should not exceed 60 characters';
+    }
+
+    if (metaDescription && metaDescription.length > 160) {
+      newErrors.metaDescription = 'Meta description should not exceed 160 characters';
+    }
+
+    if (metaCanonicalUrl && !isValidUrl(metaCanonicalUrl)) {
+      newErrors.metaCanonicalUrl = 'Please enter a valid canonical URL';
+    }
+
+    // FAQ validations
+    faqs.forEach((faq, index) => {
+      if (!faq.question.trim()) {
+        newErrors[`faqQuestion${index}`] = 'FAQ question is required';
+      }
+      if (!faq.answer.trim()) {
+        newErrors[`faqAnswer${index}`] = 'FAQ answer is required';
+      }
+    });
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      setMessage('Please fix the errors above before submitting.');
+      return;
+    }
+
+    setLoading(true);
+    setMessage('');
+
+    // Find the selected category and store objects
+    const selectedCategory = categories.find(cat => cat._id === categoryId);
+    const selectedStore = stores.find(store => store._id === storeId);
+
+    if (!selectedCategory || !selectedStore) {
+      setMessage('Invalid category or store selection.');
+      setLoading(false);
+      return;
+    }
+
+    // Clean the URL before validation to ensure it's properly formatted
+    const cleanUrl = cleanAndFormatUrl(storeUrl);
+
+    // Additional URL validation
+    try {
+      new URL(cleanUrl);
+    } catch (error) {
+      setMessage('Invalid store URL format. Please check the URL and try again.');
+      setLoading(false);
+      return;
+    }
+
+    // Handle image upload if there's a selected file but no imageUrl
+    let finalImageUrl = imageUrl;
+    if (imageFile && !imageUrl.trim()) {
+      try {
+        setMessage('Uploading image...');
+        const formData = new FormData();
+        formData.append('file', imageFile);
+
+        const uploadResponse = await fetch(`/api/upload`, {
+          method: 'POST',
+          body: formData,
+          headers: token ? { 'Authorization': `Bearer ${token}` } : undefined,
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error(`Image upload failed: ${uploadResponse.status}`);
+        }
+
+        const uploadData = await uploadResponse.json();
+        finalImageUrl = uploadData.imageUrl;
+        setImageUrl(uploadData.imageUrl); // Update state with uploaded URL
+        setImageFile(null); // Clear the file input
+        setMessage('Image uploaded successfully! Proceeding with blog creation...');
+      } catch (uploadError) {
+        console.error('Error uploading image:', uploadError);
+        setMessage('Failed to upload image. Please try uploading the image again or provide an image URL.');
+        setLoading(false);
+        return;
+      }
+    }
+
+    // Process tags
+    const processedTags = processTags(tags);
+
+    // Sanitize the HTML content from TinyMCE
+    const sanitizedLongDescription = sanitizeHtml(longDescription);
+
+    // Build the blog data object
+    const blogData = {
+      title: title.trim(),
+      shortDescription: shortDescription.trim(),
+      longDescription: sanitizedLongDescription,
+      author: {
+        name: authorName.trim(),
+        email: authorEmail.trim() || undefined,
+        avatar: authorAvatar.trim() || undefined,
+      },
+      category: {
+        id: selectedCategory._id,
+        name: selectedCategory.name,
+        slug: selectedCategory.name.toLowerCase().replace(/\s+/g, '-'),
+      },
+      store: {
+        id: selectedStore._id,
+        name: selectedStore.name,
+        url: cleanUrl,
+      },
+      status,
+      isFeaturedForHome: isFeatured,
+      FrontBanner: frontBanner,
+      // Only include image if we have a valid image URL
+      ...(finalImageUrl && finalImageUrl.trim() && {
+        image: {
+          url: finalImageUrl.trim(),
+          alt: imageAlt.trim() || title.trim()
+        }
+      }),
+      tags: processedTags.length > 0 ? processedTags : undefined,
+      // SEO Metadata
+      meta: {
+        title: metaTitle.trim() || undefined,
+        description: metaDescription.trim() || undefined,
+        keywords: typeof metaKeywords === 'string' ? metaKeywords.split(',').map(k => k.trim()).filter(Boolean) : undefined,
+        canonicalUrl: metaCanonicalUrl.trim() || undefined,
+        robots: metaRobots.trim() || 'index,follow',
+      },
+      // FAQs
+      faqs: faqs.length > 0 ? faqs : undefined,
+    };
+
+    if (onSubmit) {
+      await onSubmit(blogData, resetForm, setLoading, setMessage, setErrors);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await httpClient.post('/api/create-blog', blogData);
+      console.log('Blog creation response:', response);
+      setMessage('Blog created successfully!');
+
+      // Clear banner cache if this blog has FrontBanner enabled
+      if (frontBanner) {
+        localStorage.removeItem('heroBannerData');
+        console.log('Banner cache cleared due to FrontBanner blog creation');
+      }
+
+      // Reset form after successful save
+      resetForm();
+      // Redirect to admin blogs page after successful creation
+      setTimeout(() => {
+        router.push('/admin/blogs');
+      }, 1500);
+    } catch (error: any) {
+      console.error('Error creating blog:', error);
+
+      // Extract more detailed error information
+      let errorMessage = 'Error creating blog. Please try again.';
+
+      if (error?.response) {
+        // API returned an error response
+        errorMessage = error.response.error || error.response.message || errorMessage;
+      } else if (error?.message) {
+        // Network or other error
+        if (error.message.includes('fetch')) {
+          errorMessage = 'Network error. Please check your internet connection and try again.';
+        } else if (error.message.includes('timeout')) {
+          errorMessage = 'Request timeout. Please try again.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      console.error('Detailed error info:', {
+        message: error?.message,
+        status: error?.status,
+        response: error?.response,
+        isNetworkError: error?.isNetworkError,
+        isTimeoutError: error?.isTimeoutError
+      });
+
+      setMessage(errorMessage);
+    }
+
+    setLoading(false);
+  };
+
+  const resetForm = () => {
+    setTitle('');
+    setShortDescription('');
+    setLongDescription('');
+    setAuthorName('');
+    setAuthorEmail('');
+    setAuthorAvatar('');
+    setCategoryId('');
+    setStoreId('');
+    setStoreUrl('');
+    setStatus('draft');
+    setIsFeatured(false);
+    setFrontBanner(false);
+    setImageUrl('');
+    setImageAlt('');
+    setTags('');
+    setImageFile(null);
+    // Reset SEO metadata
+    setMetaTitle('');
+    setMetaDescription('');
+    setMetaKeywords('');
+    setMetaCanonicalUrl('');
+    setMetaRobots('index,follow');
+    // Reset FAQs
+    setFaqs([]);
+    setErrors({});
+    // Clear localStorage draft
+    localStorage.removeItem('blogDraft');
+  };
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('blogDraft');
+      if (saved) setLongDescription(saved);
+    } catch (error) {
+      console.error('Error loading draft from localStorage:', error);
+    }
+  }, []);
+
+  // Check if user is authenticated
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+  return (
+    <div className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-lg">
+      <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">
+        Create a New Blog Post
+      </h1>
+
+      {isLoading || !isAuthenticated ? (
+        <div className="flex justify-center items-center h-[60vh]">
+          <div className="text-xl">Loading...</div>
+        </div>
+      ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Required Fields Section */}
           <div className="bg-blue-50 p-4 rounded-lg">
             <h2 className="text-xl font-semibold text-blue-800 mb-4">Required Fields</h2>
-            
+
             <FormField
               id="title"
               label="Title"
@@ -576,7 +572,7 @@
           {/* Optional Fields Section */}
           <div className="bg-gray-50 p-4 rounded-lg">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">Optional Fields</h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
               <FormField
                 id="authorEmail"
@@ -622,12 +618,12 @@
                 <div className="mt-4">
                   <div className="text-sm text-gray-600 mb-2">Image Preview:</div>
                   {/* Ensure image URL is encoded for Next.js Image component */}
-                  <Image 
-                    src={imageUrl} 
-                    alt={imageAlt || 'Uploaded preview'} 
-                    width={500} 
-                    height={300} 
-                    className="rounded-lg w-full max-w-md h-auto object-cover border border-gray-300" 
+                  <Image
+                    src={imageUrl}
+                    alt={imageAlt || 'Uploaded preview'}
+                    width={500}
+                    height={300}
+                    className="rounded-lg w-full max-w-md h-auto object-cover border border-gray-300"
                     unoptimized={true} // For testing purposes, remove in production if not needed
                   />
                 </div>
@@ -728,8 +724,9 @@
             </div>
           )}
         </form>
-      </div>
-    );
-  };
+      )}
+    </div>
+  );
+};
 
-  export default BlogForm;
+export default BlogForm;

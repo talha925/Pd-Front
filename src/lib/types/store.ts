@@ -33,6 +33,10 @@ export interface Coupon {
   hits?: number;
   lastAccessed?: string | null;
   order?: number;
+  isBestValue?: boolean;
+  isExclusive?: boolean;
+  expiryDate?: string;
+  usedCount?: number;
 }
 
 export interface SEO {
