@@ -1,4 +1,6 @@
 import './globals.css'
+import { SpeedInsights } from "@vercel/speed-insights/next"
+import { Analytics } from "@vercel/analytics/next"
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { cookies } from 'next/headers'
@@ -12,14 +14,14 @@ import config from '@/lib/config'
 // Dynamically import WebSocket components for real-time functionality
 const RealTimeUpdates = dynamic(
   () => import('@/components/common/RealTimeUpdates').then(mod => ({ default: mod.RealTimeUpdates })),
-  { 
+  {
     ssr: false,
     loading: () => null
   }
 )
 
 // Load Inter font with display: swap for better performance
-const inter = Inter({ 
+const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-inter',
@@ -131,6 +133,8 @@ export default function RootLayout({
             {/* Performance monitoring is available in admin dashboard only */}
             {/* Real-time updates notifications */}
             <RealTimeUpdates />
+            <SpeedInsights />
+            <Analytics />
           </ErrorBoundary>
         </Providers>
       </body>
