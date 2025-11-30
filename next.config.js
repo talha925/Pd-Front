@@ -33,7 +33,7 @@ const nextConfig = {
     scrollRestoration: true,
     webVitalsAttribution: ['CLS', 'LCP'],
     optimizePackageImports: [
-      'lucide-react', 
+      'lucide-react',
       '@radix-ui/react-dialog',
       '@tinymce/tinymce-react',
       'web-vitals'
@@ -56,7 +56,7 @@ const nextConfig = {
             key: 'Strict-Transport-Security',
             value: 'max-age=31536000; includeSubDomains; preload'
           },
-          
+
           {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()'
@@ -156,25 +156,6 @@ const nextConfig = {
             // Separate web-vitals into its own chunk
             webVitals: {
               test: /[\\/]node_modules[\\/]web-vitals[\\/]/,
-              name: 'web-vitals',
-              chunks: 'all',
-              priority: 25,
-              reuseExistingChunk: true,
-            },
-            // Group UI libraries together
-            uiLibs: {
-              test: /[\\/]node_modules[\\/](@radix-ui|lucide-react)[\\/]/,
-              name: 'ui-libs',
-              chunks: 'all',
-              priority: 20,
-              reuseExistingChunk: true,
-            },
-            // Default vendor chunk for other node_modules
-            vendor: {
-              test: /[\\/]node_modules[\\/]/,
-              name: 'vendors',
-              chunks: 'all',
-              priority: 10,
               reuseExistingChunk: true,
             },
           },

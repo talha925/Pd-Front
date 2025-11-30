@@ -218,21 +218,6 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
         @keyframes fade-in {
           from { opacity: 0; }
           to { opacity: 1; }
-        }
-        .animate-float { animation: float 6s ease-in-out infinite; }
-        .animate-pulse-glow { animation: pulse-glow 2s infinite; }
-        .animate-scale-up { animation: scale-up 0.2s ease-out; }
-        .animate-fade-in { animation: fade-in 0.2s ease-out; }
-        .glass-panel {
-          background: rgba(255, 255, 255, 0.7);
-          backdrop-filter: blur(12px);
-          border: 1px solid rgba(255, 255, 255, 0.5);
-        }
-        .confetti {
-          position: fixed;
-          width: 10px;
-          height: 10px;
-          pointer-events: none;
           z-index: 9999;
         }
       `;
@@ -378,9 +363,9 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
           <div className="flex flex-col lg:flex-row gap-6 sm:gap-8">
 
             <div className="flex-1">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-2">
-                <h2 className="text-xl sm:text-2xl font-bold text-blue-800">Top Deals & Coupons</h2>
-                <div className="text-xs sm:text-sm text-slate-500">Last updated: Today</div>
+              <div className="flex flex-row items-center justify-between mb-4 sm:mb-6 gap-2">
+                <h2 className="text-lg sm:text-2xl font-bold text-blue-800">Top Deals & Coupons</h2>
+                <div className="text-xs sm:text-sm text-slate-500 whitespace-nowrap">Last updated: Today</div>
               </div>
 
               {activeCoupons.length === 0 ? (
@@ -465,7 +450,7 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
             </div>
 
             <aside className="w-full lg:w-80 space-y-6 sm:space-y-8">
-              <div className="glass-panel rounded-2xl p-4 sm:p-6 shadow-lg">
+              <div className="bg-white/70 backdrop-blur-md border border-white/50 rounded-2xl p-4 sm:p-6 shadow-lg">
                 <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
                   <span className="w-1 h-6 bg-blue-500 rounded-full" aria-hidden="true"></span>
                   About Store

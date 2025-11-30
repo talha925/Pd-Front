@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 // Simple SSE stream for admin dashboards. In production, hook into your backend/Redis.
 export async function GET(request: NextRequest) {
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
 
         const abort = () => {
           clearInterval(heartbeat);
-          try { controller.close(); } catch {}
+          try { controller.close(); } catch { }
         };
 
         // Close when client disconnects
