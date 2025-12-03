@@ -23,19 +23,19 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
   useEffect(() => {
     const cacheKey = 'heroBannerData';
     const cached = localStorage.getItem(cacheKey);
-    
+
     if (cached) {
       try {
         const { data, timestamp } = JSON.parse(cached);
         const cacheAge = Date.now() - timestamp;
         const isExpired = cacheAge > 5 * 60 * 1000; // 5 minutes
-        
+
         // Always load cached data immediately for instant display
         if (data?.length > 0) {
           setBannerBlogs(data);
           setLoading(false);
           setIsFirstLoad(false);
-          
+
           // If cache is expired, trigger a background refresh
           if (isExpired) {
             fetchBannerBlogs();
@@ -66,7 +66,7 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
     const handleCacheInvalidation = () => {
       fetchBannerBlogs(true);
     };
-    
+
     window.addEventListener('bannerCacheInvalidated', handleCacheInvalidation);
     return () => {
       window.removeEventListener('bannerCacheInvalidated', handleCacheInvalidation);
@@ -75,17 +75,17 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
 
   const fetchBannerBlogs = async (forceRefresh = false) => {
     const cacheKey = 'heroBannerData';
-    
+
     // Only check cache if not forcing refresh
     if (!forceRefresh) {
       const cached = localStorage.getItem(cacheKey);
-      
+
       if (cached) {
         try {
           const { data, timestamp } = JSON.parse(cached);
           const cacheAge = Date.now() - timestamp;
           const isExpired = cacheAge > 5 * 60 * 1000; // 5 minutes
-          
+
           // If cache is fresh and has data, use it immediately
           if (!isExpired && data?.length > 0) {
             setBannerBlogs(data);
@@ -100,13 +100,13 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
 
     try {
       const response = await fetch('/api/blogs?frontBanner=true');
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const result = await response.json();
-      
+
       let blogsArray = [];
       if (Array.isArray(result)) {
         blogsArray = result;
@@ -115,24 +115,24 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
       } else if (result.data && Array.isArray(result.data)) {
         blogsArray = result.data;
       }
-      
+
       // Filter for banner blogs - check both FrontBanner and frontBanner properties
-      const filteredBlogs = blogsArray.length > 0 
+      const filteredBlogs = blogsArray.length > 0
         ? blogsArray
-            .filter((blog: Blog) => {
-              return blog.FrontBanner === true || blog.frontBanner === true;
-            })
-            .sort((a: Blog, b: Blog) => {
-              // Sort by creation date (newest first)
-              const dateA = new Date(a.createdAt || 0).getTime();
-              const dateB = new Date(b.createdAt || 0).getTime();
-              return dateB - dateA;
-            })
-            .slice(0, 3) // Limit to only 3 latest blogs
+          .filter((blog: Blog) => {
+            return blog.FrontBanner === true || blog.frontBanner === true;
+          })
+          .sort((a: Blog, b: Blog) => {
+            // Sort by creation date (newest first)
+            const dateA = new Date(a.createdAt || 0).getTime();
+            const dateB = new Date(b.createdAt || 0).getTime();
+            return dateB - dateA;
+          })
+          .slice(0, 3) // Limit to only 3 latest blogs
         : [];
-      
+
       setBannerBlogs(filteredBlogs);
-      
+
       // Cache the fresh data with current timestamp
       if (filteredBlogs.length > 0) {
         localStorage.setItem(cacheKey, JSON.stringify({
@@ -140,7 +140,7 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
           timestamp: Date.now()
         }));
       }
-      
+
     } catch (error) {
       console.error('Error fetching banner blogs:', error);
       // Only clear loading if we don't have cached data to show
@@ -160,11 +160,11 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
   // Only refresh if user was away for more than 5 seconds to avoid tab switching issues
   useEffect(() => {
     let lastBlurTime = 0;
-    
+
     const handleBlur = () => {
       lastBlurTime = Date.now();
     };
-    
+
     const handleFocus = () => {
       const timeSinceBlur = Date.now() - lastBlurTime;
       // Only refresh if user was away for more than 5 seconds (likely from admin panel)
@@ -172,7 +172,7 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
         fetchBannerBlogs(true); // Force refresh when returning from admin
       }
     };
-    
+
     window.addEventListener('blur', handleBlur);
     window.addEventListener('focus', handleFocus);
     return () => {
@@ -201,20 +201,20 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
 
   if (loading && isFirstLoad) {
     return (
-      <div className={`relative h-64 md:h-80 lg:h-96 ${className} overflow-hidden mt-8 mb-12 rounded-3xl shadow-2xl`}>
+      <div className={`relative h-\[450px\] md:h-80 lg:h-96 ${className} overflow-hidden mt-8 mb-12 rounded-3xl shadow-2xl`}>
         {/* Enhanced Shimmer Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-blue-50 to-purple-100 animate-pulse" />
-        
+
         {/* Shimmer Effect Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent animate-shimmer" 
-             style={{
-               backgroundSize: '200% 100%',
-               animation: 'shimmer 2s infinite linear'
-             }} />
-        
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent animate-shimmer"
+          style={{
+            backgroundSize: '200% 100%',
+            animation: 'shimmer 2s infinite linear'
+          }} />
+
         {/* Enhanced Glassmorphism Overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-white/10 to-transparent backdrop-blur-md border border-white/20" />
-        
+
         {/* Content Skeleton */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center text-gray-700 px-6 md:px-12 max-w-5xl">
@@ -235,7 +235,7 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
 
   if (bannerBlogs.length === 0) {
     return (
-      <div className={`relative h-64 md:h-80 lg:h-96 overflow-hidden rounded-3xl mt-8 mb-12 shadow-2xl ${className}`}>
+      <div className={`relative h-\[450px\] md:h-80 lg:h-96 overflow-hidden rounded-3xl mt-8 mb-12 shadow-2xl ${className}`}>
         <div className="absolute inset-0 bg-gradient-to-br from-blue-100 via-purple-50 to-pink-100" />
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center text-gray-700 px-6 md:px-12 max-w-5xl">
@@ -257,8 +257,8 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
   const currentBlog = bannerBlogs[currentSlide];
   const imageKey = currentBlog?._id || currentSlide;
   const hasImageError = imageError[imageKey];
-  const imageUrl = hasImageError 
-    ? '/images/default-blog.jpg' 
+  const imageUrl = hasImageError
+    ? '/images/default-blog.jpg'
     : (currentBlog.image?.url || '/images/default-blog.jpg');
 
   const handleImageError = () => {
@@ -269,7 +269,7 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
   };
 
   return (
-    <div className={`relative h-64 md:h-80 lg:h-96 overflow-hidden rounded-3xl mt-8 mb-12 shadow-2xl group ${className}`}>
+    <div className={`relative h-\[450px\] md:h-80 lg:h-96 overflow-hidden rounded-3xl mt-8 mb-12 shadow-2xl group ${className}`}>
       {/* Background Image */}
       <div className="absolute inset-0">
         <Image
@@ -284,15 +284,17 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
         {/* Multi-layer Overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-black/20 via-black/10 to-black/25" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+        {/* Stronger Mobile Bottom Gradient for Text Readability */}
+        <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-black/90 via-black/60 to-transparent md:hidden" />
       </div>
 
       {/* Glassmorphism Content Overlay */}
-      <div className="absolute inset-0 flex items-center justify-start">
-        <div className="text-left text-white px-6 md:px-12 max-w-4xl ml-8 md:ml-12 lg:ml-16">
-          {/* Enhanced Glassmorphism Card */}
-          <div className="backdrop-blur-lg bg-white/5 rounded-3xl p-4 md:p-6 border border-white/15 shadow-2xl hover:bg-white/8 transition-all duration-500">
+      <div className="absolute inset-0 flex items-end justify-center md:items-center md:justify-start pb-12 md:pb-0">
+        <div className="text-center md:text-left text-white px-4 md:px-12 max-w-4xl mx-4 md:ml-12 lg:ml-16 w-full md:w-auto z-10">
+          {/* Enhanced Glassmorphism Card (Desktop Only) / Clean Text (Mobile) */}
+          <div className="md:backdrop-blur-lg md:bg-white/5 md:rounded-3xl p-2 md:p-6 md:border md:border-white/15 md:shadow-2xl md:hover:bg-white/8 transition-all duration-500">
             <h1 className="text-xl md:text-2xl lg:text-3xl font-bold mb-4 leading-relaxed bg-gradient-to-r from-white via-blue-100 to-purple-100 bg-clip-text text-transparent drop-shadow-2xl break-words max-w-full whitespace-pre-wrap">
-              {currentBlog.title && currentBlog.title.length > 40 
+              {currentBlog.title && currentBlog.title.length > 40
                 ? currentBlog.title.replace(/(.{1,25})(\s|$)/g, '$1\n').trim()
                 : currentBlog.title}
             </h1>
@@ -327,9 +329,9 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
         </div>
       </div>
 
-      {/* Navigation Arrows (only show if multiple blogs) */}
+      {/* Navigation Arrows - Hidden on Mobile, Visible on Tablet/Desktop */}
       {bannerBlogs.length > 1 && (
-        <>
+        <div className="hidden md:block">
           <button
             onClick={prevSlide}
             className="absolute left-6 top-1/2 transform -translate-y-1/2 bg-white/15 hover:bg-white/25 backdrop-blur-sm text-white w-14 h-14 rounded-2xl cursor-pointer z-10 flex items-center justify-center transition-all duration-500 border border-white/25 hover:border-white/40 shadow-xl hover:shadow-2xl hover:scale-110 group"
@@ -348,7 +350,7 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
             </svg>
           </button>
-        </>
+        </div>
       )}
 
       {/* Slide Indicators (only show if multiple blogs) */}
@@ -358,11 +360,10 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
             <button
               key={index}
               onClick={() => setCurrentSlide(index)}
-              className={`w-4 h-4 rounded-full transition-all duration-500 border-2 ${
-                index === currentSlide
-                  ? 'bg-white border-white shadow-lg scale-125'
-                  : 'bg-white/30 border-white/50 hover:bg-white/60 hover:border-white/80 hover:scale-110'
-              }`}
+              className={`w-4 h-4 rounded-full transition-all duration-500 border-2 ${index === currentSlide
+                ? 'bg-white border-white shadow-lg scale-125'
+                : 'bg-white/30 border-white/50 hover:bg-white/60 hover:border-white/80 hover:scale-110'
+                }`}
               aria-label={`Go to slide ${index + 1}`}
             />
           ))}
