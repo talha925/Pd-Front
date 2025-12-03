@@ -76,6 +76,8 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
   const fetchBannerBlogs = async (forceRefresh = false) => {
     const cacheKey = 'heroBannerData';
 
+    console.log('[HeroBanner] Starting fetch, forceRefresh:', forceRefresh);
+
     // Only check cache if not forcing refresh
     if (!forceRefresh) {
       const cached = localStorage.getItem(cacheKey);
@@ -86,26 +88,33 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
           const cacheAge = Date.now() - timestamp;
           const isExpired = cacheAge > 5 * 60 * 1000; // 5 minutes
 
+          console.log('[HeroBanner] Cache found, age:', cacheAge, 'expired:', isExpired, 'data count:', data?.length);
+
           // If cache is fresh and has data, use it immediately
           if (!isExpired && data?.length > 0) {
+            console.log('[HeroBanner] Using cached data');
             setBannerBlogs(data);
             setLoading(false);
             return;
           }
         } catch (error) {
-          console.error('Error parsing cached data:', error);
+          console.error('[HeroBanner] Error parsing cached data:', error);
         }
       }
     }
 
     try {
+      console.log('[HeroBanner] Fetching from API: /api/blogs?frontBanner=true');
       const response = await fetch('/api/blogs?frontBanner=true');
+
+      console.log('[HeroBanner] API Response status:', response.status, response.statusText);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
+      console.log('[HeroBanner] API Response data:', result);
 
       let blogsArray = [];
       if (Array.isArray(result)) {
@@ -115,6 +124,8 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
       } else if (result.data && Array.isArray(result.data)) {
         blogsArray = result.data;
       }
+
+      console.log('[HeroBanner] Extracted blogs array, count:', blogsArray.length);
 
       // Filter for banner blogs - check both FrontBanner and frontBanner properties
       const filteredBlogs = blogsArray.length > 0
@@ -131,7 +142,10 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
           .slice(0, 3) // Limit to only 3 latest blogs
         : [];
 
+      console.log('[HeroBanner] Filtered banner blogs, count:', filteredBlogs.length, filteredBlogs);
+
       setBannerBlogs(filteredBlogs);
+      setError(null); // Clear any previous errors
 
       // Cache the fresh data with current timestamp
       if (filteredBlogs.length > 0) {
@@ -139,10 +153,12 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
           data: filteredBlogs,
           timestamp: Date.now()
         }));
+        console.log('[HeroBanner] Cached new data');
       }
 
     } catch (error) {
-      console.error('Error fetching banner blogs:', error);
+      console.error('[HeroBanner] Error fetching banner blogs:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load banner');
       // Only clear loading if we don't have cached data to show
       if (bannerBlogs.length === 0) {
         setBannerBlogs([]);
@@ -229,8 +245,30 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
     );
   }
 
+  // Show error state instead of hiding component completely
   if (error) {
-    return null; // Don't show anything if there's an error
+    console.error('[HeroBanner] Error state:', error);
+    return (
+      <div className={`relative h-[450px] md:h-80 lg:h-96 overflow-hidden rounded-3xl mt-8 mb-12 shadow-2xl ${className}`}>
+        <div className="absolute inset-0 bg-gradient-to-br from-red-100 via-orange-50 to-yellow-100" />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center text-gray-700 px-6 md:px-12 max-w-5xl">
+            <h2 className="text-2xl md:text-3xl font-bold mb-4 text-gray-800">Unable to Load Banner</h2>
+            <p className="text-lg text-gray-600 mb-6">We're having trouble loading the featured content.</p>
+            <button
+              onClick={() => {
+                setError(null);
+                fetchBannerBlogs(true);
+              }}
+              disabled={loading}
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-colors duration-200 shadow-lg hover:shadow-xl"
+            >
+              {loading ? 'Retrying...' : 'Try Again'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (bannerBlogs.length === 0) {
@@ -293,7 +331,7 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
         <div className="text-center md:text-left text-white px-4 md:px-12 max-w-4xl mx-4 md:ml-12 lg:ml-16 w-full md:w-auto z-10">
           {/* Enhanced Glassmorphism Card (Desktop Only) / Clean Text (Mobile) */}
           <div className="md:backdrop-blur-lg md:bg-white/5 md:rounded-3xl p-2 md:p-6 md:border md:border-white/15 md:shadow-2xl md:hover:bg-white/8 transition-all duration-500">
-            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold mb-4 leading-relaxed bg-gradient-to-r from-white via-blue-100 to-purple-100 bg-clip-text text-transparent drop-shadow-2xl break-words max-w-full whitespace-pre-wrap">
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold mb-4 leading-relaxed text-white md:bg-gradient-to-r md:from-white md:via-blue-100 md:to-purple-100 md:bg-clip-text md:text-transparent drop-shadow-2xl break-words max-w-full whitespace-pre-wrap">
               {currentBlog.title && currentBlog.title.length > 40
                 ? currentBlog.title.replace(/(.{1,25})(\s|$)/g, '$1\n').trim()
                 : currentBlog.title}
