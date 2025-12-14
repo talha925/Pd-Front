@@ -2,19 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { Metadata } from "next";
 import HeroBanner from "@/components/ui/HeroBanner";
-import BlogCard from "@/components/blog/BlogCard";
+import BlogList from "@/components/blog/BlogList";
 import config from '@/lib/config';
 import { themeClasses } from '@/lib/theme/utils';
-
-interface Blog {
-  _id: string;
-  title: string;
-  slug: string; // Required for consistent routing
-  image?: {
-    url: string;
-    alt?: string;
-  };
-}
 
 // Define metadata for SEO
 export const metadata: Metadata = {
@@ -30,7 +20,7 @@ export const metadata: Metadata = {
 // Fetch data at build time or with revalidation
 async function fetchFeaturedBlogs() {
   try {
-    const res = await fetch(`${config.api.baseUrl}/api/blogs?isFeaturedForHome=true&page=1&pageSize=6`, {
+    const res = await fetch(`${config.api.baseUrl}/api/blogs?isFeaturedForHome=true&page=1&pageSize=9&limit=9`, {
       next: { revalidate: 60, tags: ['featured-blogs'] } // Revalidate every minute or when tagged
     });
 
@@ -162,14 +152,13 @@ export default async function Blogs() {
 
       <section className={`max-w-7xl mx-auto px-4 md:px-12 py-16 ${themeClasses.backgrounds.primary}`}>
         <h2 className={`${themeClasses.text.primary} bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 font-bold text-3xl mb-12 text-center`}>Featured Blogs</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {featuredBlogs.length === 0 ? (
-            <div className={`col-span-3 text-center ${themeClasses.text.secondary}`}>No featured blogs found.</div>
-          ) : (
-            featuredBlogs.map((blog: Blog) => (
-              <BlogCard key={blog._id} blog={blog} />
-            ))
-          )}
+        <div className="min-h-[400px]">
+          <BlogList
+            apiEndpoint="/api/blogs?isFeaturedForHome=true"
+            isEmbedded={true}
+            initialPosts={featuredBlogs}
+            emptyStateMessage="No featured blogs found."
+          />
         </div>
       </section>
     </div>

@@ -3,10 +3,11 @@
 'use client';
 
 import SafeImage from '@/components/ui/SafeImage';
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { decodeHTML } from '@/lib/utils/formatting';
 import toast, { Toaster } from 'react-hot-toast';
 import { Store, Coupon } from '@/lib/types/store';
+import DragReveal from '@/components/ui/DragReveal';
 
 interface StoreClientProps {
   initialStore: Store | null;
@@ -47,10 +48,12 @@ interface CouponModalProps {
   isOpen: boolean;
   onClose: () => void;
   code: string;
+
   onContinue: () => void;
+  trackingUrl?: string;
 }
 
-const CouponModal = ({ isOpen, onClose, code, onContinue }: CouponModalProps) => {
+const CouponModal = ({ isOpen, onClose, code, onContinue, trackingUrl }: CouponModalProps) => {
   const handleCopy = useCallback((e: React.MouseEvent) => {
     navigator.clipboard.writeText(code);
     triggerConfetti(e.clientX, e.clientY);
@@ -129,16 +132,32 @@ const CouponModal = ({ isOpen, onClose, code, onContinue }: CouponModalProps) =>
               </svg>
               Copy Code
             </button>
-            <button
-              onClick={() => { onContinue(); onClose(); }}
-              className="w-full bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold py-3.5 px-6 rounded-xl transition-colors flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              aria-label="Continue to store website"
-            >
-              <span>Continue to Store</span>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
-            </button>
+            {trackingUrl ? (
+              <a
+                href={decodeHTML(trackingUrl)}
+                target="_blank"
+                rel="sponsored noopener noreferrer"
+                onClick={onClose}
+                className="w-full bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold py-3.5 px-6 rounded-xl transition-colors flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                aria-label="Continue to store website"
+              >
+                <span>Continue to Store</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </a>
+            ) : (
+              <button
+                onClick={() => { onContinue(); onClose(); }}
+                className="w-full bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold py-3.5 px-6 rounded-xl transition-colors flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                aria-label="Continue to store website"
+              >
+                <span>Continue to Store</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -170,6 +189,8 @@ const EmptyState = ({ message }: { message: string }) => (
   </div >
 );
 
+
+
 // --- Loading State Component ---
 const LoadingState = () => (
   <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
@@ -185,6 +206,7 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [areCouponsUnlocked, setAreCouponsUnlocked] = useState(false);
 
   // Memoize computed values
   const activeCoupons = useMemo(() =>
@@ -229,6 +251,14 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
     if (!initialStore) return;
 
     if (coupon.code) {
+      // Unlock ALL coupons interactions
+      setAreCouponsUnlocked(true);
+
+      // Auto-copy the code to clipboard
+      navigator.clipboard.writeText(coupon.code)
+        .then(() => toast.success('Code copied to clipboard!'))
+        .catch((err) => console.error('Failed to copy code:', err));
+
       setSelectedCode(coupon.code);
       setShowModal(true);
       if (initialStore.trackingUrl) {
@@ -280,7 +310,12 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
         isOpen={showModal}
         onClose={handleCloseModal}
         code={selectedCode || ''}
-        onContinue={() => { }}
+        onContinue={() => {
+          if (initialStore?.trackingUrl) {
+            window.open(decodeHTML(initialStore.trackingUrl), '_blank', 'noopener,noreferrer');
+          }
+        }}
+        trackingUrl={initialStore?.trackingUrl}
       />
 
       <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-blue-100 selection:text-blue-900">
@@ -414,9 +449,14 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
                         <div className="mt-auto pt-4 border-t border-slate-100 border-dashed">
                           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
                             {coupon.code && !coupon.active ? (
-                              <div className="flex-1 bg-slate-100 rounded-lg px-3 py-2 text-center font-mono text-slate-600 text-sm border border-slate-200 relative overflow-hidden">
-                                <span className="relative z-10">••••{coupon.code.slice(-3)}</span>
-                                <div className="absolute inset-0 bg-slate-200/50 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500" aria-hidden="true"></div>
+                              <div className="flex-1">
+                                {areCouponsUnlocked ? (
+                                  <DragReveal code={coupon.code} />
+                                ) : (
+                                  <div className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center font-mono text-slate-500 select-none">
+                                    *****{coupon.code.slice(-3)}
+                                  </div>
+                                )}
                               </div>
                             ) : (
                               <div className="flex-1 text-sm font-medium text-green-600 flex items-center justify-center sm:justify-start gap-1">

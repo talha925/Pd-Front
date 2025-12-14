@@ -6,7 +6,7 @@ import { LogOut, Search, X } from "lucide-react";
 import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 import { useApp } from "@/context/AppContext";
 import { usePathname } from "next/navigation";
-import { useBlogCategories } from "@/hooks/useBlogCategories";
+
 
 import SearchBar from "@/components/ui/SearchBar";
 import { useState, useEffect } from "react";
@@ -22,7 +22,15 @@ export default function Header() {
   const pathname = usePathname();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
-  const { categories, loading: categoriesLoading } = useBlogCategories();
+
+  // Static Categories
+  const STATIC_CATEGORIES = [
+    { _id: '1', name: 'Health and Beauty', slug: 'health-and-beauty' },
+    { _id: '2', name: 'Home and Tech', slug: 'home-and-tech' },
+    { _id: '3', name: 'Lifestyle', slug: 'lifestyle' },
+    { _id: '4', name: 'Sports and Fitness', slug: 'sports-and-fitness' },
+    { _id: '5', name: 'Travel', slug: 'travel' },
+  ];
 
   // Static nav items
   const staticNavItems = [
@@ -30,13 +38,13 @@ export default function Header() {
     ['Blog', '/blog'],
   ];
 
-  // Combine static nav items with dynamic blog categories
+  // Combine static nav items with static blog categories
   const navItems = [
     ...staticNavItems,
-    ...(Array.isArray(categories) ? categories.map(category => [
+    ...STATIC_CATEGORIES.map(category => [
       category.name,
       `/blog/category/${category.slug}`
-    ]) : [])
+    ])
   ];
 
   // Prevent hydration mismatch by only showing dynamic content after hydration
@@ -88,7 +96,7 @@ export default function Header() {
               ))}
 
               {/* Categories Dropdown */}
-              {Array.isArray(categories) && categories.length > 0 && (
+              {STATIC_CATEGORIES.length > 0 && (
                 <div className="relative group">
                   <button
                     className="relative px-4 py-2 text-foreground-secondary hover:text-foreground transition-all duration-300 group flex items-center space-x-1"
@@ -110,7 +118,7 @@ export default function Header() {
                     aria-label="Blog categories"
                   >
                     <div className="p-2">
-                      {categories.map((category) => (
+                      {STATIC_CATEGORIES.map((category) => (
                         <Link
                           key={category._id}
                           href={`/blog/category/${category.slug}`}

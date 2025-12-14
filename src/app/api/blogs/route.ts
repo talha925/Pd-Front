@@ -23,7 +23,7 @@ const getBlogs = async (searchParams?: URLSearchParams) => {
       headers: {
         'Content-Type': 'application/json',
       },
-      next: { 
+      next: {
         revalidate: 300, // Revalidate every 5 minutes
         tags: ['blogs'] // Enable tag-based revalidation
       }
@@ -45,28 +45,28 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const blogs = await getBlogs(searchParams);
-    
+
     // Handle different response structures from the external API
     const blogData = blogs.data?.blogs || blogs.blogs || blogs.data || blogs || [];
     const pagination = blogs.data?.pagination || blogs.pagination || null;
-    
+
     const response = NextResponse.json({
       blogs: blogData,
       count: Array.isArray(blogData) ? blogData.length : 0,
       pagination,
       success: true
     });
-    
+
     // Restore prior cache headers
     response.headers.set('Cache-Control', 'public, s-maxage=300, must-revalidate');
     response.headers.set('CDN-Cache-Control', 'public, s-maxage=300');
     response.headers.set('Vercel-CDN-Cache-Control', 'public, s-maxage=300');
-    
+
     return response;
   } catch (error) {
     console.error('Failed to fetch blogs:', error);
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to fetch blogs. Please try again.',
         details: error instanceof Error ? error.message : 'Unknown error',
         blogs: [],
