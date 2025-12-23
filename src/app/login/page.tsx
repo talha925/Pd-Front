@@ -39,7 +39,7 @@ export default function LoginPage() {
       if (response.ok && data.token) {
         // Use the login function with credentials
         await login({ email, password });
-        
+
         // Always redirect to admin page after login
         router.push('/admin/blogs');
       } else {
@@ -61,13 +61,13 @@ export default function LoginPage() {
             Sign in to create blog posts
           </h2>
         </div>
-        
+
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
             <span className="block sm:inline">{error}</span>
           </div>
         )}
-        
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
@@ -109,19 +109,15 @@ export default function LoginPage() {
               {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </div>
-          
+
           <div className="text-sm text-center">
             <Link href="/" className="font-medium text-blue-600 hover:text-blue-500">
               Back to home
             </Link>
           </div>
         </form>
-        
-        <div className="mt-6 text-sm text-center text-gray-600">
-          <p className="font-medium">Demo Credentials:</p>
-          <p>Email: admin@example.com</p>
-          <p>Password: admin123</p>
-        </div>
+
+
       </div>
     </div>
   );

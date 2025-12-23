@@ -52,7 +52,7 @@ const SafeImage: React.FC<SafeImageProps> = ({
    */
   const encodeImageUrl = (url: string): string => {
     if (!url) return fallbackSrc;
-    
+
     try {
       // Check if it's an AWS S3 URL
       if (url.includes('amazonaws.com')) {
@@ -63,17 +63,17 @@ const SafeImage: React.FC<SafeImageProps> = ({
           const baseUrl = urlParts.slice(0, 3).join('/');
           // Get the file path and encode it properly
           const filePath = urlParts.slice(3).join('/');
-          
+
           // Encode the file path while preserving forward slashes
           const encodedPath = filePath
             .split('/')
             .map(segment => encodeURIComponent(segment))
             .join('/');
-          
+
           return `${baseUrl}/${encodedPath}`;
         }
       }
-      
+
       // For other URLs, return as is
       return url;
     } catch (error) {
@@ -110,7 +110,7 @@ const SafeImage: React.FC<SafeImageProps> = ({
       quality={quality}
       placeholder={placeholder}
       blurDataURL={blurDataURL}
-      loading={loading}
+      loading={priority ? undefined : loading}
       onLoad={handleLoad}
       onError={handleError}
       {...props}
