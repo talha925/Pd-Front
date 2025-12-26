@@ -201,6 +201,102 @@ const LoadingState = () => (
   </div>
 );
 
+// --- Smart Description Formatter ---
+const SmartDescription = ({ text }: { text: string | undefined }) => {
+  if (!text) return null;
+
+  // Calculate read time (stripping HTML tags for accuracy if needed)
+  const cleanText = text.replace(/<[^>]*>/g, '');
+  const words = cleanText.split(/\s+/).length;
+  const readTime = Math.ceil(words / 200);
+
+  const isHtml = /<[a-z][\s\S]*>/i.test(text);
+
+  return (
+    <div>
+      {/* Blog Header */}
+      <div className="flex flex-wrap items-center gap-3 mb-6 sm:mb-8 text-xs sm:text-sm text-slate-400 font-medium uppercase tracking-wider border-b border-slate-100 pb-4">
+        <span>Description</span>
+        <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+        <span>{readTime} min read</span>
+        <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+        <span className="text-blue-500">Updated Today</span>
+      </div>
+
+      {/* Content */}
+      <div className="text-slate-600 leading-relaxed font-normal">
+        {isHtml ? (
+          <div
+            className="prose prose-slate sm:prose-lg max-w-none 
+              prose-headings:font-bold prose-headings:text-slate-900 
+              prose-p:text-slate-600 prose-p:leading-8
+              prose-a:text-blue-600 prose-a:no-underline hover:prose-a:text-blue-700 hover:prose-a:underline
+              prose-li:marker:text-blue-500 prose-li:text-slate-700
+              prose-strong:text-slate-900 prose-strong:font-bold"
+            dangerouslySetInnerHTML={{ __html: text }}
+          />
+        ) : (
+          /* Fallback Plain Text Formatter */
+          <div className="space-y-6">
+            {text.split('\n').map(l => l.trim()).filter(Boolean).map((line, index) => {
+              // Heuristic for Heading
+              const isHeading =
+                (line.length < 80 && !line.endsWith('.')) ||
+                line.endsWith(':') ||
+                line.endsWith('?') ||
+                ["how to", "what to", "exclusive", "stay updated"].some(k => line.toLowerCase().includes(k));
+
+              if (isHeading) {
+                return (
+                  <h3 key={index} className="text-xl sm:text-2xl font-bold text-slate-900 mt-8 sm:mt-10 mb-3 sm:mb-4 flex gap-3 items-start group">
+                    <span className="w-1 h-6 sm:h-8 bg-gradient-to-b from-blue-500 to-purple-500 rounded-full mt-1 sm:mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                    <span className="-ml-4 group-hover:ml-0 transition-all duration-300">{line}</span>
+                  </h3>
+                );
+              }
+
+              // Heuristic for Lists
+              if (line.startsWith('-') || line.startsWith('•') || /^\d+\./.test(line)) {
+                const cleanLine = line.replace(/^[-•\d+\.]\s*/, '');
+                return (
+                  <div key={index} className="flex gap-3 sm:gap-4 mb-3 ml-1 sm:ml-2 p-2 sm:p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                    <div className="mt-1 flex-shrink-0 w-5 h-5 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center">
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <span className="text-slate-700 font-medium">{cleanLine}</span>
+                  </div>
+                );
+              }
+
+              // Regular Paragraph
+              return <p key={index} className="text-base sm:text-lg text-slate-600 leading-7 sm:leading-8 mb-4">{line}</p>;
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Blog Footer */}
+      <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-md">PS</div>
+          <div className="text-sm">
+            <div className="font-bold text-slate-900">Penny Scroll Editors</div>
+            <div className="text-slate-500 text-xs sm:text-sm">Curated & Verified</div>
+          </div>
+        </div>
+        <button
+          className="w-full sm:w-auto py-2 sm:py-0 text-sm text-blue-600 font-bold hover:text-blue-700 hover:bg-blue-50 sm:hover:bg-transparent rounded-lg transition-colors flex items-center justify-center sm:justify-end"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        >
+          Back to Top ↑
+        </button>
+      </div>
+    </div>
+  );
+};
+
 // --- Main Client Component ---
 export default function StoreClient({ initialStore, serverError }: StoreClientProps) {
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
@@ -487,6 +583,13 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
                   ))}
                 </div>
               )}
+
+              {initialStore.long_description && (
+                <div className="mt-8 bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-100">
+                  <h2 className="text-xl font-bold text-slate-900 mb-4">More About {initialStore.name}</h2>
+                  <SmartDescription text={decodeHTML(initialStore.long_description)} />
+                </div>
+              )}
             </div>
 
             <aside className="w-full lg:w-80 space-y-6 sm:space-y-8">
@@ -496,7 +599,7 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
                   About Store
                 </h3>
                 <p className="text-sm text-slate-600 leading-relaxed mb-6">
-                  {decodeHTML(initialStore.long_description || initialStore.short_description || 'No description available.')}
+                  {decodeHTML(initialStore.short_description || 'No description available.')}
                 </p>
                 <button
                   onClick={() => initialStore.trackingUrl && window.open(decodeHTML(initialStore.trackingUrl), '_blank', 'noopener,noreferrer')}

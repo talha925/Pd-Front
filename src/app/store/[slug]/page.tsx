@@ -5,9 +5,12 @@ import { getStoreBySlug } from '@/lib/store-service';
 import StoreClient from './StoreClient';
 import { Metadata } from 'next';
 
-// Force dynamic rendering to avoid Next.js caching of this page
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// Enable ISR (Incremental Static Regeneration)
+export const dynamic = 'auto'; // Default behavior, allows dynamic APIs like cookies() but caches fetches 
+// However, since we use cookies() in the service, it will de-opt to dynamic rendering at request time 
+// BUT the fetch data will be cached. 
+// To allow simple ISR behavior without force-dynamic:
+export const revalidate = 60;
 
 interface StorePageProps {
   params: { slug: string };
