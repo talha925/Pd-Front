@@ -127,10 +127,6 @@ const nextConfig = {
   },
   // Enable gzip compression
   compress: true,
-  // Increase build performance
-  swcMinify: true,
-  // Optimize fonts
-  optimizeFonts: true,
   webpack: (config, { isDev, isServer }) => {
     if (isDev) {
       config.devtool = 'cheap-module-source-map';
@@ -165,6 +161,7 @@ const nextConfig = {
 
     return config;
   },
+
 };
 
 // Add bundle analyzer in analyze mode

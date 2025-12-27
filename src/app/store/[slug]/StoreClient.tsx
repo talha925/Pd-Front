@@ -593,7 +593,7 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
             </div>
 
             <aside className="w-full lg:w-80 space-y-6 sm:space-y-8">
-              <div className="bg-white/70 backdrop-blur-md border border-white/50 rounded-2xl p-4 sm:p-6 shadow-lg">
+              <div className="hidden lg:block bg-white/70 backdrop-blur-md border border-white/50 rounded-2xl p-4 sm:p-6 shadow-lg">
                 <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
                   <span className="w-1 h-6 bg-blue-500 rounded-full" aria-hidden="true"></span>
                   About Store
