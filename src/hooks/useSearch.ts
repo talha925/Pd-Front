@@ -38,7 +38,7 @@ export function useSearch(options: UseSearchOptions = {}) {
     error: null
   });
   const [debouncedQuery, setDebouncedQuery] = useState('');
-  
+
   // Use refs to prevent unnecessary re-renders
   const abortControllerRef = useRef<AbortController | null>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -63,8 +63,8 @@ export function useSearch(options: UseSearchOptions = {}) {
 
   // Determine search type based on current route
   const searchType = useMemo(() => {
-    // Store search only for /stores and /store/[slug] routes
-    if (pathname === '/stores' || pathname?.startsWith('/store/')) {
+    // Store search for /stores, /store/[slug], and /htr routes
+    if (pathname === '/stores' || pathname?.startsWith('/store/') || pathname === '/htr') {
       return 'stores';
     }
     // Blog search for front page (/) and all other routes
@@ -77,7 +77,7 @@ export function useSearch(options: UseSearchOptions = {}) {
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
-    
+
     debounceTimerRef.current = setTimeout(() => {
       setDebouncedQuery(query);
     }, config.debounceMs);
@@ -95,7 +95,7 @@ export function useSearch(options: UseSearchOptions = {}) {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
-    
+
     if (debouncedQuery.length < config.minQueryLength!) {
       setResults({
         total: 0,
@@ -121,7 +121,7 @@ export function useSearch(options: UseSearchOptions = {}) {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
-    
+
     // Create new abort controller for this request
     abortControllerRef.current = new AbortController();
     const signal = abortControllerRef.current.signal;
@@ -129,10 +129,10 @@ export function useSearch(options: UseSearchOptions = {}) {
     setResults(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      const endpoint = searchType === 'stores' 
-        ? '/api/stores/search' 
+      const endpoint = searchType === 'stores'
+        ? '/api/stores/search'
         : '/api/blogs/search';
-      
+
       const url = new URL(endpoint, window.location.origin);
       url.searchParams.set('q', searchQuery.trim());
       url.searchParams.set('limit', config.limit!.toString());
@@ -145,16 +145,16 @@ export function useSearch(options: UseSearchOptions = {}) {
           'Content-Type': 'application/json',
         },
       });
-      
+
       // Check if request was aborted
       if (signal.aborted) return;
-      
+
       if (!response.ok) {
         throw new Error(`Search failed: ${response.status}`);
       }
 
       const data = await response.json();
-      
+
       // Check again if request was aborted after response
       if (signal.aborted) return;
 
@@ -194,7 +194,7 @@ export function useSearch(options: UseSearchOptions = {}) {
     } catch (error) {
       // Don't update state if request was aborted
       if (signal.aborted) return;
-      
+
       console.error('Search error:', error);
       setResults({
         total: 0,
@@ -212,12 +212,12 @@ export function useSearch(options: UseSearchOptions = {}) {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
-    
+
     // Clear debounce timer
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
-    
+
     setQuery('');
     setDebouncedQuery('');
     setResults({
@@ -256,8 +256,8 @@ export function useSearch(options: UseSearchOptions = {}) {
     setResults(prev => ({ ...prev, isLoading: true }));
 
     try {
-      const endpoint = searchType === 'stores' 
-        ? '/api/stores/search' 
+      const endpoint = searchType === 'stores'
+        ? '/api/stores/search'
         : '/api/blogs/search';
 
       const url = new URL(endpoint, window.location.origin);
@@ -284,7 +284,7 @@ export function useSearch(options: UseSearchOptions = {}) {
       const totalCount: number = typeof data.total === 'number' ? data.total : results.total;
       if (searchType === 'stores') {
         const newItems: Store[] = Array.isArray(data.stores) ? data.stores : [];
-        const combined = [ ...(results.stores || []), ...newItems ];
+        const combined = [...(results.stores || []), ...newItems];
         setResults({
           stores: combined,
           blogs: undefined,
@@ -297,7 +297,7 @@ export function useSearch(options: UseSearchOptions = {}) {
         });
       } else {
         const newItems: Blog[] = Array.isArray(data.blogs) ? data.blogs : [];
-        const combined = [ ...(results.blogs || []), ...newItems ];
+        const combined = [...(results.blogs || []), ...newItems];
         setResults({
           blogs: combined,
           stores: undefined,
@@ -315,7 +315,7 @@ export function useSearch(options: UseSearchOptions = {}) {
       setResults(prev => ({ ...prev, isLoading: false }));
     }
   }, [results, searchType, query, options.minQueryLength]);
-  
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {

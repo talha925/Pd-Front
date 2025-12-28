@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     // Sanitize query to prevent injection attacks
     const sanitizedQuery = query.trim().replace(/[<>"'&]/g, '');
-    
+
     if (sanitizedQuery.length === 0) {
       return NextResponse.json({
         stores: [],
@@ -45,27 +45,28 @@ export async function GET(request: NextRequest) {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=300',
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
       },
       next: {
-        revalidate: 600, // Cache for 10 minutes
-        tags: ['stores-search', `search-${sanitizedQuery}`]
+        revalidate: 300, // Cache for 5 minutes
+        tags: ['stores-search', `search-store-${sanitizedQuery}`]
       }
     });
 
     // Handle different response statuses gracefully
     if (!fetchResponse.ok) {
       console.warn(`External API returned ${fetchResponse.status} for stores search`);
-      
-      // Fallback: fetch all stores via internal proxy and perform local filtering
+
+      // Fallback: fetch directly from backend API to avoid internal proxy issues
       try {
-        const internalUrl = new URL('/api/proxy-stores', request.url);
-        const internalRes = await fetch(internalUrl.toString(), {
-          headers: { 'Content-Type': 'application/json' },
-          cache: 'no-store'
+        const fallbackUrl = new URL(`${config.api.baseUrl}/api/stores`);
+        fallbackUrl.searchParams.set('limit', '1000');
+
+        const fallbackRes = await fetch(fallbackUrl.toString(), {
+          next: { revalidate: 600, tags: ['stores'] }
         });
-        if (internalRes.ok) {
-          const payload = await internalRes.json();
+        if (fallbackRes.ok) {
+          const payload = await fallbackRes.json();
           const allStores: any[] = Array.isArray(payload.data) ? payload.data : [];
           const q = sanitizedQuery.toLowerCase();
           const queryWords = q.split(/\s+/).filter(w => w.length > 1);
@@ -103,7 +104,7 @@ export async function GET(request: NextRequest) {
       } catch (fallbackErr) {
         console.warn('Stores search fallback failed:', fallbackErr);
       }
-      
+
       // Final fallback: return empty results
       return NextResponse.json({
         stores: [],
@@ -116,7 +117,7 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await fetchResponse.json();
-    
+
     // Handle backend search response structure
     if (data.status === 'success' && Array.isArray(data.data)) {
       return NextResponse.json({
@@ -127,12 +128,12 @@ export async function GET(request: NextRequest) {
         success: true
       });
     }
-    
+
     // Fallback for different response structures
-    const stores = Array.isArray(data.stores) ? data.stores : 
-                  Array.isArray(data.data) ? data.data : 
-                  Array.isArray(data) ? data : [];
-    
+    const stores = Array.isArray(data.stores) ? data.stores :
+      Array.isArray(data.data) ? data.data :
+        Array.isArray(data) ? data : [];
+
     return NextResponse.json({
       stores: stores.slice(0, limitNum),
       total: stores.length,
@@ -147,15 +148,16 @@ export async function GET(request: NextRequest) {
     const limit = Math.max(1, Math.min(50, parseInt(searchParams?.get('limit') || '10', 10)));
     const page = Math.max(1, parseInt(searchParams?.get('page') || '1', 10));
 
-    // Attempt fallback search via internal proxy on error
+    // Attempt fallback search via direct backend API on error
     try {
-      const internalUrl = new URL('/api/proxy-stores', request.url);
-      const internalRes = await fetch(internalUrl.toString(), {
-        headers: { 'Content-Type': 'application/json' },
-        cache: 'no-store'
+      const fallbackUrl = new URL(`${config.api.baseUrl}/api/stores`);
+      fallbackUrl.searchParams.set('limit', '1000');
+
+      const fallbackRes = await fetch(fallbackUrl.toString(), {
+        next: { revalidate: 600, tags: ['stores'] }
       });
-      if (internalRes.ok) {
-        const payload = await internalRes.json();
+      if (fallbackRes.ok) {
+        const payload = await fallbackRes.json();
         const allStores: any[] = Array.isArray(payload.data) ? payload.data : [];
         const queryLc = q.trim().toLowerCase();
         const queryWords = queryLc.split(/\s+/).filter(w => w.length > 1);
@@ -204,7 +206,7 @@ export async function GET(request: NextRequest) {
       limit,
       success: true,
       message: 'Search temporarily unavailable. Please try again later.',
-      error: process.env.NODE_ENV === 'development' ? 
+      error: process.env.NODE_ENV === 'development' ?
         (error instanceof Error ? error.message : 'Unknown error') : undefined
     });
     errorResponse.headers.set('Cache-Control', 'public, s-maxage=60, must-revalidate');

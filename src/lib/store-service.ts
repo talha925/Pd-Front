@@ -105,13 +105,16 @@ async function fetchStoreBySlugDirect(slug: string, forceRefresh: boolean = fals
  */
 export async function getStoreBySlug(slug: string, forceRefresh: boolean = false): Promise<Store | null> {
   try {
-    // First attempt: direct backend slug endpoint
-    let store = await fetchStoreBySlugDirect(slug, forceRefresh);
+    // Attempt to fetch from direct backend slug endpoint
+    const store = await fetchStoreBySlugDirect(slug, forceRefresh);
 
-    // Fallback: fetch all stores and find by slug if direct endpoint returns null
+    // CRITICAL: Trust the direct endpoint. If it returns null (404), the store is gone.
+    // We removed the fallback to fetchAllStores because it was reviving deleted stores
+    // due to stale Next.js data cache.
+
     if (!store) {
-      const stores = await fetchAllStores(forceRefresh);
-      store = stores.find(s => (s.slug || '').toLowerCase() === slug.toLowerCase()) || null;
+      log(`Store NOT found at direct endpoint: ${slug}`);
+      return null;
     }
 
     // CRITICAL: Add SEO/JSON-LD structured data (preserve existing logic)
