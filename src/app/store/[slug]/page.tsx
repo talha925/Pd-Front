@@ -1,29 +1,24 @@
-// StorePage.tsx (Server Component) - PERFORMANCE OPTIMIZED VERSION
+// StorePage.tsx (Server Component) - DATA-CORRECT / CACHE-SAFE VERSION
 
-import React from 'react';
+import React, { cache } from 'react';
 import { getStoreBySlug } from '@/lib/store-service';
 import StoreClient from './StoreClient';
 import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 
-// Enable ISR (Incremental Static Regeneration)
-export const dynamic = 'auto'; // Default behavior, allows dynamic APIs like cookies() but caches fetches 
-// However, since we use cookies() in the service, it will de-opt to dynamic rendering at request time 
-// BUT the fetch data will be cached. 
-// To allow simple ISR behavior without force-dynamic:
-export const revalidate = 60;
+// Enable Dynamic Rendering (Disable caching) to prevent stale/deleted stores from showing
+export const dynamic = 'force-dynamic';
 
 interface StorePageProps {
   params: { slug: string };
 }
 
 // Helper function to get store data directly from store-service
-function getStorePromise(slug: string) {
-  // Environment-aware caching strategy:
-  // - Development: Force fresh data (forceRefresh = true) for testing
-  // - Production: Use cache (forceRefresh = false) for performance
-  const isDevelopment = process.env.NODE_ENV !== 'production';
-  return getStoreBySlug(slug, isDevelopment);
-}
+// Wrapped in React cache() to deduplicate requests between generateMetadata and StorePage
+const getStorePromise = cache((slug: string) => {
+  // ALWAYS force fresh data to ensure deleted stores are removed immediately
+  return getStoreBySlug(slug, true);
+});
 
 export async function generateMetadata({ params }: StorePageProps): Promise<Metadata> {
   try {
@@ -34,10 +29,10 @@ export async function generateMetadata({ params }: StorePageProps): Promise<Meta
       return {
         title: 'Store Not Found',
         description: 'This store does not exist.',
-        openGraph: {
-          title: 'Store Not Found',
-          description: 'This store does not exist.',
-        },
+        robots: {
+          index: false,
+          follow: false,
+        }
       };
     }
 
@@ -115,10 +110,6 @@ export async function generateMetadata({ params }: StorePageProps): Promise<Meta
     return {
       title: 'Store Not Found',
       description: 'This store does not exist.',
-      openGraph: {
-        title: 'Store Not Found',
-        description: 'This store does not exist.',
-      },
     };
   }
 }
@@ -129,12 +120,8 @@ export default async function StorePage({ params }: StorePageProps) {
   const store = await getStorePromise(params.slug);
 
   if (!store) {
-    return (
-      <StoreClient
-        initialStore={null}
-        serverError="Store not found"
-      />
-    );
+    // Return proper 404 status code for SEO
+    notFound();
   }
 
   return (
