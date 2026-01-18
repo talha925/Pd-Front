@@ -112,6 +112,11 @@ export default function RootLayout({
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
               gtag('config', 'G-EEDR5X7C4S');
+              gtag('event', 'conversion', {
+                  'send_to': 'AW-17582430046/iCXoCKrCu-cbEN6u-r9B',
+                  'value': 1.0,
+                  'currency': 'USD'
+              });
             `,
           }}
         />
