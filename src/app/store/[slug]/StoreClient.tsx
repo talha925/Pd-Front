@@ -423,7 +423,7 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
             <div className="absolute top-[20%] -right-[20%] w-[60%] h-[100%] rounded-full bg-gradient-to-bl from-indigo-500/20 to-pink-500/20 blur-3xl animate-float" style={{ animationDelay: '2s', animationDuration: '20s' }}></div>
           </div>
 
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pt-8 sm:pt-12 md:pt-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pt-4 sm:pt-6 md:pt-8">
             <div className="flex flex-col md:flex-row items-center gap-6 sm:gap-8 md:gap-12">
               <div className="relative group flex-shrink-0">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-500" aria-hidden="true"></div>

@@ -57,10 +57,15 @@ export default function Header() {
     return null;
   }
 
+  const isStorePage = pathname?.startsWith('/store/');
+
   return (
-    <div className="pt-6 px-4 md:px-6 lg:px-8">
-      <header className="sticky top-0 z-50 w-full bg-gradient-to-r from-background-elevated/95 via-background-elevated/98 to-background-elevated/95 backdrop-blur-xl shadow-2xl border border-border/30 rounded-2xl mx-auto max-w-7xl">
-        <div className="px-6 sm:px-8 lg:px-10">
+    <div className={isStorePage ? "w-full" : "pt-6 px-4 md:px-6 lg:px-8"}>
+      <header className={`sticky top-0 z-50 w-full bg-gradient-to-r from-background-elevated/95 via-background-elevated/98 to-background-elevated/95 backdrop-blur-xl transition-all duration-300 ${isStorePage
+        ? "border-b border-border/30 shadow-md"
+        : "border border-border/30 shadow-2xl rounded-2xl mx-auto max-w-7xl"
+        }`}>
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
           <div className="flex h-20 items-center justify-between">
             {/* Logo and Brand */}
             <div className="flex items-center space-x-4">

@@ -22,11 +22,10 @@ const getBlogs = async (searchParams?: URLSearchParams) => {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
       },
-      next: {
-        revalidate: 300, // Revalidate every 5 minutes
-        tags: ['blogs'] // Enable tag-based revalidation
-      }
+      cache: 'no-store'
     });
 
     if (!response.ok) {
@@ -57,10 +56,10 @@ export async function GET(request: NextRequest) {
       success: true
     });
 
-    // Restore prior cache headers
-    response.headers.set('Cache-Control', 'public, s-maxage=300, must-revalidate');
-    response.headers.set('CDN-Cache-Control', 'public, s-maxage=300');
-    response.headers.set('Vercel-CDN-Cache-Control', 'public, s-maxage=300');
+    // Set headers to prevent any caching of the API response
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    response.headers.set('Pragma', 'no-cache');
+    response.headers.set('Expires', '0');
 
     return response;
   } catch (error) {

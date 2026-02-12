@@ -14,7 +14,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
         'Content-Type': 'application/json',
       },
       cache: 'no-store',
-    }); 
+    });
     if (!response.ok) {
       if (response.status === 404) {
         return NextResponse.json({ message: 'Blog not found' }, { status: 404 });
@@ -35,11 +35,21 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   const { id } = params;
   try {
     const formData = await request.json();
+    const { cookies } = await import('next/headers');
+    const token = cookies().get('authToken')?.value;
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache',
+    };
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${API_URL}/${id}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify(formData),
       cache: 'no-store',
     });
@@ -47,31 +57,58 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    
-    // Revalidate blog-related pages and tags after update
-    revalidatePath('/blog');
-    revalidatePath(`/blog/${id}`);
-    revalidatePath('/'); // Revalidate home page for Featured Blogs
-    revalidateTag('blogs');
-    revalidateTag('featured-blogs'); // Add featured blogs tag
-    revalidateTag(`blog-${id}`);
-    
+
     const updatedBlog = (data?.data?.blog) ?? (data?.blog) ?? (data?.data) ?? data ?? null;
+
+    // ===== CACHE INVALIDATION (CRITICAL FIX) =====
+    // 1. Invalidate ALL dynamic blog detail pages at once.
+    //    Previously we used revalidatePath('/blog/${id}') where id was the MongoDB ObjectID,
+    //    but the page URL uses the SLUG (e.g. /blog/best-kitchen-knives-2026-expert-guide).
+    //    This mismatch meant the Full Route Cache was NEVER cleared on update!
+    revalidatePath('/blog/[id]', 'page');
+
+    // 2. Also revalidate the exact slug path if we have it
+    const slug = updatedBlog?.slug || formData?.slug;
+    if (slug) {
+      revalidatePath(`/blog/${slug}`);
+    }
+
+    // 3. Revalidate related pages
+    revalidatePath('/blog');
+    revalidatePath('/'); // Home page for Featured Blogs
+
+    // 4. Invalidate data cache tags
+    revalidateTag('blogs');
+    revalidateTag('featured-blogs');
+    revalidateTag(`blog-${id}`);
+
+    console.log(`[Blog Update] Cache invalidated for blog ${id}${slug ? ` (slug: ${slug})` : ''}`);
+
     return NextResponse.json({ updatedBlog });
   } catch (error) {
     return NextResponse.json({ message: 'Failed to update blog', error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
   }
 }
 
+
 // DELETE /api/blogs/[id]
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   const { id } = params;
   try {
+    const { cookies } = await import('next/headers');
+    const token = cookies().get('authToken')?.value;
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${API_URL}/${id}`, {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       cache: 'no-store',
     });
     if (!response.ok) {
@@ -80,18 +117,22 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
       }
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     // Revalidate blog-related pages and tags after deletion
+    // CRITICAL: Use dynamic route pattern to invalidate ALL blog detail pages
+    revalidatePath('/blog/[id]', 'page');
     revalidatePath('/blog');
-    revalidatePath(`/blog/${id}`);
-    revalidatePath('/'); // Revalidate home page for Featured Blogs
+    revalidatePath('/'); // Home page for Featured Blogs
     revalidateTag('blogs');
-    revalidateTag('featured-blogs'); // Add featured blogs tag
+    revalidateTag('featured-blogs');
     revalidateTag(`blog-${id}`);
-    
+
+    console.log(`[Blog Delete] Cache invalidated for blog ${id}`);
+
     return NextResponse.json({ message: 'Blog deleted successfully' });
   } catch (error) {
     return NextResponse.json({ message: 'Failed to delete blog', error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
   }
 }
+
 

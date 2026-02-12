@@ -610,7 +610,8 @@ html {
   background: linear-gradient(to right, transparent, #D1D5DB, transparent);
 }
 
-/* Drop Cap (First Letter - Optional Premium Touch) */
+/* Drop Cap (First Letter - Optional Premium Touch) - Removed as per user request */
+/* 
 .blog-content>p:first-of-type::first-letter {
   float: left;
   font-size: 3.5rem;
@@ -618,8 +619,9 @@ html {
   margin: 0.1rem 0.5rem 0 0;
   font-weight: 700;
   color: #3B82F6;
-  /* Blue-500 - more vibrant */
 }
+*/
+
 
 /* Back to Top Button */
 .back-to-top {
@@ -758,9 +760,13 @@ html {
     font-size: 0.75rem;
   }
 
+  /* Removed mobile drop cap */
+  /*
   .blog-content>p:first-of-type::first-letter {
     font-size: 2.5rem;
   }
+  */
+
 
   .back-to-top {
     bottom: 1rem;

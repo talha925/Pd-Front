@@ -54,30 +54,30 @@ class HttpClient implements IHttpClient {
     try {
       // Apply request interceptors
       let processedConfig = await this.applyRequestInterceptors(config);
-      
+
       // Build the request
       const requestOptions = await this.buildRequestOptions(processedConfig);
       const fullUrl = this.buildFullUrl(processedConfig.url);
-      
+
       // Create abort controller for timeout
       const abortController = this.createAbortController();
       const timeoutId = setTimeout(() => abortController.abort(), processedConfig.timeout || this.timeout);
-      
+
       try {
         // Make the request
         const response = await fetch(fullUrl, {
           ...requestOptions,
           signal: abortController.signal
         });
-        
+
         clearTimeout(timeoutId);
-        
+
         // Process response
         const responseData = await this.processResponse<T>(response);
-        
+
         // Apply response interceptors
         const processedResponse = await this.applyResponseInterceptors(responseData);
-        
+
         return processedResponse.data;
       } catch (error) {
         clearTimeout(timeoutId);
@@ -90,7 +90,7 @@ class HttpClient implements IHttpClient {
 
   private async applyRequestInterceptors(config: RequestConfig & { url: string }): Promise<RequestConfig & { url: string }> {
     let processedConfig = { ...config };
-    
+
     for (const interceptor of this.requestInterceptors) {
       if (interceptor.onRequest) {
         try {
@@ -103,31 +103,31 @@ class HttpClient implements IHttpClient {
         }
       }
     }
-    
+
     return processedConfig;
   }
 
   private async applyResponseInterceptors<T>(response: ResponseData<T>): Promise<ResponseData<T>> {
     let processedResponse = { ...response };
-    
+
     for (const interceptor of this.responseInterceptors) {
       if (interceptor.onResponse) {
         processedResponse = await interceptor.onResponse(processedResponse);
       }
     }
-    
+
     return processedResponse;
   }
 
   private async applyResponseErrorInterceptors(error: HttpError): Promise<HttpError> {
     let processedError = error;
-    
+
     for (const interceptor of this.responseInterceptors) {
       if (interceptor.onResponseError) {
         processedError = await interceptor.onResponseError(processedError);
       }
     }
-    
+
     return processedError;
   }
 
@@ -136,17 +136,17 @@ class HttpClient implements IHttpClient {
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return url;
     }
-    
+
     // Handle API routes
     if (url.startsWith('/api/')) {
       return url; // Use relative URL for local API routes
     }
-    
+
     // Use getApiUrl helper for external routes
     if (this.baseURL) {
       return url.startsWith('/') ? this.baseURL + url : `${this.baseURL}/${url}`;
     }
-    
+
     return getApiUrl(url);
   }
 
@@ -192,13 +192,13 @@ class HttpClient implements IHttpClient {
     }
 
     let data: T;
-    
+
     // Handle different response types
     if (response.status === 204) {
       data = null as any;
     } else {
       const contentType = response.headers.get('content-type');
-      
+
       if (contentType?.includes('application/json')) {
         data = await response.json();
       } else if (contentType?.includes('text/')) {
@@ -279,7 +279,7 @@ class HttpClient implements IHttpClient {
   // Interceptor management
   addRequestInterceptor(interceptor: RequestInterceptor): () => void {
     this.requestInterceptors.push(interceptor);
-    
+
     // Return unsubscribe function
     return () => {
       this.requestInterceptors = this.requestInterceptors.filter(i => i !== interceptor);
@@ -288,7 +288,7 @@ class HttpClient implements IHttpClient {
 
   addResponseInterceptor(interceptor: ResponseInterceptor): () => void {
     this.responseInterceptors.push(interceptor);
-    
+
     return () => {
       this.responseInterceptors = this.responseInterceptors.filter(i => i !== interceptor);
     };

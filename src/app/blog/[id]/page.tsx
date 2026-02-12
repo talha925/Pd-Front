@@ -47,58 +47,48 @@ function decodeRecursively(text: string): string {
 
 
 
-// REBUILT & ROBUST: This function now correctly finds the right blog.
-// WHY: Your API's slug filter isn't working, so we fetch the whole list and find the blog ourselves.
-// This is the most reliable way and mimics your old working client-side logic.
 async function fetchBlogBySlugOrId(slugOrId: string): Promise<Blog | null> {
   try {
-    console.log(`Searching for blog with slug: ${slugOrId}`);
+    console.log(`[Blog Fetch] Searching for blog with slug: ${slugOrId}`);
 
-    // Step 1: Fetch ALL blogs from the general endpoint.
-    // FIX: Added limit=1000 to ensure we get all blogs, not just the first page.
-    // This fixes the "Blog Not Found" issue for blogs on page 2+.
+    // Step 1: Fetch ALL blogs summary
     const listRes = await fetch(`${config.api.baseUrl}/api/blogs?limit=1000`, {
-      next: { revalidate: 60 } // Cache for 1 minute
+      next: {
+        revalidate: 60,
+        tags: ['blogs']
+      }
     });
 
-    if (!listRes.ok) {
-      throw new Error('Failed to fetch blog list');
-    }
-
+    if (!listRes.ok) throw new Error('Failed to fetch blog list');
     const listData = await listRes.json();
     const allBlogs = listData.blogs || (listData.data && listData.data.blogs) || [];
 
-    // Step 2: Find the correct blog in the list using its slug.
+    // Step 2: Find the correct blog
     const foundBlogSummary = allBlogs.find((b: any) => b.slug === slugOrId);
+    if (!foundBlogSummary || !foundBlogSummary._id) return null;
 
-    if (!foundBlogSummary || !foundBlogSummary._id) {
-      console.error(`Blog with slug "${slugOrId}" not found in the list.`);
-      return null; // Blog not found
-    }
+    console.log(`[Blog Fetch] Found blog ID: ${foundBlogSummary._id}. Fetching full details...`);
 
-    console.log(`Found blog ID: ${foundBlogSummary._id}. Now fetching full details...`);
-
-    // Step 3: Use the found _id to get the complete blog data.
+    // Step 3: Fetch full details
     const detailRes = await fetch(`${config.api.baseUrl}/api/blogs/${foundBlogSummary._id}`, {
-      next: { revalidate: 3600 } // Cache for 1 hour
+      next: {
+        revalidate: 60,
+        tags: [`blog-${foundBlogSummary._id}`]
+      }
     });
 
-    if (!detailRes.ok) {
-      throw new Error(`Failed to fetch details for blog ID: ${foundBlogSummary._id}`);
-    }
-
+    if (!detailRes.ok) throw new Error('Failed to fetch details');
     const detailData = await detailRes.json();
     const fullBlog = detailData.blog || detailData.data?.blog || detailData.data;
 
-    console.log('Successfully fetched full blog data:', fullBlog);
-    console.log('longDescription present:', !!fullBlog?.longDescription);
     return fullBlog || null;
-
   } catch (error) {
-    console.error('Error in fetchBlogBySlugOrId:', error);
+    console.error('[Blog Fetch] Error:', error);
     return null;
   }
 }
+
+
 
 // The parser now uses the new recursive decoder
 function customParser(html: string) {

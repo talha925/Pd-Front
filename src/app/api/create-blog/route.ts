@@ -6,14 +6,20 @@ const API_URL = `${config.api.baseUrl}/api/blogs`;
 
 const createBlog = async (blogData: any) => {
   try {
-    console.log('API_URL being used:', API_URL);
-    console.log('Environment NEXT_PUBLIC_API_BASE_URL:', process.env.NEXT_PUBLIC_API_BASE_URL);
+    const { cookies } = await import('next/headers');
+    const token = cookies().get('authToken')?.value;
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
 
     const response = await fetch(API_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify(blogData),
       // Add timeout for better error handling
       signal: AbortSignal.timeout(30000)
@@ -274,15 +280,22 @@ export async function POST(request: NextRequest) {
     const result = await createBlog(cleanedBlogData);
 
     // Revalidate blog-related pages and tags after creation
+    // Use dynamic route pattern to cover all blog detail pages
+    revalidatePath('/blog/[id]', 'page');
     revalidatePath('/blog');
     revalidatePath('/'); // Revalidate home page for Featured Blogs
     revalidateTag('blogs');
-    revalidateTag('featured-blogs'); // Add featured blogs tag
+    revalidateTag('featured-blogs');
     if (result?.data?.id || result?.id) {
       const blogId = result?.data?.id || result?.id;
-      revalidatePath(`/blog/${blogId}`);
       revalidateTag(`blog-${blogId}`);
     }
+    // Also revalidate by slug if available
+    const newSlug = result?.data?.slug || result?.slug;
+    if (newSlug) {
+      revalidatePath(`/blog/${newSlug}`);
+    }
+
 
     return NextResponse.json({
       success: true,

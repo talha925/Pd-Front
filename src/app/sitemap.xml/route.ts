@@ -45,38 +45,38 @@ export async function GET() {
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   ${staticPages
-    .map(
-      (page) => `
+      .map(
+        (page) => `
   <url>
     <loc>${baseUrl}${page}</loc>
     <lastmod>${currentDate}</lastmod>
     <changefreq>${page === '' ? 'daily' : 'weekly'}</changefreq>
     <priority>${page === '' ? '1.0' : '0.8'}</priority>
   </url>`
-    )
-    .join('')}
+      )
+      .join('')}
   ${blogPosts
-    .map(
-      (post) => `
+      .map(
+        (post) => `
   <url>
     <loc>${baseUrl}/blog/${post._id}</loc>
     <lastmod>${post.updatedAt || post.createdAt || currentDate}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>`
-    )
-    .join('')}
+      )
+      .join('')}
   ${stores
-    .map(
-      (store) => `
+      .map(
+        (store) => `
   <url>
     <loc>${baseUrl}/store/${store._id}</loc>
     <lastmod>${currentDate}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>`
-    )
-    .join('')}
+      )
+      .join('')}
 </urlset>`;
 
   return new NextResponse(sitemap, {
