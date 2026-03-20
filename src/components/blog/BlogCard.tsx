@@ -1,50 +1,64 @@
-import Image from 'next/image';
+import SafeImage from '@/components/ui/SafeImage';
 import Link from 'next/link';
+import { themeClasses } from '@/lib/theme/utils';
 
 interface BlogCardProps {
   blog: {
     _id: string;
     title: string;
-    slug?: string;
+    slug: string; // Required for consistent routing
+    shortDescription?: string;
     image?: {
       url: string;
       alt?: string;
     };
   };
+  variant?: string;
 }
 
-export default function BlogCard({ blog }: BlogCardProps) {
+export default function BlogCard({ blog, variant }: BlogCardProps) {
   return (
-    <div className="group relative bg-gray-800 rounded-xl overflow-hidden transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-500/20">
-      {blog.image?.url && (
-        <div className="relative h-48 overflow-hidden">
-          <Image
-            src={blog.image.url}
-            alt={blog.image.alt || blog.title}
-            width={800}
-            height={450}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-            loading="lazy" // Use lazy loading for non-critical images
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent opacity-60" />
+    <Link href={`/blog/${blog.slug || blog._id}`} className="block">
+      <div className="group relative bg-white/80 backdrop-blur-sm border border-indigo-200/40 rounded-2xl overflow-hidden transform transition-all duration-500 hover:scale-[1.03] shadow-xl hover:shadow-2xl hover:border-indigo-300/60 hover:bg-white/90 cursor-pointer">
+        {blog.image?.url && (
+          <div className="relative h-48 overflow-hidden">
+            <div className="absolute top-3 left-3 z-10">
+              <span className="px-3 py-1 text-xs font-bold text-white bg-indigo-600/90 backdrop-blur-sm rounded-full shadow-lg border border-white/20">
+                Blog
+              </span>
+            </div>
+            <SafeImage
+              src={blog.image.url}
+              alt={blog.image.alt || blog.title}
+              width={800}
+              height={450}
+              sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+              loading="lazy" // Use lazy loading for non-critical images
+              fallbackSrc="/placeholder-blog.png"
+            />
+
+          </div>
+        )}
+        <div className="p-6">
+          <div className="mb-4">
+            <h2 className="text-base md:text-lg font-bold text-slate-800 break-words leading-snug hover:text-indigo-700 transition-colors duration-300 line-clamp-2">
+              {blog.title}
+            </h2>
+          </div>
+          {blog.shortDescription && (
+            <p className="text-sm text-slate-600 mb-4 line-clamp-2 break-words leading-snug">
+              {blog.shortDescription}
+            </p>
+          )}
+          <div className="inline-flex items-center text-indigo-600 hover:text-purple-600 transition-all duration-300 font-medium hover:translate-x-1">
+            Read more
+            <svg className="w-4 h-4 ml-2 transform transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
         </div>
-      )}
-      <div className="p-6">
-        <div className="flex items-center mb-4">
-          <span className="px-3 py-1 text-xs font-semibold text-purple-400 bg-purple-900/30 rounded-full">Blog</span>
-          <span className="ml-2 text-sm text-gray-400">5 min read</span>
-        </div>
-        <h3 className="text-xl font-bold text-white mb-3 line-clamp-2 group-hover:text-purple-400 transition-colors">{blog.title}</h3>
-        <Link
-          href={`/blog/${blog.slug || blog._id}`}
-          className="inline-flex items-center text-blue-400 hover:text-blue-300 transition-colors"
-        >
-          Read more
-          <svg className="w-4 h-4 ml-2 transform transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-          </svg>
-        </Link>
       </div>
-    </div>
+    </Link>
   );
 }

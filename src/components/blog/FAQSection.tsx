@@ -60,7 +60,7 @@ const FAQSection: React.FC<FAQSectionProps> = ({
                 type="text"
                 value={faq.question}
                 onChange={(e) => updateFAQ(index, 'question', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white placeholder-gray-500 ${
                   errors[`faqQuestion${index}`] ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
@@ -75,7 +75,7 @@ const FAQSection: React.FC<FAQSectionProps> = ({
                 rows={3}
                 value={faq.answer}
                 onChange={(e) => updateFAQ(index, 'answer', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white placeholder-gray-500 ${
                   errors[`faqAnswer${index}`] ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
@@ -99,4 +99,4 @@ const FAQSection: React.FC<FAQSectionProps> = ({
   );
 };
 
-export default FAQSection; 
+export default FAQSection;

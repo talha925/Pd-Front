@@ -2,24 +2,25 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { api } from '@/lib/api';
-import { useAuth } from '@/context/AuthContext';
+import HttpClient from '@/services/HttpClient';
+import Image from 'next/image';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import config from '@/lib/config';
-import { 
-  FormField, 
-  RichTextEditor, 
-  CategorySelector, 
-  StoreSelector, 
-  FAQSection, 
-  SEOMetadataSection 
+import {
+  FormField,
+  CategorySelector,
+  StoreSelector,
+  FAQSection,
+  SEOMetadataSection
 } from './index';
+import OptimizedRichTextEditor from '@/components/ui/OptimizedRichTextEditor';
 import { Category, Store, BlogValidationErrors } from '@/lib/types';
-import { 
-  isValidUrl, 
-  isValidEmail, 
-  stripHtml, 
-  sanitizeHtml, 
-  cleanAndFormatUrl 
+import {
+  isValidUrl,
+  isValidEmail,
+  stripHtml,
+  sanitizeHtml,
+  cleanAndFormatUrl
 } from '@/lib/utils/validation';
 import { processTags } from '@/lib/utils/formatting';
 import { BLOG_STATUS_OPTIONS } from '@/lib/constants/options';
@@ -47,6 +48,7 @@ interface BlogFormProps {
     metaCanonicalUrl: string;
     metaRobots: string;
     faqs: Array<{ question: string; answer: string }>;
+    frontBanner: boolean;
   }>;
   onSubmit?: (data: any, resetForm: () => void, setLoading: (b: boolean) => void, setMessage: (msg: string) => void, setErrors: (e: any) => void) => Promise<void>;
   submitLabel?: string;
@@ -55,8 +57,9 @@ interface BlogFormProps {
 
 const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: BlogFormProps = {}) => {
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuth();
-  
+  const { isAuthenticated, isLoading, token } = useUnifiedAuth();
+  const httpClient = new HttpClient();
+
   // Required Fields
   const [title, setTitle] = useState(initialValues?.title || '');
   const [shortDescription, setShortDescription] = useState(initialValues?.shortDescription || '');
@@ -73,6 +76,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
   const [imageUrl, setImageUrl] = useState(initialValues?.imageUrl || '');
   const [imageAlt, setImageAlt] = useState(initialValues?.imageAlt || '');
   const [isFeatured, setIsFeatured] = useState(initialValues?.isFeatured || false);
+  const [frontBanner, setFrontBanner] = useState(initialValues?.frontBanner || false);
   const [tags, setTags] = useState(initialValues?.tags || '');
 
   // Image Upload States
@@ -113,7 +117,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
     const fetchCategories = async () => {
       try {
         setCategoriesLoading(true);
-        const data = await api.get('/api/blog-categories');
+        const data = await httpClient.get('/api/blog-categories');
         setCategories(data.data || data || []);
       } catch (error) {
         console.error('Error fetching categories:', error);
@@ -130,7 +134,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
     const fetchStores = async () => {
       try {
         setStoresLoading(true);
-        const data = await api.get('/api/proxy-stores');
+        const data = await httpClient.get('/api/proxy-stores');
         const storesData = data.data || data || [];
         setStores(storesData);
       } catch (error) {
@@ -188,7 +192,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
     }
 
     const plainLongDescription = stripHtml(longDescription);
-    
+
     if (!plainLongDescription.trim()) {
       newErrors.longDescription = 'Long description is required';
     } else if (plainLongDescription.trim().length < 50) {
@@ -272,7 +276,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
 
     // Clean the URL before validation to ensure it's properly formatted
     const cleanUrl = cleanAndFormatUrl(storeUrl);
-    
+
     // Additional URL validation
     try {
       new URL(cleanUrl);
@@ -288,11 +292,12 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
       try {
         setMessage('Uploading image...');
         const formData = new FormData();
-        formData.append('image', imageFile);
+        formData.append('file', imageFile);
 
-        const uploadResponse = await fetch(`${config.api.baseUrl}/api/upload`, {
+        const uploadResponse = await fetch(`/api/upload`, {
           method: 'POST',
           body: formData,
+          headers: token ? { 'Authorization': `Bearer ${token}` } : undefined,
         });
 
         if (!uploadResponse.ok) {
@@ -340,6 +345,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
       },
       status,
       isFeaturedForHome: isFeatured,
+      FrontBanner: frontBanner,
       // Only include image if we have a valid image URL
       ...(finalImageUrl && finalImageUrl.trim() && {
         image: {
@@ -367,13 +373,51 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
     }
 
     try {
-      const response = await api.post('/api/create-blog', blogData);
+      const response = await httpClient.post('/api/create-blog', blogData);
+      console.log('Blog creation response:', response);
       setMessage('Blog created successfully!');
+
+      // Clear banner cache if this blog has FrontBanner enabled
+      if (frontBanner) {
+        localStorage.removeItem('heroBannerData');
+        console.log('Banner cache cleared due to FrontBanner blog creation');
+      }
+
       // Reset form after successful save
       resetForm();
-    } catch (error) {
+      // Redirect to admin blogs page after successful creation
+      setTimeout(() => {
+        router.push('/admin/blogs');
+      }, 1500);
+    } catch (error: any) {
       console.error('Error creating blog:', error);
-      setMessage('Error creating blog. Please try again.');
+
+      // Extract more detailed error information
+      let errorMessage = 'Error creating blog. Please try again.';
+
+      if (error?.response) {
+        // API returned an error response
+        errorMessage = error.response.error || error.response.message || errorMessage;
+      } else if (error?.message) {
+        // Network or other error
+        if (error.message.includes('fetch')) {
+          errorMessage = 'Network error. Please check your internet connection and try again.';
+        } else if (error.message.includes('timeout')) {
+          errorMessage = 'Request timeout. Please try again.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      console.error('Detailed error info:', {
+        message: error?.message,
+        status: error?.status,
+        response: error?.response,
+        isNetworkError: error?.isNetworkError,
+        isTimeoutError: error?.isTimeoutError
+      });
+
+      setMessage(errorMessage);
     }
 
     setLoading(false);
@@ -391,6 +435,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
     setStoreUrl('');
     setStatus('draft');
     setIsFeatured(false);
+    setFrontBanner(false);
     setImageUrl('');
     setImageAlt('');
     setTags('');
@@ -424,241 +469,262 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
     }
   }, [isAuthenticated, isLoading, router]);
 
-  // If still loading auth state or not authenticated, show loading state
-  if (isLoading || !isAuthenticated) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="text-xl">Loading...</div>
-      </div>
-    );
-  }
-
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-lg">
       <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">
         Create a New Blog Post
       </h1>
-      
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Required Fields Section */}
-        <div className="bg-blue-50 p-4 rounded-lg">
-          <h2 className="text-xl font-semibold text-blue-800 mb-4">Required Fields</h2>
-          
-          <FormField
-            id="title"
-            label="Title"
-            type="text"
-            value={title}
-            onChange={setTitle}
-            placeholder="Enter blog title"
-            required
-            error={errors.title}
-          />
 
-          <FormField
-            id="shortDescription"
-            label="Short Description (Max 500 characters)"
-            type="text"
-            value={shortDescription}
-            onChange={setShortDescription}
-            placeholder="Brief description of the blog post"
-            required
-            maxLength={500}
-            error={errors.shortDescription}
-          />
+      {isLoading || !isAuthenticated ? (
+        <div className="flex justify-center items-center h-[60vh]">
+          <div className="text-xl">Loading...</div>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Required Fields Section */}
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <h2 className="text-xl font-semibold text-blue-800 mb-4">Required Fields</h2>
 
-          <RichTextEditor
-            value={longDescription}
-            onChange={setLongDescription}
-            error={errors.longDescription}
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-            <CategorySelector
-              categories={categories}
-              selectedCategoryId={categoryId}
-              onCategoryChange={setCategoryId}
-              loading={categoriesLoading}
-              error={errors.category}
-            />
-
-            <StoreSelector
-              stores={stores}
-              selectedStoreId={storeId}
-              onStoreChange={handleStoreChange}
-              loading={storesLoading}
-              error={errors.store}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
             <FormField
-              id="authorName"
-              label="Author Name"
+              id="title"
+              label="Title"
               type="text"
-              value={authorName}
-              onChange={setAuthorName}
-              placeholder="Author name"
+              value={title}
+              onChange={setTitle}
+              placeholder="Enter blog title"
               required
-              error={errors.authorName}
-            />
-
-            <div>
-              <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2 cursor-pointer">
-                Status <span className="text-red-500">*</span>
-              </label>
-              <select
-                id="status"
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
-              >
-                {BLOG_STATUS_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Optional Fields Section */}
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Optional Fields</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-            <FormField
-              id="authorEmail"
-              label="Author Email"
-              type="email"
-              value={authorEmail}
-              onChange={setAuthorEmail}
-              placeholder="author@example.com"
-              error={errors.authorEmail}
+              error={errors.title}
             />
 
             <FormField
-              id="authorAvatar"
-              label="Author Avatar URL"
-              type="url"
-              value={authorAvatar}
-              onChange={setAuthorAvatar}
-              placeholder="https://example.com/avatar.jpg"
-              error={errors.authorAvatar}
-            />
-          </div>
-
-          {/* Image Upload Section */}
-          <div className="space-y-4 mb-6">
-            <label className="block text-sm font-medium text-gray-700 cursor-pointer">Upload Image (Optional)</label>
-            <div className="text-xs text-gray-500 mb-2">
-              Select an image file to upload. The image will be uploaded automatically when you submit the blog post.
-            </div>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer file:cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-            />
-
-            {imageFile && (
-              <div className="text-sm text-green-600 mt-1">
-                ✓ Selected: {imageFile.name} (will be uploaded when you submit the blog)
-              </div>
-            )}
-
-            {imageUrl && (
-              <div className="mt-4">
-                <div className="text-sm text-gray-600 mb-2">Image Preview:</div>
-                <img 
-                  src={imageUrl} 
-                  alt="Uploaded preview" 
-                  className="rounded-lg w-full max-w-md h-auto border border-gray-300" 
-                />
-              </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-            <FormField
-              id="imageUrl"
-              label="Image URL (Alternative to upload above)"
-              type="url"
-              value={imageUrl}
-              onChange={setImageUrl}
-              placeholder="https://example.com/image.jpg"
-              error={errors.imageUrl}
-            />
-
-            <FormField
-              id="imageAlt"
-              label="Image Alt Text"
+              id="shortDescription"
+              label="Short Description (Max 500 characters)"
               type="text"
-              value={imageAlt}
-              onChange={setImageAlt}
-              placeholder="Description of the image"
+              value={shortDescription}
+              onChange={setShortDescription}
+              placeholder="Brief description of the blog post"
+              required
+              maxLength={500}
+              error={errors.shortDescription}
             />
+
+            <OptimizedRichTextEditor
+              id="longDescription"
+              value={longDescription}
+              onChange={(content) => setLongDescription(content)}
+              label="Long Description"
+              error={errors.longDescription}
+              placeholder="Write your detailed blog content here..."
+              required
+              mode="advanced"
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+              <CategorySelector
+                categories={categories}
+                selectedCategoryId={categoryId}
+                onCategoryChange={setCategoryId}
+                loading={categoriesLoading}
+                error={errors.category}
+              />
+
+              <StoreSelector
+                stores={stores}
+                selectedStoreId={storeId}
+                onStoreChange={handleStoreChange}
+                loading={storesLoading}
+                error={errors.store}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+              <FormField
+                id="authorName"
+                label="Author Name"
+                type="text"
+                value={authorName}
+                onChange={setAuthorName}
+                placeholder="Author name"
+                required
+                error={errors.authorName}
+              />
+
+              <div>
+                <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2 cursor-pointer">
+                  Status <span className="text-red-500">*</span>
+                </label>
+                <select
+                  id="status"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+                >
+                  {BLOG_STATUS_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
 
-          <FormField
-            id="tags"
-            label="Tags"
-            type="text"
-            value={tags}
-            onChange={setTags}
-            placeholder="Enter tags separated by commas (e.g., technology, web development, tips)"
+          {/* Optional Fields Section */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Optional Fields</h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+              <FormField
+                id="authorEmail"
+                label="Author Email"
+                type="email"
+                value={authorEmail}
+                onChange={setAuthorEmail}
+                placeholder="author@example.com"
+                error={errors.authorEmail}
+              />
+
+              <FormField
+                id="authorAvatar"
+                label="Author Avatar URL"
+                type="url"
+                value={authorAvatar}
+                onChange={setAuthorAvatar}
+                placeholder="https://example.com/avatar.jpg"
+                error={errors.authorAvatar}
+              />
+            </div>
+
+            {/* Image Upload Section */}
+            <div className="space-y-4 mb-6">
+              <label className="block text-sm font-medium text-gray-700 cursor-pointer">Upload Image (Optional)</label>
+              <div className="text-xs text-gray-500 mb-2">
+                Select an image file to upload. The image will be uploaded automatically when you submit the blog post.
+              </div>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer file:cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              />
+
+              {imageFile && (
+                <div className="text-sm text-green-600 mt-1">
+                  ✓ Selected: {imageFile.name} (will be uploaded when you submit the blog)
+                </div>
+              )}
+
+              {imageUrl && (
+                <div className="mt-4">
+                  <div className="text-sm text-gray-600 mb-2">Image Preview:</div>
+                  {/* Ensure image URL is encoded for Next.js Image component */}
+                  <Image
+                    src={imageUrl}
+                    alt={imageAlt || 'Uploaded preview'}
+                    width={500}
+                    height={300}
+                    className="rounded-lg w-full max-w-md h-auto object-cover border border-gray-300"
+                    unoptimized={true} // For testing purposes, remove in production if not needed
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+              <FormField
+                id="imageUrl"
+                label="Image URL (Alternative to upload above)"
+                type="url"
+                value={imageUrl}
+                onChange={setImageUrl}
+                placeholder="https://example.com/image.jpg"
+                error={errors.imageUrl}
+              />
+
+              <FormField
+                id="imageAlt"
+                label="Image Alt Text"
+                type="text"
+                value={imageAlt}
+                onChange={setImageAlt}
+                placeholder="Description of the image"
+              />
+            </div>
+
+            <FormField
+              id="tags"
+              label="Tags"
+              type="text"
+              value={tags}
+              onChange={setTags}
+              placeholder="Enter tags separated by commas (e.g., technology, web development, tips)"
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+              <div className="flex items-center p-3 bg-white rounded-lg border border-gray-200">
+                <input
+                  id="isFeatured"
+                  type="checkbox"
+                  checked={isFeatured}
+                  onChange={(e) => setIsFeatured(e.target.checked)}
+                  className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                />
+                <label htmlFor="isFeatured" className="ml-3 text-sm font-medium text-gray-700 cursor-pointer">
+                  Featured for Home
+                </label>
+              </div>
+
+              <div className="flex items-center p-3 bg-white rounded-lg border border-gray-200">
+                <input
+                  id="frontBanner"
+                  type="checkbox"
+                  checked={frontBanner}
+                  onChange={(e) => setFrontBanner(e.target.checked)}
+                  className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                />
+                <label htmlFor="frontBanner" className="ml-3 text-sm font-medium text-gray-700 cursor-pointer">
+                  Front Banner
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* SEO Metadata Section */}
+          <SEOMetadataSection
+            metaTitle={metaTitle}
+            metaDescription={metaDescription}
+            metaKeywords={metaKeywords}
+            metaCanonicalUrl={metaCanonicalUrl}
+            metaRobots={metaRobots}
+            onMetaChange={handleMetaChange}
+            errors={errors}
           />
 
-          <div className="flex items-center">
-            <input
-              id="isFeatured"
-              type="checkbox"
-              checked={isFeatured}
-              onChange={(e) => setIsFeatured(e.target.checked)}
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-            />
-            <label htmlFor="isFeatured" className="ml-2 text-sm font-medium text-gray-700 cursor-pointer">
-              Featured for Home
-            </label>
+          {/* FAQs Section */}
+          <FAQSection
+            faqs={faqs}
+            onFaqsChange={setFaqs}
+            errors={errors}
+          />
+
+          {/* Submit Button */}
+          <div className="flex justify-center">
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-8 py-3 bg-green-600 text-white rounded-lg text-lg font-semibold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-300 cursor-pointer disabled:cursor-not-allowed"
+            >
+              {loading ? 'Creating...' : 'Create Blog Post'}
+            </button>
           </div>
-        </div>
 
-        {/* SEO Metadata Section */}
-        <SEOMetadataSection
-          metaTitle={metaTitle}
-          metaDescription={metaDescription}
-          metaKeywords={metaKeywords}
-          metaCanonicalUrl={metaCanonicalUrl}
-          metaRobots={metaRobots}
-          onMetaChange={handleMetaChange}
-          errors={errors}
-        />
-
-        {/* FAQs Section */}
-        <FAQSection
-          faqs={faqs}
-          onFaqsChange={setFaqs}
-          errors={errors}
-        />
-
-        {/* Submit Button */}
-        <div className="flex justify-center">
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-8 py-3 bg-green-600 text-white rounded-lg text-lg font-semibold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-300 cursor-pointer disabled:cursor-not-allowed"
-          >
-            {loading ? 'Creating...' : 'Create Blog Post'}
-          </button>
-        </div>
-
-        {message && (
-          <div className="mt-6 text-center text-lg text-gray-700">
-            {message}
-          </div>
-        )}
-      </form>
+          {message && (
+            <div className="mt-6 text-center text-lg text-gray-700">
+              {message}
+            </div>
+          )}
+        </form>
+      )}
     </div>
   );
 };

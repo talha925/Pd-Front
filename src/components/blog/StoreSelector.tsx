@@ -40,16 +40,16 @@ const StoreSelector: React.FC<StoreSelectorProps> = ({
         id="store"
         value={selectedStoreId}
         onChange={handleStoreChange}
-        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white ${
           error ? 'border-red-500' : 'border-gray-300'
         }`}
         disabled={loading}
       >
-        <option value="">
+        <option value="" className="text-gray-900">
           {loading ? 'Loading stores...' : 'Select Store (with URL)'}
         </option>
         {stores.map((store) => (
-          <option key={store._id} value={store._id} disabled={!store.trackingUrl}>
+          <option key={store._id} value={store._id} disabled={!store.trackingUrl} className="text-gray-900">
             {store.name} {store.trackingUrl ? '(Has URL)' : '(No URL)'}
           </option>
         ))}
@@ -59,4 +59,4 @@ const StoreSelector: React.FC<StoreSelectorProps> = ({
   );
 };
 
-export default StoreSelector; 
+export default StoreSelector;

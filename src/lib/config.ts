@@ -14,10 +14,21 @@ const config = {
     baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://coupon-app-backend.vercel.app',
     
     // Frontend URL (for callbacks, etc.)
-    siteUrl: process.env.NEXT_PUBLIC_SITE_URL || (isProduction ? 'https://pd-front-psi.vercel.app' : 'http://localhost:3000'),
+    siteUrl: process.env.NEXT_PUBLIC_SITE_URL || (isProduction ? 'https://www.pennyscroll.com' : 'http://localhost:3000'),
     
     // Timeout for API requests in milliseconds
     timeout: parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || '30000', 10),
+  },
+  
+  // Realtime configuration
+  realtime: {
+    // Choose between 'http-only' | 'sse' | 'ws-managed'
+    mode: process.env.NEXT_PUBLIC_REALTIME_MODE || 'http-only',
+    // Optional URLs for providers
+    wsUrl: process.env.NEXT_PUBLIC_WS_URL || '',
+    sseUrl: process.env.NEXT_PUBLIC_SSE_URL || '',
+    // Managed provider id (e.g., 'pusher', 'ably') when using ws-managed
+    managedProvider: process.env.NEXT_PUBLIC_WS_PROVIDER || '',
   },
   
   // Image configuration

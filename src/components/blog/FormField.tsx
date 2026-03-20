@@ -29,7 +29,7 @@ const FormField: React.FC<FormFieldProps> = ({
   rows = 3,
   className = ''
 }) => {
-  const baseInputClasses = `w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-text ${
+  const baseInputClasses = `w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-text text-gray-900 bg-white placeholder-gray-500 ${
     error ? 'border-red-500' : 'border-gray-300'
   } ${className}`;
 
@@ -80,4 +80,4 @@ const FormField: React.FC<FormFieldProps> = ({
   );
 };
 
-export default FormField; 
+export default FormField;

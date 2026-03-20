@@ -1,6 +1,7 @@
 export interface Blog {
   _id?: string;
   title: string;
+  slug: string; // Required for consistent routing
   shortDescription: string;
   longDescription: string;
   author: {
@@ -20,6 +21,8 @@ export interface Blog {
   };
   status: 'draft' | 'published';
   isFeaturedForHome?: boolean;
+  frontBanner?: boolean;
+  FrontBanner?: boolean; // API response uses PascalCase
   image?: {
     url: string;
     alt: string;
@@ -54,6 +57,7 @@ export interface BlogFormData {
   imageUrl: string;
   imageAlt: string;
   isFeatured: boolean;
+  frontBanner: boolean;
   tags: string;
   metaTitle: string;
   metaDescription: string;
@@ -65,4 +69,4 @@ export interface BlogFormData {
 
 export interface BlogValidationErrors {
   [key: string]: string;
-} 
+}

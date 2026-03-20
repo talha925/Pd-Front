@@ -27,16 +27,16 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
         id="category"
         value={selectedCategoryId}
         onChange={(e) => onCategoryChange(e.target.value)}
-        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white ${
           error ? 'border-red-500' : 'border-gray-300'
         }`}
         disabled={loading}
       >
-        <option value="">
+        <option value="" className="text-gray-900">
           {loading ? 'Loading categories...' : 'Select Category'}
         </option>
         {categories.map((category) => (
-          <option key={category._id} value={category._id}>
+          <option key={category._id} value={category._id} className="text-gray-900">
             {category.name}
           </option>
         ))}
@@ -46,4 +46,4 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
   );
 };
 
-export default CategorySelector; 
+export default CategorySelector;

@@ -3,10 +3,13 @@
 import Link from 'next/link';
 import React from 'react';
 import Image from 'next/image';
+import RealtimeStatus from '@/components/common/RealtimeStatus';
 
 const navLinks = [
   { href: '/admin/blogs/create', label: 'Create Blog' },
   { href: '/admin/blogs', label: 'All Blogs' },
+  { href: '/admin/performance-dashboard', label: 'Performance Dashboard' },
+  { href: '/admin/health', label: 'Health' },
 ];
 
 const topNavLinks = [
@@ -16,10 +19,27 @@ const topNavLinks = [
   { href: '/blog', label: 'Blog' },
 ];
 
-function handleLogout() {
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('authToken');
-    window.location.href = '/login';
+async function handleLogout() {
+  try {
+    // Call logout API to clear server-side cookies
+    await fetch('/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include'
+    });
+    
+    // Clear client-side storage
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('authToken');
+      // Force redirect to login
+      window.location.href = '/login';
+    }
+  } catch (error) {
+    console.error('Logout error:', error);
+    // Even if API fails, clear local storage and redirect
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('authToken');
+      window.location.href = '/login';
+    }
   }
 }
 
@@ -30,14 +50,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <nav className="w-full bg-white shadow px-4 py-2 z-50 fixed top-0 left-0 h-14 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Image src="/image/Logo-ATT.png" alt="logo" width={40} height={40} className="h-10 w-auto" />
-          <span className="text-xl font-bold text-gray-800">BRANDWELL</span>
+          <span className="text-xl font-bold text-gray-800">PENNY SCROLL</span>
         </div>
-        <div className="flex gap-6">
+        <div className="flex gap-6 items-center">
           {topNavLinks.map((link) => (
             <Link key={link.href} href={link.href} className="text-gray-700 hover:text-blue-600 font-medium">
               {link.label}
             </Link>
           ))}
+          <RealtimeStatus />
         </div>
       </nav>
       {/* Sidebar (fixed below nav) */}
@@ -68,4 +89,4 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <main className="bg-gray-50 p-8 min-h-screen ml-64 pt-14">{children}</main>
     </div>
   );
-} 
+}

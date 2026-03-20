@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { themeClasses } from '@/lib/theme/utils';
 
 export default function NewsletterSubscription() {
   const [email, setEmail] = useState('');
@@ -34,28 +35,28 @@ export default function NewsletterSubscription() {
 
   return (
     <div>
-      <h3 className="text-2xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
+      <h3 className="text-2xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600">
         Subscribe to Our Newsletter
       </h3>
-      <p className="text-gray-400 mb-6 text-lg leading-relaxed">Stay updated with our latest deals and articles</p>
+      <p className="text-slate-700 mb-6 text-lg leading-relaxed">Stay updated with our latest deals and articles</p>
       
       {status === 'success' ? (
         <div className="px-4 py-3 rounded-xl bg-green-900/30 border border-green-700 text-green-400">
           {message}
         </div>
       ) : (
-        <form className="flex gap-3" onSubmit={handleSubmit}>
+        <form className="flex flex-col sm:flex-row gap-3" onSubmit={handleSubmit}>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter your email"
-            className="flex-1 px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 text-white placeholder-gray-400 transition-all duration-300"
+            className="flex-1 px-4 py-3 rounded-xl bg-white/70 border border-indigo-200/50 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-slate-800 placeholder-slate-500 transition-all duration-300 backdrop-blur-sm"
             disabled={status === 'loading'}
           />
           <button 
             type="submit"
-            className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl font-semibold hover:opacity-90 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-purple-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white rounded-xl font-semibold hover:opacity-90 hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-lg hover:shadow-xl"
             disabled={status === 'loading'}
           >
             {status === 'loading' ? 'Subscribing...' : 'Subscribe'}

@@ -1,7 +1,6 @@
 'use client';
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { useApp } from '@/context/AppContext';
 
 interface Props {
   children: ReactNode;
@@ -49,21 +48,8 @@ interface ErrorFallbackProps {
 }
 
 const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error }) => {
-  const { addNotification } = useApp();
-
-  React.useEffect(() => {
-    // Show error notification
-    addNotification({
-      type: 'error',
-      title: 'Something went wrong',
-      message: 'An unexpected error occurred. Please try refreshing the page.',
-      duration: 0, // Don't auto-dismiss
-      action: {
-        label: 'Refresh Page',
-        onClick: () => window.location.reload(),
-      },
-    });
-  }, [addNotification]);
+  // Remove the useApp hook usage to prevent issues with class component
+  // Error notifications can be handled elsewhere if needed
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -121,4 +107,4 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error }) => {
   );
 };
 
-export default ErrorBoundary; 
+export default ErrorBoundary;

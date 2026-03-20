@@ -58,7 +58,7 @@ const CategorySelector = ({
     onChange(e.target.value);
   };
 
-  const baseClasses = `w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+  const baseClasses = `w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white ${
     error ? 'border-red-500' : 'border-gray-300'
   } ${className}`;
 
@@ -74,9 +74,9 @@ const CategorySelector = ({
         className={baseClasses}
         disabled={loading}
       >
-        <option value="">{loading ? 'Loading categories...' : 'Select Category'}</option>
+        <option value="" className="text-gray-900">{loading ? 'Loading categories...' : 'Select Category'}</option>
         {categories.map((cat) => (
-          <option key={cat._id} value={cat._id}>{cat.name}</option>
+          <option key={cat._id} value={cat._id} className="text-gray-900">{cat.name}</option>
         ))}
       </select>
       {error && <p className="text-red-500 text-sm mt-1">{error}</p>}

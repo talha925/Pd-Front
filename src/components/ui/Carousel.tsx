@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { themeClasses } from '@/lib/theme/utils';
 
 interface CarouselProps {
   images: string[];
@@ -31,7 +32,7 @@ export default function Carousel({ images }: CarouselProps) {
     <div className="relative h-full">
       <button
         onClick={prevSlide}
-        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-gray-800/80 hover:bg-gray-700/90 text-white w-12 h-12 rounded-full cursor-pointer z-10 flex items-center justify-center transition-all duration-300 backdrop-blur-sm border border-gray-600/50 hover:border-purple-500/50"
+        className={`absolute left-4 top-1/2 transform -translate-y-1/2 ${themeClasses.backgrounds.card}/80 hover:${themeClasses.backgrounds.cardHover}/90 ${themeClasses.text.primary} w-12 h-12 rounded-full cursor-pointer z-10 flex items-center justify-center transition-all duration-300 backdrop-blur-sm ${themeClasses.borders.light}/50 hover:border-purple-500/50`}
       >
         ❮
       </button>
@@ -46,12 +47,12 @@ export default function Carousel({ images }: CarouselProps) {
             priority
             loading="eager"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-gray-900/90 via-gray-900/70 to-gray-900/50"></div>
+
         </div>
       </div>
       <button
         onClick={nextSlide}
-        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-gray-800/80 hover:bg-gray-700/90 text-white w-12 h-12 rounded-full cursor-pointer z-10 flex items-center justify-center transition-all duration-300 backdrop-blur-sm border border-gray-600/50 hover:border-purple-500/50"
+        className={`absolute right-4 top-1/2 transform -translate-y-1/2 ${themeClasses.backgrounds.card}/80 hover:${themeClasses.backgrounds.cardHover}/90 ${themeClasses.text.primary} w-12 h-12 rounded-full cursor-pointer z-10 flex items-center justify-center transition-all duration-300 backdrop-blur-sm ${themeClasses.borders.light}/50 hover:border-purple-500/50`}
       >
         ❯
       </button>

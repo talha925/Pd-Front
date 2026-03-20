@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import config from './config';
 
 // Server-side data fetching utilities
-export async function fetchStoresServer() {
+export async function fetchStoresServer({ noCache = false }: { noCache?: boolean } = {}) {
   try {
     const cookieStore = cookies();
     const token = cookieStore.get('authToken')?.value;
@@ -15,9 +15,12 @@ export async function fetchStoresServer() {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    const response = await fetch(`${config.api.siteUrl}/api/proxy-stores`, {
+    const url = noCache
+      ? `${config.api.siteUrl}/api/proxy-stores?noCache=true`
+      : `${config.api.siteUrl}/api/proxy-stores`;
+
+    const response = await fetch(url, {
       headers,
-      cache: 'no-store', // Always fetch fresh data
     });
     
     if (!response.ok) {
@@ -46,9 +49,10 @@ export async function fetchCategoriesServer() {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
+    // Disable caching for instant data updates
     const response = await fetch(`${config.api.siteUrl}/api/proxy-categories`, {
       headers,
-      cache: 'no-store', // Always fetch fresh data
+      cache: 'no-store' // Always fetch fresh data
     });
     
     if (!response.ok) {
@@ -61,6 +65,28 @@ export async function fetchCategoriesServer() {
   } catch (error) {
     console.error('Server-side categories fetch error:', error);
     return { data: [], error: 'Failed to fetch categories' };
+  }
+}
+
+/**
+ * Server-side data fetching for individual store
+ * Updated to use direct service layer instead of internal HTTP calls
+ */
+export async function fetchStoreServer(slug: string) {
+  try {
+    // Import here to avoid circular dependencies
+    const { getStoreBySlug } = await import('./store-service');
+    
+    const store = await getStoreBySlug(slug);
+    
+    if (!store) {
+      return { data: null, error: 'Store not found' };
+    }
+    
+    return { data: store, error: null };
+  } catch (error) {
+    console.error('Server-side store fetch error:', error);
+    return { data: null, error: 'Failed to fetch store' };
   }
 }
 

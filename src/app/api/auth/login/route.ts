@@ -2,6 +2,24 @@ import { NextResponse } from 'next/server';
 import { SignJWT } from 'jose';
 import { cookies } from 'next/headers';
 
+interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+interface LoginResponse {
+  message: string;
+  token: string;
+  user: User;
+}
+
 // In a real application, you would validate against a database
 // This is a simplified example with hardcoded credentials
 const VALID_EMAIL = 'admin@example.com';
@@ -9,7 +27,7 @@ const VALID_PASSWORD = 'admin123';
 
 export async function POST(request: Request) {
   try {
-    const { email, password } = await request.json();
+    const { email, password }: LoginRequest = await request.json();
 
     // Basic validation
     if (!email || !password) {
@@ -72,4 +90,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-} 
+}

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import Link from 'next/link';
 
 export default function LoginPage() {
@@ -11,7 +11,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { login } = useAuth();
+  const { login } = useUnifiedAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,11 +37,11 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok && data.token) {
-        // Use the login function from AuthContext
-        login(data.token, data.user);
-        
-        // Always redirect to blog/create page after login
-        router.push('/blog/create');
+        // Use the login function with credentials
+        await login({ email, password });
+
+        // Always redirect to admin page after login
+        router.push('/admin/blogs');
       } else {
         setError(data.message || 'Login failed. Please check your credentials.');
       }
@@ -61,13 +61,13 @@ export default function LoginPage() {
             Sign in to create blog posts
           </h2>
         </div>
-        
+
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
             <span className="block sm:inline">{error}</span>
           </div>
         )}
-        
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
@@ -109,20 +109,16 @@ export default function LoginPage() {
               {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </div>
-          
+
           <div className="text-sm text-center">
             <Link href="/" className="font-medium text-blue-600 hover:text-blue-500">
               Back to home
             </Link>
           </div>
         </form>
-        
-        <div className="mt-6 text-sm text-center text-gray-600">
-          <p className="font-medium">Demo Credentials:</p>
-          <p>Email: admin@example.com</p>
-          <p>Password: admin123</p>
-        </div>
+
+
       </div>
     </div>
   );
-} 
+}

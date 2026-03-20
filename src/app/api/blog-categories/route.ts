@@ -10,6 +10,10 @@ const getBlogCategories = async () => {
       headers: {
         'Content-Type': 'application/json',
       },
+      next: { 
+        revalidate: 300, // Revalidate every 5 minutes
+        tags: ['blog-categories'] // Enable tag-based revalidation
+      }
     });
 
     if (!response.ok) {
