@@ -104,6 +104,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={inter.variable}>
       <head>
+        {/* Impact Site Verification */}
+        {/* @ts-ignore - 'value' is a custom attribute required by Impact */}
+        <meta name="impact-site-verification" {...({ value: "cec0f8fd-5fdc-4b05-946e-082045c985d2" } as any)} />
         {/* Google tag (gtag.js) */}
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-EEDR5X7C4S"></script>
         <script
