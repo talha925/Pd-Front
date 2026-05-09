@@ -81,7 +81,6 @@ export const metadata: Metadata = {
     images: ['/images/twitter-image.jpg'],
   },
 
-
   robots: {
     index: true,
     follow: true,
