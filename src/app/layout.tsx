@@ -90,6 +90,9 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
+  verification: {
+    google: "Lz5ILa9zCmzuTvlPRQr1DEan6HB4UXEyIHxMmY5OWwQ",
+  },
 }
 
 
