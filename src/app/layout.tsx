@@ -80,6 +80,7 @@ export const metadata: Metadata = {
     description: "Your ultimate guide to smart shopping and better living. Discover amazing deals, expert reviews, travel tips, health advice, and lifestyle inspiration.",
     images: ['/images/twitter-image.jpg'],
   },
+
   robots: {
     index: true,
     follow: true,
@@ -89,6 +90,9 @@ export const metadata: Metadata = {
       'max-image-preview': 'large',
       'max-snippet': -1,
     },
+  },
+  verification: {
+    google: "Lz5ILa9zCmzuTvlPRQr1DEan6HB4UXEyIHxMmY5OWwQ",
   },
 }
 
