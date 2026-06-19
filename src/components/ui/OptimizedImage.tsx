@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback } from 'react';
 import Image from 'next/image';
+import cloudfrontLoader from '@/lib/image-loader';
 
 interface OptimizedImageProps {
   src: string;
@@ -72,6 +73,8 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
     );
   }
 
+  const isS3Image = src.includes('coupon-app-image.s3.us-east-1.amazonaws.com');
+
   const imageProps = {
     src,
     alt,
@@ -82,7 +85,8 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
     quality,
     placeholder,
     blurDataURL: blurDataURL || (width && height ? generateBlurDataURL(width, height) : undefined),
-    sizes: sizes || (fill ? '100vw' : undefined)
+    sizes: sizes || (fill ? '100vw' : undefined),
+    loader: isS3Image ? (cloudfrontLoader as any) : undefined
   };
 
   if (fill) {

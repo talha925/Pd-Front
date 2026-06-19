@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import cloudfrontLoader from '@/lib/image-loader';
 
 interface SafeImageProps {
   src: string;
@@ -97,6 +98,8 @@ const SafeImage: React.FC<SafeImageProps> = ({
 
   const encodedSrc = encodeImageUrl(imgSrc);
 
+  const isS3Image = encodedSrc.includes('coupon-app-image.s3.us-east-1.amazonaws.com');
+
   return (
     <Image
       src={encodedSrc}
@@ -113,6 +116,7 @@ const SafeImage: React.FC<SafeImageProps> = ({
       loading={priority ? undefined : loading}
       onLoad={handleLoad}
       onError={handleError}
+      loader={isS3Image ? (cloudfrontLoader as any) : undefined}
       {...props}
     />
   );

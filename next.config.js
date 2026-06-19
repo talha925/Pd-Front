@@ -24,6 +24,10 @@ const nextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'd2o27hd92ee531.cloudfront.net',
+      },
+      {
+        protocol: 'https',
         hostname: 'cdn.pixabay.com',
       },
     ],

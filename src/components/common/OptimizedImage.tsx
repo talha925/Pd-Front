@@ -3,6 +3,7 @@
 import React, { useState, useCallback } from 'react';
 import Image from 'next/image';
 import { usePerformanceOptimization } from '@/hooks/usePerformanceOptimization';
+import cloudfrontLoader from '@/lib/image-loader';
 
 interface OptimizedImageProps {
   src: string;
@@ -122,6 +123,8 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
     );
   }
 
+  const isS3Image = src.includes('coupon-app-image.s3.us-east-1.amazonaws.com');
+
   const imageProps = {
     src,
     alt: optimalProps.alt,
@@ -141,6 +144,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
     decoding: optimalProps.decoding,
     onLoad: handleLoad,
     onError: handleError,
+    loader: isS3Image ? (cloudfrontLoader as any) : undefined,
     ...props
   };
 
