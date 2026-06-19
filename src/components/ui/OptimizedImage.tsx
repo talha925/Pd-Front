@@ -64,7 +64,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
 
   if (hasError) {
     return (
-      <div 
+      <div
         className={`bg-gray-200 flex items-center justify-center ${className}`}
         style={{ width, height }}
       >
@@ -97,6 +97,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
       />
     );
   }
+
 
   if (width && height) {
     return (
