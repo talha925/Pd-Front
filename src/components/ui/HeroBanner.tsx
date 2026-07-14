@@ -9,12 +9,13 @@ import { BannerCache } from '@/lib/cache/bannerCache';
 
 interface HeroBannerProps {
   className?: string;
+  initialBannerBlogs?: Blog[];
 }
 
-export default function HeroBanner({ className = '' }: HeroBannerProps) {
-  const [bannerBlogs, setBannerBlogs] = useState<Blog[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isFirstLoad, setIsFirstLoad] = useState(true);
+export default function HeroBanner({ className = '', initialBannerBlogs = [] }: HeroBannerProps) {
+  const [bannerBlogs, setBannerBlogs] = useState<Blog[]>(initialBannerBlogs);
+  const [loading, setLoading] = useState(initialBannerBlogs.length === 0);
+  const [isFirstLoad, setIsFirstLoad] = useState(initialBannerBlogs.length === 0);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [imageError, setImageError] = useState<{ [key: string]: boolean }>({});

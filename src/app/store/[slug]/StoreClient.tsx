@@ -5,6 +5,7 @@
 import SafeImage from '@/components/ui/SafeImage';
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { decodeHTML } from '@/lib/utils/formatting';
+import { stripAdTrackingParams } from '@/lib/utils/validation';
 import toast, { Toaster } from 'react-hot-toast';
 import { Store, Coupon } from '@/lib/types/store';
 import DragReveal from '@/components/ui/DragReveal';
@@ -134,7 +135,7 @@ const CouponModal = ({ isOpen, onClose, code, onContinue, trackingUrl }: CouponM
             </button>
             {trackingUrl ? (
               <a
-                href={decodeHTML(trackingUrl)}
+                href={stripAdTrackingParams(decodeHTML(trackingUrl))}
                 target="_blank"
                 rel="sponsored noopener noreferrer"
                 onClick={onClose}
@@ -358,11 +359,11 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
       setSelectedCode(coupon.code);
       setShowModal(true);
       if (initialStore.trackingUrl) {
-        window.open(decodeHTML(initialStore.trackingUrl), '_blank', 'noopener,noreferrer');
+        window.open(stripAdTrackingParams(decodeHTML(initialStore.trackingUrl)), '_blank', 'noopener,noreferrer');
       }
     } else {
       if (initialStore.trackingUrl) {
-        window.open(decodeHTML(initialStore.trackingUrl), '_blank', 'noopener,noreferrer');
+        window.open(stripAdTrackingParams(decodeHTML(initialStore.trackingUrl)), '_blank', 'noopener,noreferrer');
       }
       toast.success('Deal activated! Redirecting...');
     }
@@ -408,7 +409,7 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
         code={selectedCode || ''}
         onContinue={() => {
           if (initialStore?.trackingUrl) {
-            window.open(decodeHTML(initialStore.trackingUrl), '_blank', 'noopener,noreferrer');
+            window.open(stripAdTrackingParams(decodeHTML(initialStore.trackingUrl)), '_blank', 'noopener,noreferrer');
           }
         }}
         trackingUrl={initialStore?.trackingUrl}
@@ -434,6 +435,7 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
                       alt={`${initialStore.name} logo`}
                       width={120}
                       height={120}
+                      priority={true}
                       className="object-contain w-full h-full"
                     />
                   ) : (
@@ -602,7 +604,7 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
                   {decodeHTML(initialStore.short_description || 'No description available.')}
                 </p>
                 <button
-                  onClick={() => initialStore.trackingUrl && window.open(decodeHTML(initialStore.trackingUrl), '_blank', 'noopener,noreferrer')}
+                  onClick={() => initialStore.trackingUrl && window.open(stripAdTrackingParams(decodeHTML(initialStore.trackingUrl)), '_blank', 'noopener,noreferrer')}
                   className="w-full py-3 rounded-xl border-2 border-slate-200 text-slate-700 font-bold hover:border-blue-500 hover:text-blue-600 transition-all flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={!initialStore.trackingUrl}
                   aria-label="Visit store website"

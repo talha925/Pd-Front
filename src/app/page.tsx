@@ -34,16 +34,47 @@ async function fetchFeaturedBlogs() {
   }
 }
 
+async function fetchBannerBlogs() {
+  try {
+    const res = await fetch(`${config.api.baseUrl}/api/blogs?frontBanner=true`, {
+      next: { revalidate: 60, tags: ['banner-blogs'] }
+    });
+
+    if (!res.ok) throw new Error('Failed to fetch banner blogs');
+
+    const result = await res.json();
+    let blogsArray = [];
+    if (Array.isArray(result)) {
+      blogsArray = result;
+    } else if (result.blogs && Array.isArray(result.blogs)) {
+      blogsArray = result.blogs;
+    } else if (result.data && Array.isArray(result.data)) {
+      blogsArray = result.data;
+    }
+
+    return blogsArray
+      .filter((blog: any) => blog.FrontBanner === true || blog.frontBanner === true)
+      .sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+      .slice(0, 3);
+  } catch (error) {
+    console.error('Error fetching banner blogs:', error);
+    return [];
+  }
+}
+
 export default async function Blogs() {
   // Fetch data server-side
-  const featuredBlogs = await fetchFeaturedBlogs();
+  const [featuredBlogs, bannerBlogs] = await Promise.all([
+    fetchFeaturedBlogs(),
+    fetchBannerBlogs()
+  ]);
 
   return (
     <div className="w-full min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
       {/* Banner: with proper spacing matching header */}
       <section className="relative pt-2 px-4 md:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <HeroBanner className="w-full" />
+          <HeroBanner initialBannerBlogs={bannerBlogs} className="w-full" />
         </div>
       </section>
 

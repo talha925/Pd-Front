@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Store } from '@/lib/types';
 import { decodeHTML } from '@/lib/utils/formatting';
+import { stripAdTrackingParams } from '@/lib/utils/validation';
 import SafeImage from '@/components/ui/SafeImage';
 
 interface StoreCardProps {
@@ -14,7 +15,7 @@ const StoreCard: React.FC<StoreCardProps> = ({ store }) => {
   const handleGetDeal = () => {
     // Get the first available coupon
     const firstCoupon = store.coupons?.[0];
-    
+
     // Copy coupon code to clipboard if available
     if (firstCoupon?.code) {
       navigator.clipboard.writeText(firstCoupon.code);
@@ -23,8 +24,8 @@ const StoreCard: React.FC<StoreCardProps> = ({ store }) => {
 
     // Redirect to store tracking URL
     if (store?.trackingUrl) {
-      const decodedUrl = decodeHTML(store.trackingUrl);
-      window.open(decodedUrl, '_blank');
+      const decodedUrl = stripAdTrackingParams(decodeHTML(store.trackingUrl));
+      window.open(decodedUrl, '_blank', 'noopener,noreferrer');
     } else {
       alert('Tracking URL not available for this store.');
     }
@@ -62,7 +63,7 @@ const StoreCard: React.FC<StoreCardProps> = ({ store }) => {
             GET DEAL
           </button>
         )}
-        
+
         {/* View Button */}
         <Link
           href={`/store/${store.slug}`}

@@ -50,16 +50,17 @@ export const processTags = (tagsString: string): string[] => {
  * Decodes HTML entities in a string
  */
 export const decodeHTML = (input: string): string => {
-  if (typeof window !== 'undefined') {
-    const doc = new DOMParser().parseFromString(input, "text/html");
-    return doc.documentElement.textContent || input;
-  }
-  // Fallback for server-side rendering
+  if (!input) return input;
+  
+  // Use consistent decoding for both server and client to prevent hydration mismatches.
+  // The previous client-side DOMParser implementation stripped HTML tags by using textContent,
+  // which caused the server to render HTML and the client to render plain text.
   return input
     .replace(/&amp;/g, '&')
     .replace(/&#x2F;/g, '/')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
-    .replace(/&#x27;/g, "'");
+    .replace(/&#x27;/g, "'")
+    .replace(/&#39;/g, "'");
 }; 
