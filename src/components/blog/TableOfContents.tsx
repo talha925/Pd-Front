@@ -15,7 +15,7 @@ interface TableOfContentsProps {
 }
 
 export default function TableOfContents({ headings: propHeadings, contentSelector = '.blog-content' }: TableOfContentsProps) {
-  const [toc, setToc] = useState<TOCItem[]>([]);
+  const [toc, setToc] = useState<TOCItem[]>(propHeadings || []);
   const [activeId, setActiveId] = useState<string>('');
 
   useEffect(() => {

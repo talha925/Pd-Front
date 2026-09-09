@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import SafeImage from '@/components/ui/SafeImage';
 import SidebarCard from './SidebarCard';
+import { decode } from 'html-entities';
 
 interface Blog {
   _id: string;
@@ -29,12 +30,13 @@ export default function RecentBlogs({ currentBlogId, limit = 5 }: RecentBlogsPro
     const fetchRecentBlogs = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/blogs?limit=${limit}${currentBlogId ? `&exclude=${currentBlogId}` : ''}`);
+        const response = await fetch(`/api/blogs?limit=${limit}&status=published${currentBlogId ? `&exclude=${currentBlogId}` : ''}`);
         if (!response.ok) {
           throw new Error('Failed to fetch blogs');
         }
         const data = await response.json();
-        setBlogs(data.blogs || []);
+        const rawBlogs = data.blogs || [];
+        setBlogs(rawBlogs.filter((b: any) => !b.status || b.status === 'published'));
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load blogs');
       } finally {
@@ -107,7 +109,7 @@ export default function RecentBlogs({ currentBlogId, limit = 5 }: RecentBlogsPro
                     <div className="flex-shrink-0">
                       <SafeImage
                         src={imageUrl}
-                        alt={blog.title}
+                        alt={decode(blog.title)}
                         width={96}
                         height={64}
                         className="rounded-lg object-cover w-24 h-16"
@@ -117,7 +119,7 @@ export default function RecentBlogs({ currentBlogId, limit = 5 }: RecentBlogsPro
                   )}
                   <div className="flex-1 min-w-0">
                     <h4 className="text-sm font-semibold text-gray-800 group-hover:text-blue-600 line-clamp-2 mb-0.5 transition-colors">
-                      {blog.title}
+                      {decode(blog.title)}
                     </h4>
                     {blog.shortDescription && (
                       <p className="text-xs text-gray-600 line-clamp-2 mb-1">

@@ -9,13 +9,18 @@ const getBlogs = async (searchParams?: URLSearchParams) => {
     const apiUrl = new URL(API_URL);
     if (searchParams) {
       // Forward supported query parameters to the external API
-      const supportedParams = ['category', 'search', 'page', 'pageSize', 'limit', 'featured', 'isFeaturedForHome', 'frontBanner', 'status'];
+      const supportedParams = ['category', 'search', 'page', 'pageSize', 'limit', 'featured', 'isFeaturedForHome', 'frontBanner', 'status', 'sort', 'sortBy', 'sortOrder', 'order'];
       supportedParams.forEach(param => {
         const value = searchParams.get(param);
         if (value) {
           apiUrl.searchParams.set(param, value);
         }
       });
+
+      // Default to newest first (-createdAt) if no sort parameter is specified
+      if (!apiUrl.searchParams.has('sort')) {
+        apiUrl.searchParams.set('sort', '-createdAt');
+      }
     }
 
     const response = await fetch(apiUrl.toString(), {
@@ -43,11 +48,47 @@ const getBlogs = async (searchParams?: URLSearchParams) => {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const blogs = await getBlogs(searchParams);
+    const isAll = searchParams.get('all') === 'true' || searchParams.get('status') === 'all';
+    
+    let blogData: any[] = [];
+    let pagination = null;
 
-    // Handle different response structures from the external API
-    const blogData = blogs.data?.blogs || blogs.blogs || blogs.data || blogs || [];
-    const pagination = blogs.data?.pagination || blogs.pagination || null;
+    if (isAll) {
+      // For Admin: Fetch both published and draft blogs and combine them
+      const pubParams = new URLSearchParams(searchParams);
+      pubParams.set('status', 'published');
+      pubParams.delete('all');
+      pubParams.set('limit', '100');
+
+      const draftParams = new URLSearchParams(searchParams);
+      draftParams.set('status', 'draft');
+      draftParams.delete('all');
+      draftParams.set('limit', '100');
+
+      const [pubRes, draftRes] = await Promise.all([
+        getBlogs(pubParams).catch(() => ({})),
+        getBlogs(draftParams).catch(() => ({}))
+      ]);
+
+      const pubList = pubRes.blogs || pubRes.data?.blogs || pubRes.data || [];
+      const draftList = draftRes.blogs || draftRes.data?.blogs || draftRes.data || [];
+
+      // Combine and remove duplicates by _id
+      const idMap = new Map();
+      [...pubList, ...draftList].forEach((b: any) => {
+        if (b && b._id) idMap.set(b._id, b);
+      });
+
+      blogData = Array.from(idMap.values()).sort((a: any, b: any) => {
+        const dateA = new Date(a.createdAt || a.updatedAt || a.publishDate || 0).getTime();
+        const dateB = new Date(b.createdAt || b.updatedAt || b.publishDate || 0).getTime();
+        return dateB - dateA;
+      });
+    } else {
+      const blogs = await getBlogs(searchParams);
+      blogData = blogs.data?.blogs || blogs.blogs || blogs.data || blogs || [];
+      pagination = blogs.data?.pagination || blogs.pagination || null;
+    }
 
     const response = NextResponse.json({
       blogs: blogData,

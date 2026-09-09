@@ -24,6 +24,52 @@ import {
 } from '@/lib/utils/validation';
 import { processTags } from '@/lib/utils/formatting';
 import { BLOG_STATUS_OPTIONS } from '@/lib/constants/options';
+import parse, { DOMNode, Element, domToReact } from 'html-react-parser';
+import { decode } from 'html-entities';
+import BlogInteractive from '@/components/blog/BlogInteractive';
+
+function decodeRecursively(text: string): string {
+  if (!text) return '';
+  let newText = decode(text);
+  let limit = 0;
+  while (newText !== text && limit < 5) {
+    text = newText;
+    newText = decode(text);
+    limit++;
+  }
+  return newText;
+}
+
+function customParser(html: string) {
+  if (!html) return null;
+  const decodedHtml = decodeRecursively(html);
+
+  return parse(decodedHtml, {
+    replace: (domNode) => {
+      const node = domNode as Element;
+      if (node.name === 'p') {
+        const containsBlockElement = node.children?.some(
+          (child) =>
+            child.type === 'tag' &&
+            ['ul', 'ol', 'h1', 'h2', 'h3', 'h4', 'div', 'blockquote'].includes((child as Element).name)
+        );
+        if (containsBlockElement) {
+          return <>{domToReact(node.children as DOMNode[], { replace: () => null })}</>;
+        }
+      }
+      if (node.name === 'h2' || node.name === 'h3') {
+        const Tag = node.name as 'h2' | 'h3';
+        const { class: _c, ...cleanAttribs } = node.attribs || {};
+        const className = `${node.attribs?.class || ''}`.trim();
+        return (
+          <Tag {...cleanAttribs} className={className}>
+            {domToReact(node.children as DOMNode[])}
+          </Tag>
+        );
+      }
+    },
+  });
+}
 
 interface BlogFormProps {
   initialValues?: Partial<{
@@ -68,7 +114,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
   const [storeId, setStoreId] = useState(initialValues?.storeId || '');
   const [storeUrl, setStoreUrl] = useState(initialValues?.storeUrl || '');
   const [authorName, setAuthorName] = useState(initialValues?.authorName || '');
-  const [status, setStatus] = useState(initialValues?.status || 'draft');
+  const [status, setStatus] = useState(initialValues?.status || 'published');
 
   // Optional Fields
   const [authorEmail, setAuthorEmail] = useState(initialValues?.authorEmail || '');
@@ -103,6 +149,10 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
 
   // Validation States
   const [errors, setErrors] = useState<BlogValidationErrors>({});
+
+  // Preview Mode for Long Description
+  const [longDescTab, setLongDescTab] = useState<'editor' | 'preview'>('editor');
+  const [showFullPreviewModal, setShowFullPreviewModal] = useState(false);
 
   // Image Upload Handlers
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -508,16 +558,92 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
               error={errors.shortDescription}
             />
 
-            <OptimizedRichTextEditor
-              id="longDescription"
-              value={longDescription}
-              onChange={(content) => setLongDescription(content)}
-              label="Long Description"
-              error={errors.longDescription}
-              placeholder="Write your detailed blog content here..."
-              required
-              mode="advanced"
-            />
+            {/* Long Description with Live Preview Tabs */}
+            <div className="space-y-2">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Long Description <span className="text-red-500">*</span>
+                </label>
+                <div className="flex items-center gap-2">
+                  <div className="inline-flex rounded-lg border border-gray-200 bg-gray-100 p-0.5 text-xs font-semibold">
+                    <button
+                      type="button"
+                      onClick={() => setLongDescTab('editor')}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all ${
+                        longDescTab === 'editor'
+                          ? 'bg-white text-gray-900 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      <span>✏️</span> Edit HTML / Content
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLongDescTab('preview')}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all ${
+                        longDescTab === 'preview'
+                          ? 'bg-white text-blue-600 shadow-sm font-bold'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      <span>👁️</span> Live Preview
+                    </button>
+                  </div>
+                  {longDescription && (
+                    <button
+                      type="button"
+                      onClick={() => setShowFullPreviewModal(true)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs font-medium text-slate-700 transition shadow-sm"
+                      title="Open Fullscreen Preview Modal"
+                    >
+                      <span>⛶</span> Full Preview
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Editor View */}
+              <div className={longDescTab === 'editor' ? 'block' : 'hidden'}>
+                <OptimizedRichTextEditor
+                  id="longDescription"
+                  value={longDescription}
+                  onChange={(content) => setLongDescription(content)}
+                  error={errors.longDescription}
+                  placeholder="Write your detailed blog content here..."
+                  required
+                  mode="advanced"
+                />
+              </div>
+
+              {/* Live Preview View */}
+              {longDescTab === 'preview' && (
+                <div className="border border-slate-200 rounded-xl p-6 sm:p-8 bg-white shadow-sm min-h-[450px]">
+                  <div className="flex items-center justify-between pb-3 mb-6 border-b border-slate-100">
+                    <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                      Interactive Live Preview (Exact Website Styles)
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setLongDescTab('editor')}
+                      className="text-xs px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-medium transition"
+                    >
+                      ← Back to Editor
+                    </button>
+                  </div>
+                  {longDescription ? (
+                    <article className="blog-content prose prose-lg md:prose-xl prose-slate w-full max-w-none">
+                      <BlogInteractive />
+                      {customParser(longDescription)}
+                    </article>
+                  ) : (
+                    <div className="text-center py-16">
+                      <p className="text-slate-400 italic">No content to preview yet. Switch to "Edit HTML / Content" tab to write or paste your blog.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
               <CategorySelector
@@ -549,22 +675,63 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
                 error={errors.authorName}
               />
 
-              <div>
-                <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2 cursor-pointer">
-                  Status <span className="text-red-500">*</span>
-                </label>
-                <select
-                  id="status"
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
-                >
-                  {BLOG_STATUS_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+              {/* Blog Visibility Toggle Switch (Show / Hide Button) */}
+              <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <label htmlFor="blog-visibility-toggle" className="block text-sm font-semibold text-gray-800 cursor-pointer">
+                      Show Blog on Website <span className="text-red-500">*</span>
+                    </label>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {status === 'published'
+                        ? 'Blog is ON — Visible to all visitors on the website.'
+                        : 'Blog is OFF — Hidden from website visitors.'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    id="blog-visibility-toggle"
+                    role="switch"
+                    aria-checked={status === 'published'}
+                    onClick={() => setStatus(status === 'published' ? 'draft' : 'published')}
+                    className={`relative inline-flex h-7 w-14 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 ${
+                      status === 'published' ? 'bg-emerald-600' : 'bg-gray-300'
+                    }`}
+                  >
+                    <span className="sr-only">Toggle Blog Visibility</span>
+                    <span
+                      aria-hidden="true"
+                      className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                        status === 'published' ? 'translate-x-7' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                <div className="mt-3 pt-2.5 border-t border-gray-100 flex items-center justify-between">
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
+                      status === 'published'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : 'bg-amber-100 text-amber-800'
+                    }`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        status === 'published' ? 'bg-emerald-600 animate-pulse' : 'bg-amber-500'
+                      }`}
+                    ></span>
+                    {status === 'published' ? '🟢 Visible (ON)' : '⚪ Hidden (OFF)'}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => setStatus(status === 'published' ? 'draft' : 'published')}
+                    className="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                  >
+                    Click to {status === 'published' ? 'Turn OFF (Hide)' : 'Turn ON (Show)'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -714,7 +881,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
               disabled={loading}
               className="px-8 py-3 bg-green-600 text-white rounded-lg text-lg font-semibold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-300 cursor-pointer disabled:cursor-not-allowed"
             >
-              {loading ? 'Creating...' : 'Create Blog Post'}
+              {loading ? 'Saving...' : (submitLabel || 'Create Blog Post')}
             </button>
           </div>
 
@@ -724,6 +891,76 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
             </div>
           )}
         </form>
+      )}
+
+      {/* Fullscreen Preview Modal */}
+      {showFullPreviewModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-sm flex justify-center items-start p-3 sm:p-6 md:p-10 animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-5xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[92vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50 sticky top-0 z-10">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">👁️</span>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Blog Full Preview</h3>
+                  <p className="text-xs text-slate-500">Live preview of how this blog will appear to users on the website</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowFullPreviewModal(false)}
+                className="px-3.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-bold transition"
+              >
+                ✕ Close Preview
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 md:p-10 overflow-y-auto space-y-6">
+              {/* Blog Title */}
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-slate-900 leading-tight">
+                {title || 'Untitled Blog Post'}
+              </h1>
+
+              {/* Short Description */}
+              {shortDescription && (
+                <p className="text-slate-600 text-base md:text-lg italic border-l-4 border-blue-500 pl-4 py-1">
+                  {shortDescription}
+                </p>
+              )}
+
+              {/* Blog Image */}
+              {imageUrl && (
+                <div className="w-full max-h-[400px] overflow-hidden rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center">
+                  <img
+                    src={imageUrl}
+                    alt={imageAlt || title || 'Blog cover'}
+                    className="max-h-[400px] w-auto object-contain"
+                  />
+                </div>
+              )}
+
+              {/* Long Description Content */}
+              <div className="pt-4 border-t border-slate-100">
+                <article className="blog-content prose prose-lg md:prose-xl prose-slate w-full max-w-none">
+                  <BlogInteractive />
+                  {customParser(longDescription)}
+                </article>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-3 border-t border-slate-200 bg-slate-50 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowFullPreviewModal(false)}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition shadow-sm"
+              >
+                Done Previewing
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

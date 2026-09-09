@@ -70,13 +70,15 @@ const BlogList: React.FC<BlogListProps> = ({
 
       // Construct URL with pagination parameters
       const separator = apiEndpoint.includes('?') ? '&' : '?';
-      const url = `${apiEndpoint}${separator}page=${pageNum}&limit=${BLOGS_PER_PAGE}`;
+      const statusParam = !apiEndpoint.includes('status=') ? '&status=published' : '';
+      const url = `${apiEndpoint}${separator}page=${pageNum}&limit=${BLOGS_PER_PAGE}${statusParam}`;
 
       const response = await fetch(url);
 
       if (response.ok) {
         const data = await response.json();
-        const newBlogs = data.blogs || [];
+        const rawBlogs = data.blogs || [];
+        const newBlogs = rawBlogs.filter((b: BlogPost) => !b.status || b.status === 'published');
         const pagination = data.pagination;
 
         if (isInitialLoad) {

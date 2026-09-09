@@ -1,5 +1,8 @@
 // app/blog/[id]/page.tsx
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { Metadata } from 'next';
 import SafeImage from '@/components/ui/SafeImage';
 import { notFound } from 'next/navigation';
@@ -11,6 +14,7 @@ import RecentBlogs from '@/components/blog/RecentBlogs';
 import ReadingProgress from '@/components/blog/ReadingProgress';
 
 import BackToTop from '@/components/blog/BackToTop';
+import BlogInteractive from '@/components/blog/BlogInteractive';
 
 // Blog Type Interface
 interface Blog {
@@ -35,8 +39,9 @@ interface Blog {
 }
 
 // NEW HELPER: This function will decode the string repeatedly until it's clean.
-// This will fix your "&lt;p&gt;&amp;lt;p&amp;gt;..." issue.
+// This will fix your "&lt;p&gt;&amp;lt;p&amp;gt;..." and "&amp;amp;" issues.
 function decodeRecursively(text: string): string {
+  if (!text) return '';
   let newText = decode(text);
   while (newText !== text) {
     text = newText;
@@ -45,7 +50,56 @@ function decodeRecursively(text: string): string {
   return newText;
 }
 
+function generateSlug(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
 
+function generateHeadingId(text: string, index: number): string {
+  const slug = generateSlug(text);
+  return `heading-${index}-${slug}`;
+}
+
+function getCleanText(node: Element): string {
+  let text = '';
+  if (node.children) {
+    for (const child of node.children) {
+      if ((child as any).type === 'text') {
+        text += (child as any).data || '';
+      } else if ((child as any).children) {
+        text += getCleanText(child as Element);
+      }
+    }
+  }
+  return text.trim();
+}
+
+function extractHeadingsFromHtml(html: string): Array<{ id: string; text: string; level: number }> {
+  if (!html) return [];
+  const decodedHtml = decodeRecursively(html);
+  const regex = /<h([2-3])[^>]*>([\s\S]*?)<\/h\1>/gi;
+  const headings: Array<{ id: string; text: string; level: number }> = [];
+  let match;
+  let index = 0;
+
+  while ((match = regex.exec(decodedHtml)) !== null) {
+    const level = parseInt(match[1], 10);
+    const text = decodeRecursively(match[2].replace(/<[^>]+>/g, '').trim());
+    if (!text) continue;
+
+    const lower = text.toLowerCase();
+    if (lower.includes('click to reveal') || lower.includes('warning:')) {
+      continue;
+    }
+
+    const id = generateHeadingId(text, index);
+    headings.push({ id, text, level });
+    index++;
+  }
+  return headings;
+}
 
 async function fetchBlogBySlugOrId(slugOrId: string): Promise<Blog | null> {
   try {
@@ -53,10 +107,7 @@ async function fetchBlogBySlugOrId(slugOrId: string): Promise<Blog | null> {
 
     // Step 1: Fetch ALL blogs summary
     const listRes = await fetch(`${config.api.baseUrl}/api/blogs?limit=1000`, {
-      next: {
-        revalidate: 60,
-        tags: ['blogs']
-      }
+      cache: 'no-store'
     });
 
     if (!listRes.ok) throw new Error('Failed to fetch blog list');
@@ -64,22 +115,29 @@ async function fetchBlogBySlugOrId(slugOrId: string): Promise<Blog | null> {
     const allBlogs = listData.blogs || (listData.data && listData.data.blogs) || [];
 
     // Step 2: Find the correct blog
-    const foundBlogSummary = allBlogs.find((b: any) => b.slug === slugOrId);
+    const foundBlogSummary = allBlogs.find((b: any) => 
+      b.slug === slugOrId || 
+      b.slug === decodeURIComponent(slugOrId) || 
+      b._id === slugOrId
+    );
     if (!foundBlogSummary || !foundBlogSummary._id) return null;
 
     console.log(`[Blog Fetch] Found blog ID: ${foundBlogSummary._id}. Fetching full details...`);
 
     // Step 3: Fetch full details
     const detailRes = await fetch(`${config.api.baseUrl}/api/blogs/${foundBlogSummary._id}`, {
-      next: {
-        revalidate: 60,
-        tags: [`blog-${foundBlogSummary._id}`]
-      }
+      cache: 'no-store'
     });
 
     if (!detailRes.ok) throw new Error('Failed to fetch details');
     const detailData = await detailRes.json();
     const fullBlog = detailData.blog || detailData.data?.blog || detailData.data;
+
+    // If blog is turned off / draft, do not show to public visitors
+    if (fullBlog && fullBlog.status && fullBlog.status !== 'published') {
+      console.log(`[Blog Fetch] Blog ${foundBlogSummary._id} is hidden (status: ${fullBlog.status})`);
+      return null;
+    }
 
     return fullBlog || null;
   } catch (error) {
@@ -88,19 +146,18 @@ async function fetchBlogBySlugOrId(slugOrId: string): Promise<Blog | null> {
   }
 }
 
-
-
-// The parser now uses the new recursive decoder
+// The parser now uses the recursive decoder and attaches matching heading IDs
 function customParser(html: string) {
   // First, fully clean the double (or triple) encoded HTML string
   const decodedHtml = decodeRecursively(html);
+  let headingCounter = 0;
 
   return parse(decodedHtml, {
     replace: (domNode) => {
       const node = domNode as Element;
       // Fix for invalid nesting like <p><ul>...</ul></p>
       if (node.name === 'p') {
-        const containsBlockElement = node.children.some(
+        const containsBlockElement = node.children?.some(
           (child) =>
             child.type === 'tag' &&
             ['ul', 'ol', 'h1', 'h2', 'h3', 'h4', 'div', 'blockquote'].includes((child as Element).name)
@@ -109,17 +166,34 @@ function customParser(html: string) {
           return <>{domToReact(node.children as DOMNode[], { replace: () => null })}</>;
         }
       }
+
+      // Assign matching ID to headings for Table of Contents
+      if (node.name === 'h2' || node.name === 'h3') {
+        const text = getCleanText(node);
+        const id = node.attribs?.id || generateHeadingId(text, headingCounter++);
+        const Tag = node.name as 'h2' | 'h3';
+        const { class: _c, ...cleanAttribs } = node.attribs || {};
+        const className = `${node.attribs?.class || ''} scroll-mt-24`.trim();
+
+        return (
+          <Tag {...cleanAttribs} id={id} className={className}>
+            {domToReact(node.children as DOMNode[])}
+          </Tag>
+        );
+      }
     },
   });
 }
 
-// Generate metadata - no changes needed here
+// Generate metadata with decoded strings
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const blog = await fetchBlogBySlugOrId(params.id);
   if (!blog) return { title: 'Blog Not Found' };
+  const rawTitle = blog.meta?.title || blog.title;
+  const rawDesc = blog.meta?.description || blog.excerpt || 'Blog post description';
   return {
-    title: blog.meta?.title || blog.title,
-    description: blog.meta?.description || blog.excerpt || 'Blog post description',
+    title: decodeRecursively(rawTitle),
+    description: decodeRecursively(rawDesc),
   };
 }
 
@@ -173,6 +247,8 @@ export default async function BlogDetailPage({ params }: { params: { id: string 
 
 
   const fullUrl = `${config.api.baseUrl}/blog/${blog.slug || params.id}`;
+  const decodedTitle = decodeRecursively(blog.title || '');
+  const headings = blog.longDescription ? extractHeadingsFromHtml(blog.longDescription) : [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100/50">
@@ -203,7 +279,7 @@ export default async function BlogDetailPage({ params }: { params: { id: string 
             )}
             <li className="flex items-center">
               <span className="mx-2">/</span>
-              <span className="text-gray-900 font-medium line-clamp-1">{blog.title}</span>
+              <span className="text-gray-900 font-medium line-clamp-1">{decodedTitle}</span>
             </li>
           </ol>
         </nav>
@@ -213,7 +289,7 @@ export default async function BlogDetailPage({ params }: { params: { id: string 
           {/* Left Sidebar - Table of Contents */}
           <aside className="hidden lg:block bg-transparent">
             <div className="sticky-sidebar">
-              <TableOfContents />
+              <TableOfContents headings={headings} />
             </div>
           </aside>
 
@@ -225,7 +301,7 @@ export default async function BlogDetailPage({ params }: { params: { id: string 
                 <div className="relative w-full rounded-2xl overflow-hidden mb-8">
                   <SafeImage
                     src={blog.image.url}
-                    alt={blog.image.alt || blog.title}
+                    alt={decodeRecursively(blog.image.alt || blog.title)}
                     width={1200}
                     height={630}
                     className="w-full h-auto object-contain"
@@ -240,8 +316,8 @@ export default async function BlogDetailPage({ params }: { params: { id: string 
 
 
                 {/* Title */}
-                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-6 text-gray-900 leading-tight">
-                  {blog.title}
+                <h1 className="text-2xl md:text-3xl lg:text-4xl font-extrabold mb-6 text-gray-900 leading-tight tracking-tight">
+                  {decodedTitle}
                 </h1>
 
 
@@ -251,6 +327,7 @@ export default async function BlogDetailPage({ params }: { params: { id: string 
                 {/* Blog Content */}
                 {blog.longDescription ? (
                   <article className="blog-content prose prose-lg md:prose-xl lg:prose-xl prose-slate w-full max-w-none">
+                    <BlogInteractive />
                     {customParser(blog.longDescription)}
                   </article>
                 ) : (

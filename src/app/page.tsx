@@ -20,14 +20,15 @@ export const metadata: Metadata = {
 // Fetch data at build time or with revalidation
 async function fetchFeaturedBlogs() {
   try {
-    const res = await fetch(`${config.api.baseUrl}/api/blogs?isFeaturedForHome=true&page=1&pageSize=9&limit=9`, {
+    const res = await fetch(`${config.api.baseUrl}/api/blogs?isFeaturedForHome=true&status=published&page=1&pageSize=9&limit=9`, {
       next: { revalidate: 60, tags: ['featured-blogs'] } // Revalidate every minute or when tagged
     });
 
     if (!res.ok) throw new Error('Failed to fetch blogs');
 
     const data = await res.json();
-    return data.blogs?.blogs || data.data?.blogs || [];
+    const rawBlogs = data.blogs?.blogs || data.data?.blogs || data.blogs || [];
+    return rawBlogs.filter((b: any) => !b.status || b.status === 'published');
   } catch (error) {
     console.error('Error fetching blogs:', error);
     return [];
@@ -36,7 +37,7 @@ async function fetchFeaturedBlogs() {
 
 async function fetchBannerBlogs() {
   try {
-    const res = await fetch(`${config.api.baseUrl}/api/blogs?frontBanner=true`, {
+    const res = await fetch(`${config.api.baseUrl}/api/blogs?frontBanner=true&status=published`, {
       next: { revalidate: 60, tags: ['banner-blogs'] }
     });
 
@@ -53,7 +54,7 @@ async function fetchBannerBlogs() {
     }
 
     return blogsArray
-      .filter((blog: any) => blog.FrontBanner === true || blog.frontBanner === true)
+      .filter((blog: any) => (!blog.status || blog.status === 'published') && (blog.FrontBanner === true || blog.frontBanner === true))
       .sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
       .slice(0, 3);
   } catch (error) {

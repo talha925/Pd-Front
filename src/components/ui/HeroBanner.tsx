@@ -105,8 +105,8 @@ export default function HeroBanner({ className = '', initialBannerBlogs = [] }: 
     }
 
     try {
-      console.log('[HeroBanner] Fetching from API: /api/blogs?frontBanner=true');
-      const response = await fetch('/api/blogs?frontBanner=true');
+      console.log('[HeroBanner] Fetching from API: /api/blogs?frontBanner=true&status=published');
+      const response = await fetch('/api/blogs?frontBanner=true&status=published');
 
       console.log('[HeroBanner] API Response status:', response.status, response.statusText);
 
@@ -128,11 +128,12 @@ export default function HeroBanner({ className = '', initialBannerBlogs = [] }: 
 
       console.log('[HeroBanner] Extracted blogs array, count:', blogsArray.length);
 
-      // Filter for banner blogs - check both FrontBanner and frontBanner properties
+      // Filter for banner blogs - check both FrontBanner and frontBanner properties, and ensure status is published
       const filteredBlogs = blogsArray.length > 0
         ? blogsArray
           .filter((blog: Blog) => {
-            return blog.FrontBanner === true || blog.frontBanner === true;
+            const isPublished = !blog.status || blog.status === 'published';
+            return isPublished && (blog.FrontBanner === true || blog.frontBanner === true);
           })
           .sort((a: Blog, b: Blog) => {
             // Sort by creation date (newest first)
