@@ -3,6 +3,7 @@ import config from '@/lib/config';
 
 const API_URL = `${config.api.baseUrl}/api/blogs`;
 
+
 const getBlogs = async (searchParams?: URLSearchParams) => {
   try {
     // Build the API URL with query parameters
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const isAll = searchParams.get('all') === 'true' || searchParams.get('status') === 'all';
-    
+
     let blogData: any[] = [];
     let pagination = null;
 
