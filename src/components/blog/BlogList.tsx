@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import BlogCard from './BlogCard';
 
+
 export interface BlogPost {
   _id: string;
   title: string;
