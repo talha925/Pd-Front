@@ -70,7 +70,6 @@ export default async function Blogs() {
     fetchBannerBlogs()
   ]);
 
-
   return (
     <div className="w-full min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
       {/* Banner: with proper spacing matching header */}
