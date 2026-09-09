@@ -18,10 +18,6 @@ const getBlogs = async (searchParams?: URLSearchParams) => {
         }
       });
 
-      // Default to newest first (-createdAt) if no sort parameter is specified
-      if (!apiUrl.searchParams.has('sort')) {
-        apiUrl.searchParams.set('sort', '-createdAt');
-      }
     }
 
     const response = await fetch(apiUrl.toString(), {

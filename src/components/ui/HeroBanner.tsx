@@ -122,6 +122,8 @@ export default function HeroBanner({ className = '', initialBannerBlogs = [] }: 
         blogsArray = result;
       } else if (result.blogs && Array.isArray(result.blogs)) {
         blogsArray = result.blogs;
+      } else if (result.data?.blogs && Array.isArray(result.data.blogs)) {
+        blogsArray = result.data.blogs;
       } else if (result.data && Array.isArray(result.data)) {
         blogsArray = result.data;
       }

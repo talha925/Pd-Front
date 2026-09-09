@@ -44,11 +44,13 @@ async function fetchBannerBlogs() {
     if (!res.ok) throw new Error('Failed to fetch banner blogs');
 
     const result = await res.json();
-    let blogsArray = [];
+    let blogsArray: any[] = [];
     if (Array.isArray(result)) {
       blogsArray = result;
     } else if (result.blogs && Array.isArray(result.blogs)) {
       blogsArray = result.blogs;
+    } else if (result.data?.blogs && Array.isArray(result.data.blogs)) {
+      blogsArray = result.data.blogs;
     } else if (result.data && Array.isArray(result.data)) {
       blogsArray = result.data;
     }
