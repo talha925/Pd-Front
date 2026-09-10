@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import SidebarCard from './SidebarCard';
+import { decodeRecursively } from '@/lib/utils/formatting';
 
 interface TOCItem {
   id: string;
@@ -102,31 +103,30 @@ export default function TableOfContents({ headings: propHeadings, contentSelecto
 
   return (
     <SidebarCard title="Table of Contents" icon="📋">
-      <nav className="space-y-1 max-h-80 overflow-y-auto">
+      <nav className="space-y-0.5 max-h-[calc(100vh-220px)] overflow-y-auto pr-1">
         {toc.map((item, index) => {
           const isActive = activeId === item.id;
-          const paddingLeft = `${(item.level - 1) * 12 + 8}px`;
+          const paddingLeft = `${(item.level - 1) * 6 + 4}px`;
 
           return (
             <button
               key={index}
               onClick={() => scrollToHeading(item.id)}
-              className={`w-full text-left p-2 rounded-lg transition-all duration-300 hover:bg-blue-50 group ${isActive ? 'bg-blue-100 border-l-4 border-blue-500' : ''
-                }`}
+              className={`w-full text-left py-1 px-1.5 rounded-md transition-all duration-200 hover:bg-blue-50/80 group ${
+                isActive ? 'bg-blue-50 text-blue-700 font-medium border-l-2 border-blue-600' : ''
+              }`}
               style={{ paddingLeft }}
             >
-              <div className="flex items-center space-x-2">
-                <div className={`w-2 h-2 rounded-full transition-colors ${item.level === 1 ? 'bg-blue-600' :
+              <div className="flex items-start space-x-1.5">
+                <div className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 transition-colors ${
+                  item.level === 1 ? 'bg-blue-600' :
                   item.level === 2 ? 'bg-blue-500' :
-                    item.level === 3 ? 'bg-blue-400' :
-                      'bg-blue-300'
-                  } ${isActive ? 'scale-125' : ''}`}></div>
-                <span className={`text-sm transition-colors line-clamp-2 ${isActive ? 'text-blue-700 font-semibold' : 'text-gray-700 group-hover:text-blue-600'
-                  } ${item.level === 1 ? 'font-semibold' :
-                    item.level === 2 ? 'font-medium' :
-                      'font-normal'
-                  }`}>
-                  {item.text}
+                  'bg-blue-400'
+                } ${isActive ? 'scale-125' : ''}`}></div>
+                <span className={`text-[12px] leading-snug transition-colors line-clamp-2 ${
+                  isActive ? 'text-blue-700 font-semibold' : 'text-slate-600 group-hover:text-blue-600'
+                }`}>
+                  {decodeRecursively(item.text)}
                 </span>
               </div>
             </button>

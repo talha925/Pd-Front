@@ -96,7 +96,13 @@ module.exports = {
           800: '#1F2937',  // Very dark grey
           900: '#111827',  // Dark gray for primary text (specified)
         },
-        
+
+        // Brand-specific colors from CSS variables
+        'brand-primary': 'hsl(var(--brand-primary))',
+        'brand-secondary': 'hsl(var(--brand-secondary))',
+        'brand-accent': 'hsl(var(--brand-accent))',
+        'brand-accent-2': 'hsl(var(--brand-accent-2))',
+
         // Semantic color aliases for better DX
         'bg-primary': 'hsl(var(--background))',
         'bg-secondary': 'hsl(var(--background-secondary))',

@@ -22,54 +22,9 @@ import {
   sanitizeHtml,
   cleanAndFormatUrl
 } from '@/lib/utils/validation';
-import { processTags } from '@/lib/utils/formatting';
+import { processTags, decodeRecursively } from '@/lib/utils/formatting';
 import { BLOG_STATUS_OPTIONS } from '@/lib/constants/options';
-import parse, { DOMNode, Element, domToReact } from 'html-react-parser';
-import { decode } from 'html-entities';
 import BlogInteractive from '@/components/blog/BlogInteractive';
-
-function decodeRecursively(text: string): string {
-  if (!text) return '';
-  let newText = decode(text);
-  let limit = 0;
-  while (newText !== text && limit < 5) {
-    text = newText;
-    newText = decode(text);
-    limit++;
-  }
-  return newText;
-}
-
-function customParser(html: string) {
-  if (!html) return null;
-  const decodedHtml = decodeRecursively(html);
-
-  return parse(decodedHtml, {
-    replace: (domNode) => {
-      const node = domNode as Element;
-      if (node.name === 'p') {
-        const containsBlockElement = node.children?.some(
-          (child) =>
-            child.type === 'tag' &&
-            ['ul', 'ol', 'h1', 'h2', 'h3', 'h4', 'div', 'blockquote'].includes((child as Element).name)
-        );
-        if (containsBlockElement) {
-          return <>{domToReact(node.children as DOMNode[], { replace: () => null })}</>;
-        }
-      }
-      if (node.name === 'h2' || node.name === 'h3') {
-        const Tag = node.name as 'h2' | 'h3';
-        const { class: _c, ...cleanAttribs } = node.attribs || {};
-        const className = `${node.attribs?.class || ''}`.trim();
-        return (
-          <Tag {...cleanAttribs} className={className}>
-            {domToReact(node.children as DOMNode[])}
-          </Tag>
-        );
-      }
-    },
-  });
-}
 
 interface BlogFormProps {
   initialValues?: Partial<{
@@ -109,7 +64,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
   // Required Fields
   const [title, setTitle] = useState(initialValues?.title || '');
   const [shortDescription, setShortDescription] = useState(initialValues?.shortDescription || '');
-  const [longDescription, setLongDescription] = useState(initialValues?.longDescription || '');
+  const [longDescription, setLongDescription] = useState(decodeRecursively(initialValues?.longDescription || ''));
   const [categoryId, setCategoryId] = useState(initialValues?.categoryId || '');
   const [storeId, setStoreId] = useState(initialValues?.storeId || '');
   const [storeUrl, setStoreUrl] = useState(initialValues?.storeUrl || '');
@@ -151,7 +106,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
   const [errors, setErrors] = useState<BlogValidationErrors>({});
 
   // Preview Mode for Long Description
-  const [longDescTab, setLongDescTab] = useState<'editor' | 'preview'>('editor');
+  const [longDescTab, setLongDescTab] = useState<'editor' | 'raw' | 'preview'>('editor');
   const [showFullPreviewModal, setShowFullPreviewModal] = useState(false);
 
   // Image Upload Handlers
@@ -575,7 +530,18 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
                           : 'text-gray-600 hover:text-gray-900'
                       }`}
                     >
-                      <span>✏️</span> Edit HTML / Content
+                      <span>✏️</span> Visual Editor
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLongDescTab('raw')}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all ${
+                        longDescTab === 'raw'
+                          ? 'bg-white text-amber-700 shadow-sm font-bold'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      <span>&lt;/&gt;</span> Raw HTML / Code
                     </button>
                     <button
                       type="button"
@@ -602,7 +568,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
                 </div>
               </div>
 
-              {/* Editor View */}
+              {/* Visual Editor View */}
               <div className={longDescTab === 'editor' ? 'block' : 'hidden'}>
                 <OptimizedRichTextEditor
                   id="longDescription"
@@ -615,6 +581,27 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
                 />
               </div>
 
+              {/* Raw HTML / Code View */}
+              {longDescTab === 'raw' && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs bg-slate-100 px-3.5 py-2 rounded-t-lg border border-b-0 border-slate-300">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-slate-800">&lt;/&gt; Raw HTML Editor</span>
+                      <span className="text-slate-500 text-[11px]">(Direct clean paste - will not strip &lt;style&gt;, &lt;script&gt; or format)</span>
+                    </div>
+                    <span className="font-mono text-slate-500 text-[11px]">{longDescription.length} characters</span>
+                  </div>
+                  <textarea
+                    id="rawLongDescription"
+                    value={longDescription}
+                    onChange={(e) => setLongDescription(e.target.value)}
+                    rows={22}
+                    className="w-full font-mono text-xs p-4 bg-slate-950 text-emerald-400 border border-slate-300 rounded-b-lg focus:ring-2 focus:ring-blue-500 focus:outline-none leading-relaxed"
+                    placeholder="Paste your raw HTML here (e.g. <style>...</style><div class='mgx-wrap'>...</div>)"
+                  />
+                </div>
+              )}
+
               {/* Live Preview View */}
               {longDescTab === 'preview' && (
                 <div className="border border-slate-200 rounded-xl p-6 sm:p-8 bg-white shadow-sm min-h-[450px]">
@@ -623,22 +610,42 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
                       <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                       Interactive Live Preview (Exact Website Styles)
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setLongDescTab('editor')}
-                      className="text-xs px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-medium transition"
-                    >
-                      ← Back to Editor
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setLongDescTab('raw')}
+                        className="text-xs px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-md font-medium transition"
+                      >
+                        Edit Raw HTML
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setLongDescTab('editor')}
+                        className="text-xs px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-medium transition"
+                      >
+                        Visual Editor
+                      </button>
+                    </div>
                   </div>
                   {longDescription ? (
-                    <article className="blog-content prose prose-lg md:prose-xl prose-slate w-full max-w-none">
-                      <BlogInteractive />
-                      {customParser(longDescription)}
-                    </article>
+                    (() => {
+                      const decoded = decodeRecursively(longDescription);
+                      const isMgx = decoded.includes('mgx-wrap') || decoded.includes('mgx-hero');
+                      return (
+                        <>
+                          <BlogInteractive />
+                          <article
+                            className={`blog-content w-full max-w-none ${
+                              isMgx ? '' : 'prose prose-lg md:prose-xl prose-slate'
+                            }`}
+                            dangerouslySetInnerHTML={{ __html: decoded }}
+                          />
+                        </>
+                      );
+                    })()
                   ) : (
                     <div className="text-center py-16">
-                      <p className="text-slate-400 italic">No content to preview yet. Switch to "Edit HTML / Content" tab to write or paste your blog.</p>
+                      <p className="text-slate-400 italic">No content to preview yet. Switch to "Raw HTML / Code" or "Visual Editor" tab to write or paste your blog.</p>
                     </div>
                   )}
                 </div>
@@ -942,9 +949,11 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
 
               {/* Long Description Content */}
               <div className="pt-4 border-t border-slate-100">
-                <article className="blog-content prose prose-lg md:prose-xl prose-slate w-full max-w-none">
+                <article 
+                  className="blog-content prose prose-lg md:prose-xl prose-slate w-full max-w-none"
+                  dangerouslySetInnerHTML={{ __html: decodeRecursively(longDescription) }}
+                >
                   <BlogInteractive />
-                  {customParser(longDescription)}
                 </article>
               </div>
             </div>

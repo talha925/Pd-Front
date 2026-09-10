@@ -5,14 +5,12 @@ export const revalidate = 0;
 
 import { Metadata } from 'next';
 import SafeImage from '@/components/ui/SafeImage';
-import { notFound } from 'next/navigation';
-import parse, { DOMNode, Element, domToReact } from 'html-react-parser';
+import parse, { attributesToProps, DOMNode, Element, domToReact } from 'html-react-parser';
 import config from '@/lib/config';
-import { decode } from 'html-entities';
+import { decodeRecursively, sanitizeBrandText, cleanTypography } from '@/lib/utils/formatting';
 import TableOfContents from '@/components/blog/TableOfContents';
 import RecentBlogs from '@/components/blog/RecentBlogs';
 import ReadingProgress from '@/components/blog/ReadingProgress';
-
 import BackToTop from '@/components/blog/BackToTop';
 import BlogInteractive from '@/components/blog/BlogInteractive';
 
@@ -38,18 +36,6 @@ interface Blog {
   };
 }
 
-// NEW HELPER: This function will decode the string repeatedly until it's clean.
-// This will fix your "&lt;p&gt;&amp;lt;p&amp;gt;..." and "&amp;amp;" issues.
-function decodeRecursively(text: string): string {
-  if (!text) return '';
-  let newText = decode(text);
-  while (newText !== text) {
-    text = newText;
-    newText = decode(text);
-  }
-  return newText;
-}
-
 function generateSlug(text: string): string {
   return text
     .toLowerCase()
@@ -62,18 +48,209 @@ function generateHeadingId(text: string, index: number): string {
   return `heading-${index}-${slug}`;
 }
 
-function getCleanText(node: Element): string {
-  let text = '';
-  if (node.children) {
-    for (const child of node.children) {
-      if ((child as any).type === 'text') {
-        text += (child as any).data || '';
-      } else if ((child as any).children) {
-        text += getCleanText(child as Element);
-      }
-    }
+// Helper to extract text from AST nodes (same as Waleed-Webiste)
+function getTextFromNode(node: any): string {
+  if (!node) return '';
+  if (node.type === 'text') {
+    return node.data || '';
   }
-  return text.trim();
+  if (node.children && Array.isArray(node.children)) {
+    return node.children.map(getTextFromNode).join('');
+  }
+  return '';
+}
+
+// --- Semantic Blog Content Formatter & Parser from Waleed-Webiste ---
+function formatAndParseBlogContent(rawContent: string, brandName: string = 'Penny Scroll', store?: { name?: string; url?: string }) {
+  if (!rawContent) return null;
+
+  // 1. Clean recursive encoding and typography artifacts
+  const content = sanitizeBrandText(decodeRecursively(rawContent), brandName);
+
+  // 2. Check if content already contains block HTML tags
+  const hasHtmlTags = /<\/?(p|div|h[1-6]|ul|ol|li|table|blockquote|section|article|style)\b/i.test(content);
+
+  let formattedHtml = content;
+
+  if (!hasHtmlTags) {
+    const rawLines = content
+      .replace(/\r\n/g, '\n')
+      .split('\n')
+      .map(l => l.trim());
+
+    const processedBlocks: string[] = [];
+    let currentList: string[] = [];
+    let isNumberedList = false;
+
+    const flushList = () => {
+      if (currentList.length > 0) {
+        if (isNumberedList) {
+          processedBlocks.push(
+            `<ol class="list-decimal pl-6 space-y-2.5 my-6 text-foreground/90 font-medium text-base md:text-lg">${currentList.map(item => `<li>${item}</li>`).join('')}</ol>`
+          );
+        } else {
+          processedBlocks.push(
+            `<ul class="list-disc pl-6 space-y-2 my-6 text-foreground/90 text-base md:text-lg">${currentList.map(item => `<li>${item}</li>`).join('')}</ul>`
+          );
+        }
+        currentList = [];
+        isNumberedList = false;
+      }
+    };
+
+    for (let i = 0; i < rawLines.length; i++) {
+      const line = rawLines[i];
+      if (!line) {
+        flushList();
+        continue;
+      }
+
+      if (line.startsWith('```')) {
+        flushList();
+        continue;
+      }
+
+      const isCtaLine = /^(SHOP\s|BUY\s|GET\s|EXPLORE\s|VISIT\s|.*RECOMMENDS\s)/i.test(line) && line.length < 90;
+      if (isCtaLine) {
+        flushList();
+        const targetUrl = store?.url || '#';
+        const cleanedTitle = cleanTypography(line);
+        let buttonText = /^SHOP\s/i.test(line) ? `Shop ${store?.name || 'Now'}` : 'Shop Now';
+        processedBlocks.push(`
+          <div class="my-8 p-6 sm:p-7 rounded-2xl border border-border/80 bg-gradient-to-r from-card via-background-secondary/70 to-card shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col md:flex-row items-center justify-between gap-6 not-prose">
+            <div class="space-y-2 text-center md:text-left flex-1 min-w-0">
+              <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-brand-accent/15 text-brand-accent border border-brand-accent/30 whitespace-nowrap shadow-sm">
+                <span>Verified Recommendation</span>
+              </div>
+              <h4 class="text-xl sm:text-2xl font-black text-foreground pt-1 leading-snug tracking-tight">${cleanedTitle}</h4>
+              <p class="text-xs sm:text-sm text-foreground-secondary font-medium">Exclusive deals & verified discounts available for our readers</p>
+            </div>
+            <a href="${targetUrl}" target="_blank" rel="noopener noreferrer nofollow" class="blog-cta-btn px-8 py-3.5 rounded-full !no-underline uppercase tracking-wider text-xs sm:text-sm font-black shrink-0 cursor-pointer gap-2">
+              <span>${buttonText}</span>
+            </a>
+          </div>
+        `);
+        continue;
+      }
+
+      // Check for Numbered List items
+      const numberedMatch = line.match(/^(\d+)\.\s+(.*)/);
+      if (numberedMatch) {
+        if (!isNumberedList && currentList.length > 0) flushList();
+        isNumberedList = true;
+        currentList.push(`<strong>${numberedMatch[2]}</strong>`);
+        continue;
+      }
+
+      // Check for Bullet points
+      const bulletMatch = line.match(/^[-*•]\s+(.*)/);
+      if (bulletMatch) {
+        if (isNumberedList && currentList.length > 0) flushList();
+        isNumberedList = false;
+        currentList.push(bulletMatch[1]);
+        continue;
+      }
+
+      // Check for Short feature list item
+      const nextLine = rawLines[i + 1];
+      const isShortItem = line.length < 50 && !line.endsWith('.') && !line.endsWith(':') && !line.endsWith('?') &&
+        ((nextLine && nextLine.length < 50 && !nextLine.endsWith('.') && !nextLine.endsWith('?')) || currentList.length > 0);
+
+      if (isShortItem && !line.startsWith('##') && !line.startsWith('###')) {
+        if (isNumberedList && currentList.length > 0) flushList();
+        isNumberedList = false;
+        currentList.push(line);
+        continue;
+      }
+
+      flushList();
+
+      if (line.startsWith('## ') || line.startsWith('### ')) {
+        const headingText = line.replace(/^#{2,3}\s+/, '');
+        const headingId = headingText.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        processedBlocks.push(`<h2 id="${headingId}" class="text-2xl md:text-3xl font-black text-foreground mt-10 mb-4 tracking-tight scroll-mt-24">${headingText}</h2>`);
+        continue;
+      }
+
+      const isHeadingPattern = (
+        line.endsWith('?') ||
+        /^(Best|Why|What|How|Frequently Asked Questions|Conclusion|Summary|Real Owner Experiences|Future Trends|Top Rated|Final Thoughts|Key Takeaways|The Verdict)\b/i.test(line)
+      ) && line.length < 80 && !line.endsWith('.');
+
+      if (isHeadingPattern) {
+        const headingId = line.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        processedBlocks.push(`<h2 id="${headingId}" class="text-2xl md:text-3xl font-black text-foreground mt-10 mb-4 tracking-tight scroll-mt-24">${line}</h2>`);
+        continue;
+      }
+
+      processedBlocks.push(`<p class="mb-6 text-base md:text-lg leading-relaxed text-foreground/90 font-normal">${line}</p>`);
+    }
+
+    flushList();
+    formattedHtml = processedBlocks.join('\n');
+  }
+
+  return parse(formattedHtml, {
+    replace: (domNode) => {
+      const node = domNode as Element;
+      if (!node || !node.name) return;
+
+      // Ensure <style> tags render their CSS rules directly in React
+      if (node.name === 'style') {
+        const cssContent = getTextFromNode(node);
+        return <style dangerouslySetInnerHTML={{ __html: decodeRecursively(cssContent) }} />;
+      }
+
+      // Handle 2-item or 4-item grids to display 2 columns (complete space)
+      if (node.attribs && (node.attribs.class?.includes('mgx-carousel') || node.attribs.class?.includes('mgx-grid'))) {
+        const elementChildren = (node.children || []).filter((child: any) => child.type === 'tag');
+        if (elementChildren.length === 2) {
+          const props = attributesToProps(node.attribs);
+          const className = `${node.attribs.class || ''} mgx-grid-2`.trim();
+          return (
+            <div {...props} className={className}>
+              {domToReact(node.children as DOMNode[])}
+            </div>
+          );
+        }
+        if (elementChildren.length === 4) {
+          const props = attributesToProps(node.attribs);
+          const className = `${node.attribs.class || ''} mgx-grid-4`.trim();
+          return (
+            <div {...props} className={className}>
+              {domToReact(node.children as DOMNode[])}
+            </div>
+          );
+        }
+      }
+
+      // Ensure all anchor links have clean decoded URLs without %20 or spaces in domain
+      if (node.name === 'a' && node.attribs?.href) {
+        let href = node.attribs.href;
+        href = href.replace(/penny(?:\s+|%20)+scroll\.com/gi, 'pennyscroll.com');
+        href = href.replace(/blogzenix\.com/gi, 'pennyscroll.com');
+        const props = attributesToProps({ ...node.attribs, href });
+        return (
+          <a {...props}>
+            {domToReact(node.children as DOMNode[])}
+          </a>
+        );
+      }
+
+      // Auto-assign IDs to headings for Table of Contents if not present, while preserving all existing styles/attributes
+      if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(node.name)) {
+        const text = getTextFromNode(node);
+        const id = node.attribs?.id || text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        const props = attributesToProps(node.attribs || {});
+        const Tag = node.name as any;
+        return (
+          <Tag {...props} id={id}>
+            {domToReact(node.children as DOMNode[])}
+          </Tag>
+        );
+      }
+    },
+  });
 }
 
 function extractHeadingsFromHtml(html: string): Array<{ id: string; text: string; level: number }> {
@@ -144,45 +321,6 @@ async function fetchBlogBySlugOrId(slugOrId: string): Promise<Blog | null> {
     console.error('[Blog Fetch] Error:', error);
     return null;
   }
-}
-
-// The parser now uses the recursive decoder and attaches matching heading IDs
-function customParser(html: string) {
-  // First, fully clean the double (or triple) encoded HTML string
-  const decodedHtml = decodeRecursively(html);
-  let headingCounter = 0;
-
-  return parse(decodedHtml, {
-    replace: (domNode) => {
-      const node = domNode as Element;
-      // Fix for invalid nesting like <p><ul>...</ul></p>
-      if (node.name === 'p') {
-        const containsBlockElement = node.children?.some(
-          (child) =>
-            child.type === 'tag' &&
-            ['ul', 'ol', 'h1', 'h2', 'h3', 'h4', 'div', 'blockquote'].includes((child as Element).name)
-        );
-        if (containsBlockElement) {
-          return <>{domToReact(node.children as DOMNode[], { replace: () => null })}</>;
-        }
-      }
-
-      // Assign matching ID to headings for Table of Contents
-      if (node.name === 'h2' || node.name === 'h3') {
-        const text = getCleanText(node);
-        const id = node.attribs?.id || generateHeadingId(text, headingCounter++);
-        const Tag = node.name as 'h2' | 'h3';
-        const { class: _c, ...cleanAttribs } = node.attribs || {};
-        const className = `${node.attribs?.class || ''} scroll-mt-24`.trim();
-
-        return (
-          <Tag {...cleanAttribs} id={id} className={className}>
-            {domToReact(node.children as DOMNode[])}
-          </Tag>
-        );
-      }
-    },
-  });
 }
 
 // Generate metadata with decoded strings
@@ -285,7 +423,7 @@ export default async function BlogDetailPage({ params }: { params: { id: string 
         </nav>
 
         {/* 3-Column Grid Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)_240px] gap-8 lg:gap-10 xl:gap-12 max-w-7xl xl:max-w-8xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-[190px_minmax(0,1fr)_195px] gap-5 lg:gap-6 xl:gap-8 max-w-7xl xl:max-w-8xl mx-auto">
           {/* Left Sidebar - Table of Contents */}
           <aside className="hidden lg:block bg-transparent">
             <div className="sticky-sidebar">
@@ -298,13 +436,13 @@ export default async function BlogDetailPage({ params }: { params: { id: string 
             <article className="">
               {/* Hero Image */}
               {blog.image?.url && (
-                <div className="relative w-full rounded-2xl overflow-hidden mb-8">
+                <div className="relative w-full rounded-2xl overflow-hidden mb-6 shadow-sm border border-slate-200/80 bg-white">
                   <SafeImage
                     src={blog.image.url}
                     alt={decodeRecursively(blog.image.alt || blog.title)}
                     width={1200}
                     height={630}
-                    className="w-full h-auto object-contain"
+                    className="w-full h-auto rounded-2xl block"
                     priority
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 75vw, 60vw"
                   />
@@ -313,23 +451,23 @@ export default async function BlogDetailPage({ params }: { params: { id: string 
 
               {/* Content */}
               <div className="">
-
-
                 {/* Title */}
-                <h1 className="text-2xl md:text-3xl lg:text-4xl font-extrabold mb-6 text-gray-900 leading-tight tracking-tight">
+                <h1 className="text-2xl md:text-3xl lg:text-4xl font-extrabold mb-3.5 text-gray-900 leading-tight tracking-tight">
                   {decodedTitle}
                 </h1>
 
-
-
-
-
                 {/* Blog Content */}
                 {blog.longDescription ? (
-                  <article className="blog-content prose prose-lg md:prose-xl lg:prose-xl prose-slate w-full max-w-none">
+                  <>
                     <BlogInteractive />
-                    {customParser(blog.longDescription)}
-                  </article>
+                    <article
+                      className={`blog-content w-full max-w-none ${
+                        (blog.longDescription || '').includes('mgx-wrap') ? '' : 'prose prose-lg md:prose-xl lg:prose-xl prose-slate'
+                      }`}
+                    >
+                      {formatAndParseBlogContent(blog.longDescription, 'Penny Scroll', (blog as any).store)}
+                    </article>
+                  </>
                 ) : (
                   <div className="text-center py-12">
                     <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
@@ -338,8 +476,6 @@ export default async function BlogDetailPage({ params }: { params: { id: string 
                     <p className="text-gray-500 italic">No content available for this post.</p>
                   </div>
                 )}
-
-
               </div>
             </article>
           </main>

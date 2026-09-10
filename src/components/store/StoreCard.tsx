@@ -50,7 +50,7 @@ const StoreCard: React.FC<StoreCardProps> = ({ store }) => {
       </div>
 
       <h3 className="text-lg font-medium text-gray-800 text-center mb-4">
-        {store.name}
+        {decodeHTML(store.name)}
       </h3>
 
       <div className="flex flex-col gap-2 w-full">

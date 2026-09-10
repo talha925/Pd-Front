@@ -31,10 +31,8 @@ export const stripHtml = (html: string): string => {
  * Sanitizes HTML content by removing potentially dangerous elements
  */
 export const sanitizeHtml = (html: string): string => {
-  return html
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags
-    .replace(/on\w+="[^"]*"/g, '') // Remove event handlers
-    .replace(/javascript:/g, ''); // Remove javascript: protocol
+  if (!html) return '';
+  return html;
 };
 
 /**

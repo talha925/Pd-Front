@@ -4,7 +4,7 @@
 
 import SafeImage from '@/components/ui/SafeImage';
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { decodeHTML } from '@/lib/utils/formatting';
+import { decodeHTML, decodeRecursively } from '@/lib/utils/formatting';
 import { stripAdTrackingParams } from '@/lib/utils/validation';
 import toast, { Toaster } from 'react-hot-toast';
 import { Store, Coupon } from '@/lib/types/store';
@@ -203,8 +203,9 @@ const LoadingState = () => (
 );
 
 // --- Smart Description Formatter ---
-const SmartDescription = ({ text }: { text: string | undefined }) => {
-  if (!text) return null;
+const SmartDescription = ({ text: rawText }: { text: string | undefined }) => {
+  if (!rawText) return null;
+  const text = decodeRecursively(rawText);
 
   // Calculate read time (stripping HTML tags for accuracy if needed)
   const cleanText = text.replace(/<[^>]*>/g, '');

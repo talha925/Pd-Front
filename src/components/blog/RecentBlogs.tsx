@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import SafeImage from '@/components/ui/SafeImage';
 import SidebarCard from './SidebarCard';
-import { decode } from 'html-entities';
+import { decodeRecursively } from '@/lib/utils/formatting';
 
 interface Blog {
   _id: string;
@@ -95,38 +95,37 @@ export default function RecentBlogs({ currentBlogId, limit = 5 }: RecentBlogsPro
           <p className="text-gray-500 text-sm mb-6">No recent blogs available</p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {blogs.slice(0, 3).map((blog) => {
             const imageUrl = typeof blog.image === 'string' ? blog.image : blog.image?.url;
             return (
               <Link
                 key={blog._id}
                 href={`/blog/${blog.slug}`}
-                className="block group hover:bg-white/50 rounded-xl p-2 transition-all duration-200 border border-transparent hover:border-white/30"
+                className="block group hover:bg-slate-100/70 rounded-lg p-1.5 transition-all duration-200"
               >
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2.5">
                   {imageUrl && (
                     <div className="flex-shrink-0">
                       <SafeImage
                         src={imageUrl}
-                        alt={decode(blog.title)}
-                        width={96}
-                        height={64}
-                        className="rounded-lg object-cover w-24 h-16"
+                        alt={decodeRecursively(blog.title)}
+                        width={56}
+                        height={56}
+                        className="rounded-md object-cover w-12 h-12"
                         fallbackSrc="/placeholder-blog.png"
                       />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-semibold text-gray-800 group-hover:text-blue-600 line-clamp-2 mb-0.5 transition-colors">
-                      {decode(blog.title)}
+                    <h4 className="text-[13px] leading-snug font-semibold text-slate-800 group-hover:text-blue-600 line-clamp-2 transition-colors">
+                      {decodeRecursively(blog.title)}
                     </h4>
                     {blog.shortDescription && (
-                      <p className="text-xs text-gray-600 line-clamp-2 mb-1">
-                        {blog.shortDescription}
+                      <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
+                        {decodeRecursively(blog.shortDescription)}
                       </p>
                     )}
-
                   </div>
                 </div>
               </Link>
@@ -135,10 +134,10 @@ export default function RecentBlogs({ currentBlogId, limit = 5 }: RecentBlogsPro
         </div>
       )}
 
-      <div className="pt-4 border-t border-gray-200/50">
+      <div className="pt-3 mt-2 border-t border-slate-200/60">
         <Link
           href="/blog"
-          className="block text-center text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+          className="block text-center text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
         >
           View All Blogs →
         </Link>

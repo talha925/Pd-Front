@@ -14,9 +14,14 @@ export default function BlogInteractive() {
     const handleInput = (e: Event) => {
       const target = e.target as HTMLInputElement;
       if (target && target.matches('.mgx-range, [data-mgx-range]')) {
-        const frame = target.closest('.mgx-comparison-frame') as HTMLElement;
+        const frame = target.closest('.mgx-comparison-frame, .mgx-result .mgx-reveal, .mgx-reveal') as HTMLElement;
         if (frame) {
-          frame.style.setProperty('--mgx-pos', `${target.value}%`);
+          const val = `${target.value}%`;
+          frame.style.setProperty('--mgx-pos', val);
+          const before = frame.querySelector('.mgx-reveal-before, .mgx-before') as HTMLElement;
+          if (before) before.style.width = val;
+          const handle = frame.querySelector('.mgx-handle') as HTMLElement;
+          if (handle) handle.style.left = val;
         }
       }
     };
@@ -26,9 +31,24 @@ export default function BlogInteractive() {
       const target = e.target as HTMLElement;
 
       // Sensitive content reveal button
-      const revealBtn = target.closest('[data-mgx-reveal], .mgx-reveal button') as HTMLElement;
+      const revealBtn = target.closest('[data-mgx-reveal], .mgx-reveal-button, .mgx-reveal button') as HTMLElement;
       if (revealBtn) {
         e.preventDefault();
+        e.stopPropagation();
+
+        // Handle .mgx-reveal slider (V7.3 click-to-reveal)
+        const slider = revealBtn.closest('.mgx-reveal') as HTMLElement;
+        if (slider) {
+          slider.classList.remove('is-blurred');
+          const cover = slider.querySelector('.mgx-reveal-cover');
+          if (cover) cover.classList.add('hidden');
+          const warning = slider.querySelector('.mgx-graphic-warning');
+          if (warning) warning.classList.add('hidden');
+          const range = slider.querySelector('.mgx-range') as HTMLInputElement;
+          if (range) range.disabled = false;
+        }
+
+        // Also handle legacy .mgx-comparison-frame if present
         const frame = revealBtn.closest('.mgx-comparison-frame') as HTMLElement;
         if (frame) {
           frame.classList.add('revealed');
@@ -62,11 +82,16 @@ export default function BlogInteractive() {
 
     // Initialize all comparison frames with default 50%
     const initFrames = () => {
-      const frames = document.querySelectorAll('.mgx-comparison-frame');
+      const frames = document.querySelectorAll('.mgx-comparison-frame, .mgx-result .mgx-reveal, .mgx-reveal');
       frames.forEach((frame) => {
         const range = frame.querySelector('.mgx-range, [data-mgx-range]') as HTMLInputElement;
         const defaultVal = range?.value || '50';
-        (frame as HTMLElement).style.setProperty('--mgx-pos', `${defaultVal}%`);
+        const val = `${defaultVal}%`;
+        (frame as HTMLElement).style.setProperty('--mgx-pos', val);
+        const before = frame.querySelector('.mgx-reveal-before, .mgx-before') as HTMLElement;
+        if (before) before.style.width = val;
+        const handle = frame.querySelector('.mgx-handle') as HTMLElement;
+        if (handle) handle.style.left = val;
       });
     };
 

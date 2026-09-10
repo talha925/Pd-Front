@@ -4,19 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import HttpClient from "@/services/HttpClient";
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
-import { decode } from 'html-entities';
-
-function decodeRecursively(text: string): string {
-  if (!text) return '';
-  let newText = decode(text);
-  let limit = 0;
-  while (newText !== text && limit < 5) {
-    text = newText;
-    newText = decode(text);
-    limit++;
-  }
-  return newText;
-}
+import { decodeRecursively } from '@/lib/utils/formatting';
 
 // Custom debounce hook
 function useDebounce<T>(value: T, delay: number): T {

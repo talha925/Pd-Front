@@ -1,6 +1,6 @@
 import SafeImage from '@/components/ui/SafeImage';
 import Link from 'next/link';
-import { themeClasses } from '@/lib/theme/utils';
+import { decodeRecursively, cleanTypography } from '@/lib/utils/formatting';
 
 interface BlogCardProps {
   blog: {
@@ -16,7 +16,10 @@ interface BlogCardProps {
   variant?: string;
 }
 
-export default function BlogCard({ blog, variant }: BlogCardProps) {
+export default function BlogCard({ blog }: BlogCardProps) {
+  const cleanTitle = decodeRecursively(blog.title);
+  const cleanDesc = decodeRecursively(blog.shortDescription);
+
   return (
     <Link href={`/blog/${blog.slug || blog._id}`} className="block">
       <div className="group relative bg-white/80 backdrop-blur-sm border border-indigo-200/40 rounded-2xl overflow-hidden transform transition-all duration-500 hover:scale-[1.03] shadow-xl hover:shadow-2xl hover:border-indigo-300/60 hover:bg-white/90 cursor-pointer">
@@ -29,7 +32,7 @@ export default function BlogCard({ blog, variant }: BlogCardProps) {
             </div>
             <SafeImage
               src={blog.image.url}
-              alt={blog.image.alt || blog.title}
+              alt={blog.image.alt ? cleanTypography(blog.image.alt) : cleanTitle}
               width={800}
               height={450}
               sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -43,12 +46,12 @@ export default function BlogCard({ blog, variant }: BlogCardProps) {
         <div className="p-6">
           <div className="mb-4">
             <h2 className="text-base md:text-lg font-bold text-slate-800 break-words leading-snug hover:text-indigo-700 transition-colors duration-300 line-clamp-2">
-              {blog.title}
+              {cleanTitle}
             </h2>
           </div>
-          {blog.shortDescription && (
+          {cleanDesc && (
             <p className="text-sm text-slate-600 mb-4 line-clamp-2 break-words leading-snug">
-              {blog.shortDescription}
+              {cleanDesc}
             </p>
           )}
           <div className="inline-flex items-center text-indigo-600 hover:text-purple-600 transition-all duration-300 font-medium hover:translate-x-1">
