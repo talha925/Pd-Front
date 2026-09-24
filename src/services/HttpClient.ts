@@ -53,7 +53,7 @@ class HttpClient implements IHttpClient {
   async request<T = any>(config: RequestConfig & { url: string }): Promise<T> {
     try {
       // Apply request interceptors
-      let processedConfig = await this.applyRequestInterceptors(config);
+      const processedConfig = await this.applyRequestInterceptors(config);
 
       // Build the request
       const requestOptions = await this.buildRequestOptions(processedConfig);

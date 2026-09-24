@@ -77,3 +77,57 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: jest.fn(),
   })),
 });
+
+// Polyfill Web API globals for Next.js API route testing
+const { TextEncoder, TextDecoder } = require('util');
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder;
+global.setImmediate = (fn, ...args) => setTimeout(fn, 0, ...args);
+
+if (typeof Response === 'undefined') {
+  global.Response = class Response {
+    constructor(body, init = {}) {
+      this.body = body;
+      this.status = init.status || 200;
+      this.ok = this.status >= 200 && this.status < 300;
+      this.headers = new Map(Object.entries(init.headers || {}));
+    }
+    async json() {
+      return typeof this.body === 'string' ? JSON.parse(this.body) : this.body || {};
+    }
+    async text() {
+      return typeof this.body === 'string' ? this.body : JSON.stringify(this.body || '');
+    }
+    static json(data, init = {}) {
+      const res = new Response(data, init);
+      return res;
+    }
+  };
+}
+
+if (typeof Request === 'undefined') {
+  global.Request = class Request {
+    constructor(input, init = {}) {
+      this.url = typeof input === 'string' ? input : input.url;
+      this.method = init.method || 'GET';
+      this.headers = new Map(Object.entries(init.headers || {}));
+      this._body = init.body;
+    }
+    async json() {
+      return typeof this._body === 'string' ? JSON.parse(this._body) : this._body || {};
+    }
+    async text() {
+      return typeof this._body === 'string' ? this._body : JSON.stringify(this._body || '');
+    }
+  };
+}
+
+if (typeof global.fetch === 'undefined') {
+  global.fetch = jest.fn().mockImplementation(() =>
+    Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({ status: 'success' }),
+      text: () => Promise.resolve('ok'),
+    })
+  );
+}
