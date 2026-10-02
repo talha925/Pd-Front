@@ -6,6 +6,7 @@ export const revalidate = 0;
 import { Metadata } from 'next';
 import SafeImage from '@/components/ui/SafeImage';
 import parse, { attributesToProps, DOMNode, Element, domToReact } from 'html-react-parser';
+import sanitizeHtml from 'sanitize-html';
 import config from '@/lib/config';
 import { decodeRecursively, sanitizeBrandText, cleanTypography } from '@/lib/utils/formatting';
 import TableOfContents from '@/components/blog/TableOfContents';
@@ -190,7 +191,25 @@ function formatAndParseBlogContent(rawContent: string, brandName: string = 'Penn
     formattedHtml = processedBlocks.join('\n');
   }
 
-  return parse(formattedHtml, {
+  // 3. Sanitize HTML securely to prevent XSS while preserving rich styling and mgx components
+  const cleanHtml = sanitizeHtml(formattedHtml, {
+    allowedTags: sanitizeHtml.defaults.allowedTags.concat([
+      'style', 'img', 'iframe', 'svg', 'path', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      'section', 'article', 'nav', 'aside', 'header', 'footer', 'figure', 'figcaption',
+      'div', 'span', 'summary', 'details', 'picture', 'source', 'button'
+    ]),
+    allowedAttributes: {
+      '*': ['class', 'id', 'style', 'role', 'aria-*', 'data-*', 'tabindex'],
+      a: ['href', 'name', 'target', 'rel', 'title', 'download'],
+      img: ['src', 'srcset', 'alt', 'title', 'width', 'height', 'loading', 'decoding'],
+      iframe: ['src', 'width', 'height', 'frameborder', 'allow', 'allowfullscreen', 'referrerpolicy'],
+      td: ['colspan', 'rowspan'],
+      th: ['colspan', 'rowspan', 'scope']
+    },
+    allowedSchemes: ['http', 'https', 'mailto', 'tel', 'data']
+  });
+
+  return parse(cleanHtml, {
     replace: (domNode) => {
       const node = domNode as Element;
       if (!node || !node.name) return;
@@ -432,7 +451,7 @@ export default async function BlogDetailPage({ params }: { params: { id: string 
           </aside>
 
           {/* Main Content */}
-          <main>
+          <main className="min-w-0">
             <article className="">
               {/* Hero Image */}
               {blog.image?.url && (
@@ -462,7 +481,9 @@ export default async function BlogDetailPage({ params }: { params: { id: string 
                     <BlogInteractive />
                     <article
                       className={`blog-content w-full max-w-none ${
-                        (blog.longDescription || '').includes('mgx-wrap') ? '' : 'prose prose-lg md:prose-xl lg:prose-xl prose-slate'
+                        /(mgx-|<style\b|&lt;style\b)/i.test(blog.longDescription || '')
+                          ? ''
+                          : 'prose prose-lg md:prose-xl lg:prose-xl prose-slate'
                       }`}
                     >
                       {formatAndParseBlogContent(blog.longDescription, 'Penny Scroll', (blog as any).store)}
